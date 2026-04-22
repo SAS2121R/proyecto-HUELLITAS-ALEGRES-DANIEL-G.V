@@ -17,4 +17,11 @@ urlpatterns = [
     path('api/registro/', views.registro_usuario, name='api_registro'),
     path('api/login/', views.login_usuario, name='api_login'),
     path('logout/', views.logout_usuario, name='logout'),
+    
+    # Vistas de administración (solo Administrador)
+    path('admin/usuarios/', views.admin_user_list, name='admin_user_list'),
+    path('admin/usuarios/<int:pk>/editar/', views.admin_user_edit, name='admin_user_edit'),
+    
+    # Vistas de veterinario (solo Veterinario)
+    path('dashboard/', views.vet_dashboard, name='vet_dashboard'),
 ]

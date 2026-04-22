@@ -29,3 +29,7 @@ Thumbs.db
 
 # Archivos de configuración de VSCode
 .vscode/
+
+# Artefactos de Testsprite (no son parte del proyecto)
+testsprite_tests/
+tests_sprite_tests_placeholder.txt

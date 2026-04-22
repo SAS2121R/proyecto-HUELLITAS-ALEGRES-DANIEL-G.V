@@ -22,19 +22,35 @@
 # - Respuestas JSON para APIs REST
 # ========================================
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.urls import reverse
+from .decorators import admin_required, veterinario_required
+from .forms import RolChangeForm
+from .models import Rol
 import json
 
 # Obtener el modelo de usuario personalizado configurado en settings.py
 Usuario = get_user_model()
+
+
+def get_redirect_url(user):
+    """Return the appropriate post-login redirect URL based on user role."""
+    rol_nombre = user.rol.nombre
+    if rol_nombre == 'Administrador':
+        return reverse('usuarios:admin_user_list')
+    elif rol_nombre == 'Veterinario':
+        return reverse('usuarios:vet_dashboard')
+    else:
+        return reverse('productos:lista')
+
 
 # ========================================
 # VISTA PRINCIPAL DEL SERVICIO WEB
@@ -238,7 +254,7 @@ def login_usuario(request):
                     return JsonResponse({
                         'success': True, 
                         'message': 'Autenticación satisfactoria - Bienvenido a Huellitas Alegres',
-                        'redirect_url': '/productos/'
+                        'redirect_url': get_redirect_url(usuario)
                     })
                 else:
                     # ERROR: Cuenta desactivada
@@ -289,7 +305,7 @@ def login_view(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, f'¡Bienvenido {user.first_name or user.username}!')
-                return redirect('productos:lista')
+                return redirect(get_redirect_url(user))
             else:
                 messages.error(request, 'Email o contraseña incorrectos')
         else:
@@ -298,65 +314,52 @@ def login_view(request):
     return render(request, 'usuarios/login.html')
 
 def register_view(request):
-    """Vista para procesar el registro de usuarios"""
+    """Vista para procesar el registro de usuarios usando RegistroForm."""
     if request.method == 'POST':
-        email = request.POST.get('email')
-        password1 = request.POST.get('password1')
-        password2 = request.POST.get('password2')
-        
-        # Validaciones
-        if not all([email, password1, password2]):
-            messages.error(request, 'Todos los campos son obligatorios')
-            return render(request, 'usuarios/login.html')
-        
-        if password1 != password2:
-            messages.error(request, 'Las contraseñas no coinciden')
-            return render(request, 'usuarios/login.html')
-        
-        if len(password1) < 6:
-            messages.error(request, 'La contraseña debe tener al menos 6 caracteres')
-            return render(request, 'usuarios/login.html')
-        
-        # Verificar si el email ya existe
-        if Usuario.objects.filter(email=email).exists():
-            messages.error(request, 'Este email ya está registrado')
-            return render(request, 'usuarios/login.html')
-        
-        try:
-            # Crear el usuario usando el modelo personalizado
-            # Generar username único basado en el email
-            username = email.split('@')[0]
-            counter = 1
-            original_username = username
-            while Usuario.objects.filter(username=username).exists():
-                username = f"{original_username}{counter}"
-                counter += 1
-            
-            print(f"DEBUG: Intentando crear usuario con username={username}, email={email}")
-            
-            user = Usuario.objects.create_user(
-                username=username,
-                email=email,
-                password=password1
-            )
-            
-            print(f"DEBUG: Usuario creado exitosamente: {user.id}, {user.username}, {user.email}")
-            
-            # Verificar que el usuario se guardó
-            if Usuario.objects.filter(email=email).exists():
-                print(f"DEBUG: Usuario confirmado en base de datos")
-                messages.success(request, '¡Registro exitoso! Ya puedes iniciar sesión')
-            else:
-                print(f"DEBUG: ERROR - Usuario no encontrado en base de datos después de crear")
-                messages.error(request, 'Error: El usuario no se guardó correctamente')
-            
-            return render(request, 'usuarios/login.html')
-            
-        except Exception as e:
-            print(f"DEBUG: Error al crear usuario: {str(e)}")
-            import traceback
-            print(f"DEBUG: Traceback completo: {traceback.format_exc()}")
-            messages.error(request, f'Error al crear la cuenta: {str(e)}')
-            return render(request, 'usuarios/login.html')
+        from .forms import RegistroForm
+        form = RegistroForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, '¡Registro exitoso! Ya puedes iniciar sesión')
+            return redirect('usuarios:login')
+        # Form has errors — render login page with form context
+        return render(request, 'usuarios/login.html', {'register_form': form})
     
     return redirect('usuarios:login')
+
+
+# ========================================
+# VISTAS DE ADMINISTRACIÓN (Solo Administrador)
+# ========================================
+@login_required
+@admin_required
+def admin_user_list(request):
+    """Vista para listar todos los usuarios (solo Administrador)."""
+    users = Usuario.objects.select_related('rol').all().order_by('pk')
+    return render(request, 'usuarios/admin/user_list.html', {'users': users})
+
+
+@login_required
+@admin_required
+def admin_user_edit(request, pk):
+    """Vista para editar el rol de un usuario (solo Administrador)."""
+    user = get_object_or_404(Usuario, pk=pk)
+    if request.method == 'POST':
+        form = RolChangeForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Rol de {user.get_full_name() or user.username} actualizado exitosamente.')
+            return redirect('usuarios:admin_user_list')
+    else:
+        form = RolChangeForm(instance=user)
+    return render(request, 'usuarios/admin/user_edit.html', {'form': form, 'target_user': user})
+
+
+# ========================================
+# VISTAS DE VETERINARIO (Solo Veterinario)
+# ========================================
+@login_required
+@veterinario_required
+def vet_dashboard(request):
+    """Vista del dashboard para veterinarios."""
+    return render(request, 'usuarios/dashboard_vet.html')

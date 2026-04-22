@@ -22,6 +22,7 @@ from django.shortcuts import redirect
 def redirect_to_auth(request):
     return redirect('usuarios:auth')
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', redirect_to_auth, name='inicio'),

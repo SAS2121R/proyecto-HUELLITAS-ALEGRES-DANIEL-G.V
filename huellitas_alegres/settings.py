@@ -118,3 +118,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Configuración del modelo de usuario personalizado
 AUTH_USER_MODEL = 'usuarios.Usuario'
+
+# URL de inicio de sesión (usada por @login_required y autenticación)
+LOGIN_URL = '/usuarios/login/'
