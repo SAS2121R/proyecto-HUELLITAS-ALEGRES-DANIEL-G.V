@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4">Disponibilidades</h1>
+  <div class="d-flex justify-content-end mb-3">
+    {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+    <a href="{% url 'agenda:crear_disponibilidad' %}" class="btn btn-success">Nueva Disponibilidad</a>
+    {% endif %}
+  </div>
+  {% if page_obj %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            {% if user.rol.nombre == 'Administrador' %}
+            <th>Veterinario</th>
+            {% endif %}
+            <th>Fecha</th>
+            <th>Hora Inicio</th>
+            <th>Hora Fin</th>
+            <th>Activa</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in page_obj %}
+          <tr>
+            {% if user.rol.nombre == 'Administrador' %}
+            <td>{{ d.veterinario }}</td>
+            {% endif %}
+            <td>{{ d.fecha }}</td>
+            <td>{{ d.hora_inicio|time:"H:i" }}</td>
+            <td>{{ d.hora_fin|time:"H:i" }}</td>
+            <td>
+              {% if d.activa %}
+              <span class="badge bg-success">Sí</span>
+              {% else %}
+              <span class="badge bg-danger">No</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'agenda:editar_disponibilidad' d.pk %}" class="btn btn-sm btn-warning">Editar</a>
+              {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+              <a href="{% url 'agenda:eliminar_disponibilidad' d.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <!-- Paginación -->
+    <nav aria-label="Page navigation">
+      <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo; Anterior</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+          <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente &raquo;</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Siguiente &raquo;</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% else %}
+    <div class="alert alert-info text-center">
+      No hay disponibilidades registradas.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

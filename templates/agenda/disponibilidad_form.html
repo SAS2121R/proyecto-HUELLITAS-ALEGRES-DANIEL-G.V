@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4">{{ form.instance.pk|yesno:'Editar Disponibilidad,Nueva Disponibilidad' }}</h1>
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="mb-3">
+          <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+          <div class="invalid-feedback d-block">
+            {% for error in field.errors %}
+            {{ error }}
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+          <a href="{% url 'agenda:lista_disponibilidad' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

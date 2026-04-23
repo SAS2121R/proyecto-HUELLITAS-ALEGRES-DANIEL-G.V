@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+          <h4 class="mb-0">Confirmar Eliminación</h4>
+        </div>
+        <div class="card-body">
+          <p>¿Estás seguro de que deseas eliminar la disponibilidad de
+            <strong>{{ disponibilidad.veterinario }}</strong>
+            el <strong>{{ disponibilidad.fecha }}</strong>
+            de <strong>{{ disponibilidad.hora_inicio|time:"H:i" }}</strong>
+            a <strong>{{ disponibilidad.hora_fin|time:"H:i" }}</strong>?
+          </p>
+          <p class="text-muted">Esta acción no se puede deshacer.</p>
+          <form method="post">
+            {% csrf_token %}
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+              <a href="{% url 'agenda:lista_disponibilidad' %}" class="btn btn-secondary">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

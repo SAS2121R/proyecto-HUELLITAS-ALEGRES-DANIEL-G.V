@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'productos', # aplicacion personalizada para manejar productos de la tienda
     'usuarios', # aplicacion personalizada para manejar autenticacion de usuarios
     'mascotas', # aplicacion para manejar mascotas (pacientes) de la clinica
+    'agenda', # aplicacion para gestion de disponibilidades y citas
 ]
 
 MIDDLEWARE = [
