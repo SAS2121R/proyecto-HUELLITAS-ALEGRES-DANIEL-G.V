@@ -4,6 +4,13 @@ from django.core.exceptions import ValidationError
 from datetime import date
 
 
+ESTADO_CHOICES = [
+    ('Programada', 'Programada'),
+    ('Atendida', 'Atendida'),
+    ('Cancelada', 'Cancelada'),
+]
+
+
 class Disponibilidad(models.Model):
     """Modelo para representar un bloque de disponibilidad de un veterinario."""
 
@@ -28,6 +35,11 @@ class Disponibilidad(models.Model):
     def __str__(self):
         return f"{self.veterinario} — {self.fecha} {self.hora_inicio.strftime('%H:%M')}-{self.hora_fin.strftime('%H:%M')}"
 
+    @property
+    def esta_ocupada(self):
+        """True if slot has a Programada or Atendida cita."""
+        return self.citas.filter(estado__in=['Programada', 'Atendida']).exists()
+
     def clean(self):
         errors = {}
         # hora_inicio must be before hora_fin
@@ -46,5 +58,78 @@ class Disponibilidad(models.Model):
             ).exclude(pk=self.pk)
             if qs.exists():
                 errors['hora_inicio'] = 'Ya existe una disponibilidad que se superpone en este horario.'
+        if errors:
+            raise ValidationError(errors)
+
+
+class Cita(models.Model):
+    """Modelo para representar una cita veterinaria."""
+
+    mascota = models.ForeignKey(
+        'mascotas.Mascota',
+        on_delete=models.PROTECT,
+        related_name='citas',
+        verbose_name='Mascota',
+    )
+    disponibilidad = models.ForeignKey(
+        Disponibilidad,
+        on_delete=models.PROTECT,
+        related_name='citas',
+        verbose_name='Disponibilidad',
+    )
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO_CHOICES,
+        default='Programada',
+        verbose_name='Estado',
+    )
+    motivo_cancelacion = models.TextField(
+        blank=True,
+        default='',
+        verbose_name='Motivo de cancelación',
+    )
+    fecha_creacion = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Fecha de creación',
+    )
+
+    class Meta:
+        verbose_name = 'Cita'
+        verbose_name_plural = 'Citas'
+        db_table = 'agenda_cita'
+        ordering = ['disponibilidad__fecha', 'disponibilidad__hora_inicio']
+
+    def __str__(self):
+        return f"Cita: {self.mascota} — {self.disponibilidad} [{self.estado}]"
+
+    @property
+    def veterinario(self):
+        return self.disponibilidad.veterinario
+
+    def clean(self):
+        errors = {}
+        # Double-booking prevention
+        if self.disponibilidad_id and self.estado != 'Cancelada':
+            existing = Cita.objects.filter(
+                disponibilidad=self.disponibilidad
+            ).exclude(estado='Cancelada').exclude(pk=self.pk)
+            if existing.exists():
+                errors['disponibilidad'] = 'Este horario ya tiene una cita programada o atendida.'
+
+        # State transition validation
+        if self.pk:
+            try:
+                old = Cita.objects.get(pk=self.pk)
+                if old.estado == 'Atendida' and self.estado != 'Atendida':
+                    errors['estado'] = 'No se puede cambiar el estado de una cita atendida.'
+                if old.estado == 'Cancelada' and self.estado != 'Cancelada':
+                    errors['estado'] = 'No se puede reactivar una cita cancelada.'
+            except Cita.DoesNotExist:
+                pass
+
+        # Motivo cancelación required when cancelling
+        if self.estado == 'Cancelada' and not self.motivo_cancelacion:
+            errors['motivo_cancelacion'] = 'Debe indicar el motivo de cancelación.'
+
         if errors:
             raise ValidationError(errors)

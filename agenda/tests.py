@@ -1,10 +1,14 @@
 from django.test import TestCase
-from django.urls import reverse
+from django.urls import reverse, resolve
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db.models import ProtectedError
+from django.contrib import admin
 from datetime import date, time, datetime
 
 from usuarios.models import Rol, Usuario
+from mascotas.models import Mascota
+from .models import Cita, Disponibilidad
 
 
 def create_user_with_role(rol_nombre, **kwargs):
@@ -704,5 +708,1027 @@ class DisponibilidadDeleteViewTest(TestCase):
     def test_no_autenticado_redirige(self):
         """R8.5: Unauthenticated redirected to login"""
         resp = self.client.get(reverse('agenda:eliminar_disponibilidad', kwargs={'pk': self.disp.pk}))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/usuarios/login/', resp.url)
+
+
+# ========================================
+# CITAS FASE B — Block 1: Model + Validations + esta_ocupada + URLs + Admin
+# ========================================
+
+class CitaModelTest(TestCase):
+    """REQ-01: Cita model structure — 8 scenarios"""
+
+    def setUp(self):
+        self.rol_vet = Rol.objects.get_or_create(nombre='Veterinario')[0]
+        self.rol_admin = Rol.objects.get_or_create(nombre='Administrador')[0]
+        self.rol_cliente = Rol.objects.get_or_create(nombre='Cliente')[0]
+        self.vet = Usuario.objects.create_user(
+            username='vet_cita', email='vet_cita@test.com',
+            password='testpass123', rol=self.rol_vet,
+        )
+        self.cliente = Usuario.objects.create_user(
+            username='cliente_cita', email='cliente_cita@test.com',
+            password='testpass123', rol=self.rol_cliente,
+        )
+        self.mascota = Mascota.objects.create(
+            nombre='Firulais', especie='Canino', sexo='Macho',
+            propietario=self.cliente,
+        )
+        self.disp = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 5, 1),
+            hora_inicio=time(9, 0), hora_fin=time(10, 0),
+        )
+
+    def test_creacion_basica(self):
+        """R1.1: Create Cita with mascota, disponibilidad, estado='Programada'"""
+        cita = Cita.objects.create(
+            mascota=self.mascota, disponibilidad=self.disp,
+        )
+        self.assertEqual(cita.mascota, self.mascota)
+        self.assertEqual(cita.disponibilidad, self.disp)
+        self.assertEqual(cita.estado, 'Programada')
+        self.assertIsNotNone(cita.pk)
+
+    def test_str_format(self):
+        """R1.2: __str__ returns 'Cita: {mascota} — {disponibilidad} [Programada]'"""
+        cita = Cita.objects.create(
+            mascota=self.mascota, disponibilidad=self.disp,
+        )
+        expected = f"Cita: {self.mascota} — {self.disp} [Programada]"
+        self.assertEqual(str(cita), expected)
+
+    def test_estado_default_programada(self):
+        """R1.3: Default estado is 'Programada'"""
+        cita = Cita(mascota=self.mascota, disponibilidad=self.disp)
+        self.assertEqual(cita.estado, 'Programada')
+
+    def test_motivo_cancelacion_default_empty(self):
+        """R1.4: Default motivo_cancelacion is ''"""
+        cita = Cita(mascota=self.mascota, disponibilidad=self.disp)
+        self.assertEqual(cita.motivo_cancelacion, '')
+
+    def test_protect_on_mascota_delete(self):
+        """R1.5: Deleting Mascota linked to Cita raises ProtectedError"""
+        Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp)
+        with self.assertRaises(ProtectedError):
+            self.mascota.delete()
+
+    def test_protect_on_disponibilidad_delete(self):
+        """R1.6: Deleting Disponibilidad linked to Cita raises ProtectedError"""
+        Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp)
+        with self.assertRaises(ProtectedError):
+            self.disp.delete()
+
+    def test_veterinario_property(self):
+        """R1.7: cita.veterinario returns cita.disponibilidad.veterinario"""
+        cita = Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp)
+        self.assertEqual(cita.veterinario, self.vet)
+
+    def test_meta_ordering(self):
+        """R1.8: Citas ordered by disponibilidad__fecha, disponibilidad__hora_inicio"""
+        disp2 = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 5, 2),
+            hora_inicio=time(10, 0), hora_fin=time(11, 0),
+        )
+        Cita.objects.create(mascota=self.mascota, disponibilidad=disp2)
+        Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp)
+        results = list(Cita.objects.all())
+        self.assertEqual(results[0].disponibilidad.fecha, date(2026, 5, 1))
+        self.assertEqual(results[1].disponibilidad.fecha, date(2026, 5, 2))
+
+
+class DoubleBookingTest(TestCase):
+    """REQ-02: Double-booking prevention — 5 scenarios"""
+
+    def setUp(self):
+        self.rol_vet = Rol.objects.get_or_create(nombre='Veterinario')[0]
+        self.rol_cliente = Rol.objects.get_or_create(nombre='Cliente')[0]
+        self.vet = Usuario.objects.create_user(
+            username='vet_db', email='vet_db@test.com',
+            password='testpass123', rol=self.rol_vet,
+        )
+        self.cliente = Usuario.objects.create_user(
+            username='cliente_db', email='cliente_db@test.com',
+            password='testpass123', rol=self.rol_cliente,
+        )
+        self.mascota = Mascota.objects.create(
+            nombre='Firulais', especie='Canino', sexo='Macho',
+            propietario=self.cliente,
+        )
+        self.disp = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 5, 1),
+            hora_inicio=time(9, 0), hora_fin=time(10, 0),
+        )
+
+    def test_programada_over_programada_blocked(self):
+        """R2.1: Programada over Programada raises ValidationError"""
+        Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp, estado='Programada')
+        cita2 = Cita(
+            mascota=self.mascota, disponibilidad=self.disp, estado='Programada',
+        )
+        with self.assertRaises(ValidationError):
+            cita2.full_clean()
+
+    def test_programada_over_atendida_blocked(self):
+        """R2.2: Programada over Atendida raises ValidationError"""
+        c1 = Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp, estado='Programada')
+        Cita.objects.filter(pk=c1.pk).update(estado='Atendida')
+        cita2 = Cita(
+            mascota=self.mascota, disponibilidad=self.disp, estado='Programada',
+        )
+        with self.assertRaises(ValidationError):
+            cita2.full_clean()
+
+    def test_new_cita_over_cancelada_allowed(self):
+        """R2.3: New Programada over Cancelada is allowed (Auto-Libre)"""
+        Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp, estado='Cancelada', motivo_cancelacion='Test')
+        cita2 = Cita(mascota=self.mascota, disponibilidad=self.disp, estado='Programada')
+        cita2.full_clean()  # Should NOT raise
+        cita2.save()
+        self.assertEqual(Cita.objects.filter(disponibilidad=self.disp).count(), 2)
+
+    def test_multiple_canceladas_allowed(self):
+        """R2.4: Multiple Canceladas on same Disponibilidad allowed (historical)"""
+        c1 = Cita.objects.create(
+            mascota=self.mascota, disponibilidad=self.disp,
+            estado='Cancelada', motivo_cancelacion='Reason 1',
+        )
+        c2 = Cita(
+            mascota=self.mascota, disponibilidad=self.disp,
+            estado='Cancelada', motivo_cancelacion='Reason 2',
+        )
+        c2.full_clean()  # Should NOT raise
+        c2.save()
+        self.assertEqual(Cita.objects.filter(disponibilidad=self.disp, estado='Cancelada').count(), 2)
+
+    def test_self_exclusion_on_edit(self):
+        """R2.5: Editing same Cita without changing disponibilidad — no ValidationError"""
+        cita = Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp, estado='Programada')
+        # Fetch from DB to ensure pk is set, then modify estado and re-validate
+        cita = Cita.objects.get(pk=cita.pk)
+        cita.estado = 'Atendida'
+        cita.motivo_cancelacion = ''  # not required for Atendida
+        # This MUST NOT raise — the existing cita on this disponibilidad is ITSELF
+        cita.full_clean()
+
+
+class StateTransitionTest(TestCase):
+    """REQ-03: State transitions — 6 scenarios"""
+
+    def setUp(self):
+        self.rol_vet = Rol.objects.get_or_create(nombre='Veterinario')[0]
+        self.rol_cliente = Rol.objects.get_or_create(nombre='Cliente')[0]
+        self.vet = Usuario.objects.create_user(
+            username='vet_st', email='vet_st@test.com',
+            password='testpass123', rol=self.rol_vet,
+        )
+        self.cliente = Usuario.objects.create_user(
+            username='cliente_st', email='cliente_st@test.com',
+            password='testpass123', rol=self.rol_cliente,
+        )
+        self.mascota = Mascota.objects.create(
+            nombre='Firulais', especie='Canino', sexo='Macho',
+            propietario=self.cliente,
+        )
+        self.disp = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 5, 1),
+            hora_inicio=time(9, 0), hora_fin=time(10, 0),
+        )
+
+    def test_programada_to_atendida(self):
+        """R3.1: Programada → Atendida is valid"""
+        cita = Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp, estado='Programada')
+        cita.estado = 'Atendida'
+        cita.full_clean()  # Should NOT raise
+
+    def test_programada_to_cancelada_with_motivo(self):
+        """R3.2: Programada → Cancelada with motivo is valid"""
+        cita = Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp, estado='Programada')
+        cita.estado = 'Cancelada'
+        cita.motivo_cancelacion = 'Urgencia familiar'
+        cita.full_clean()  # Should NOT raise
+
+    def test_atendida_to_programada_blocked(self):
+        """R3.3: Atendida → Programada raises ValidationError (terminal state)"""
+        c1 = Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp, estado='Programada')
+        Cita.objects.filter(pk=c1.pk).update(estado='Atendida')
+        cita = Cita.objects.get(pk=c1.pk)
+        cita.estado = 'Programada'
+        with self.assertRaises(ValidationError):
+            cita.full_clean()
+
+    def test_atendida_to_cancelada_blocked(self):
+        """R3.4: Atendida → Cancelada raises ValidationError (terminal state)"""
+        c1 = Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp, estado='Programada')
+        Cita.objects.filter(pk=c1.pk).update(estado='Atendida')
+        cita = Cita.objects.get(pk=c1.pk)
+        cita.estado = 'Cancelada'
+        cita.motivo_cancelacion = 'Test'
+        with self.assertRaises(ValidationError):
+            cita.full_clean()
+
+    def test_cancelada_to_programada_blocked(self):
+        """R3.5: Cancelada → Programada raises ValidationError (no reactivation)"""
+        c1 = Cita.objects.create(
+            mascota=self.mascota, disponibilidad=self.disp,
+            estado='Cancelada', motivo_cancelacion='Test',
+        )
+        cita = Cita.objects.get(pk=c1.pk)
+        cita.estado = 'Programada'
+        with self.assertRaises(ValidationError):
+            cita.full_clean()
+
+    def test_cancelada_to_atendida_blocked(self):
+        """R3.6: Cancelada → Atendida raises ValidationError (no reactivation)"""
+        c1 = Cita.objects.create(
+            mascota=self.mascota, disponibilidad=self.disp,
+            estado='Cancelada', motivo_cancelacion='Test',
+        )
+        cita = Cita.objects.get(pk=c1.pk)
+        cita.estado = 'Atendida'
+        with self.assertRaises(ValidationError):
+            cita.full_clean()
+
+
+class MotivoCancelacionTest(TestCase):
+    """REQ-04: Motivo cancelación validation — 3 scenarios"""
+
+    def setUp(self):
+        self.rol_vet = Rol.objects.get_or_create(nombre='Veterinario')[0]
+        self.rol_cliente = Rol.objects.get_or_create(nombre='Cliente')[0]
+        self.vet = Usuario.objects.create_user(
+            username='vet_mc', email='vet_mc@test.com',
+            password='testpass123', rol=self.rol_vet,
+        )
+        self.cliente = Usuario.objects.create_user(
+            username='cliente_mc', email='cliente_mc@test.com',
+            password='testpass123', rol=self.rol_cliente,
+        )
+        self.mascota = Mascota.objects.create(
+            nombre='Firulais', especie='Canino', sexo='Macho',
+            propietario=self.cliente,
+        )
+        self.disp = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 5, 1),
+            hora_inicio=time(9, 0), hora_fin=time(10, 0),
+        )
+
+    def test_cancel_without_motivo_raises_error(self):
+        """R4.1: Cancel without motivo_cancelacion raises ValidationError"""
+        cita = Cita(mascota=self.mascota, disponibilidad=self.disp, estado='Cancelada')
+        with self.assertRaises(ValidationError):
+            cita.full_clean()
+
+    def test_cancel_with_motivo_valid(self):
+        """R4.2: Cancel with motivo is valid"""
+        cita = Cita(
+            mascota=self.mascota, disponibilidad=self.disp,
+            estado='Cancelada', motivo_cancelacion='Urgencia familiar',
+        )
+        cita.full_clean()  # Should NOT raise
+
+    def test_programada_with_empty_motivo_valid(self):
+        """R4.3: Programada with empty motivo is valid"""
+        cita = Cita(
+            mascota=self.mascota, disponibilidad=self.disp,
+            estado='Programada', motivo_cancelacion='',
+        )
+        cita.full_clean()  # Should NOT raise
+
+
+class EstaOcupadaTest(TestCase):
+    """REQ-05: Disponibilidad.esta_ocupada property — 4 scenarios"""
+
+    def setUp(self):
+        self.rol_vet = Rol.objects.get_or_create(nombre='Veterinario')[0]
+        self.rol_cliente = Rol.objects.get_or_create(nombre='Cliente')[0]
+        self.vet = Usuario.objects.create_user(
+            username='vet_eo', email='vet_eo@test.com',
+            password='testpass123', rol=self.rol_vet,
+        )
+        self.cliente = Usuario.objects.create_user(
+            username='cliente_eo', email='cliente_eo@test.com',
+            password='testpass123', rol=self.rol_cliente,
+        )
+        self.mascota = Mascota.objects.create(
+            nombre='Firulais', especie='Canino', sexo='Macho',
+            propietario=self.cliente,
+        )
+        self.disp = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 5, 1),
+            hora_inicio=time(9, 0), hora_fin=time(10, 0),
+        )
+
+    def test_true_with_programada(self):
+        """R5.1: Disponibilidad with Cita(Programada) → esta_ocupada=True"""
+        Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp, estado='Programada')
+        self.assertTrue(self.disp.esta_ocupada)
+
+    def test_true_with_atendida(self):
+        """R5.2: Disponibilidad with Cita(Atendida) → esta_ocupada=True"""
+        c1 = Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp, estado='Programada')
+        Cita.objects.filter(pk=c1.pk).update(estado='Atendida')
+        self.disp.refresh_from_db()
+        self.assertTrue(self.disp.esta_ocupada)
+
+    def test_false_with_only_canceladas(self):
+        """R5.3: Disponibilidad with only Cancelada Citas → esta_ocupada=False"""
+        Cita.objects.create(
+            mascota=self.mascota, disponibilidad=self.disp,
+            estado='Cancelada', motivo_cancelacion='Test',
+        )
+        self.disp.refresh_from_db()
+        self.assertFalse(self.disp.esta_ocupada)
+
+    def test_false_with_no_citas(self):
+        """R5.4: Disponibilidad with no Citas → esta_ocupada=False"""
+        self.assertFalse(self.disp.esta_ocupada)
+
+
+class CitaURLTest(TestCase):
+    """REQ-11: URL configuration — 1 scenario"""
+
+    def test_url_patterns_resolve(self):
+        """R11.1: All 4 cita URL patterns resolve correctly under agenda: namespace"""
+        url_lista = reverse('agenda:lista_citas')
+        self.assertEqual(url_lista, '/agenda/citas/')
+
+        url_crear = reverse('agenda:crear_cita')
+        self.assertEqual(url_crear, '/agenda/citas/nueva/')
+
+        url_editar = reverse('agenda:editar_cita', kwargs={'pk': 5})
+        self.assertEqual(url_editar, '/agenda/citas/editar/5/')
+
+        url_eliminar = reverse('agenda:eliminar_cita', kwargs={'pk': 5})
+        self.assertEqual(url_eliminar, '/agenda/citas/eliminar/5')
+
+
+class CitaAdminTest(TestCase):
+    """REQ-12: Admin registration — 1 scenario"""
+
+    def test_cita_admin_registered(self):
+        """R12.1: Cita model is in admin.site._registry"""
+        self.assertIn(Cita, admin.site._registry)
+
+
+class ColoredEstadoTest(TestCase):
+    """REQ-13: Colored estado in admin — 2 scenarios"""
+
+    def setUp(self):
+        self.rol_vet = Rol.objects.get_or_create(nombre='Veterinario')[0]
+        self.rol_cliente = Rol.objects.get_or_create(nombre='Cliente')[0]
+        self.vet = Usuario.objects.create_user(
+            username='vet_ce', email='vet_ce@test.com',
+            password='testpass123', rol=self.rol_vet,
+        )
+        self.cliente = Usuario.objects.create_user(
+            username='cliente_ce', email='cliente_ce@test.com',
+            password='testpass123', rol=self.rol_cliente,
+        )
+        self.mascota = Mascota.objects.create(
+            nombre='Firulais', especie='Canino', sexo='Macho',
+            propietario=self.cliente,
+        )
+        self.disp = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 5, 1),
+            hora_inicio=time(9, 0), hora_fin=time(10, 0),
+        )
+
+    def test_colored_estado_returns_html(self):
+        """R13.1: CitaAdmin.colored_estado returns format_html with colored badges"""
+        from agenda.admin import CitaAdmin
+        admin_instance = CitaAdmin(Cita, admin.site)
+
+        cita_prog = Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp, estado='Programada')
+        html = admin_instance.colored_estado(cita_prog)
+        self.assertIn('orange', str(html))
+        self.assertIn('Programada', str(html))
+
+        c1 = Cita.objects.create(
+            mascota=self.mascota, disponibilidad=self.disp,
+            estado='Cancelada', motivo_cancelacion='Test',
+        )
+        Cita.objects.filter(pk=c1.pk).update(estado='Atendida')
+        cita_atendida = Cita.objects.get(pk=c1.pk)
+        html = admin_instance.colored_estado(cita_atendida)
+        self.assertIn('green', str(html))
+        self.assertIn('Atendida', str(html))
+
+        c2 = Cita.objects.create(
+            mascota=self.mascota, disponibilidad=self.disp,
+            estado='Cancelada', motivo_cancelacion='Test 2',
+        )
+        html = admin_instance.colored_estado(c2)
+        self.assertIn('red', str(html))
+        self.assertIn('Cancelada', str(html))
+
+    def test_colored_estado_admin_order_field(self):
+        """R13.2: colored_estado has admin_order_field = 'estado'"""
+        from agenda.admin import CitaAdmin
+        admin_instance = CitaAdmin(Cita, admin.site)
+        self.assertEqual(admin_instance.colored_estado.admin_order_field, 'estado')
+
+
+# ========================================
+# CITAS FASE B — Block 2: CitaForm (REQ-06)
+# ========================================
+
+class CitaFormTest(TestCase):
+    """REQ-06: CitaForm — 6 scenarios"""
+
+    def setUp(self):
+        self.rol_vet = Rol.objects.get_or_create(nombre='Veterinario')[0]
+        self.rol_cliente = Rol.objects.get_or_create(nombre='Cliente')[0]
+        self.vet = Usuario.objects.create_user(
+            username='vet_form_cita', email='vet_form_cita@test.com',
+            password='testpass123', rol=self.rol_vet,
+        )
+        self.cliente = Usuario.objects.create_user(
+            username='cliente_form_cita', email='cliente_form_cita@test.com',
+            password='testpass123', rol=self.rol_cliente,
+        )
+        self.mascota = Mascota.objects.create(
+            nombre='Firulais', especie='Canino', sexo='Macho',
+            propietario=self.cliente,
+        )
+        self.disp = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 5, 1),
+            hora_inicio=time(9, 0), hora_fin=time(10, 0),
+        )
+
+    def test_valid_form_creates_cita(self):
+        """R6.1: Valid form data with mascota and disponibilidad creates Cita successfully"""
+        from agenda.forms import CitaForm
+        form = CitaForm(data={
+            'mascota': self.mascota.pk,
+            'disponibilidad': self.disp.pk,
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+        count_before = Cita.objects.count()
+        cita = form.save()
+        self.assertEqual(Cita.objects.count(), count_before + 1)
+        self.assertEqual(cita.mascota, self.mascota)
+        self.assertEqual(cita.disponibilidad, self.disp)
+        self.assertEqual(cita.estado, 'Programada')
+
+    def test_excludes_estado_on_creation(self):
+        """R6.2: Form for creation excludes estado field"""
+        from agenda.forms import CitaForm
+        form = CitaForm()
+        self.assertNotIn('estado', form.fields)
+
+    def test_shows_estado_on_edit(self):
+        """R6.3: Form for edit includes estado field"""
+        from agenda.forms import CitaForm
+        cita = Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp)
+        form = CitaForm(instance=cita)
+        self.assertIn('estado', form.fields)
+
+    def test_motivo_cancelacion_field_visible(self):
+        """R6.4: Form includes motivo_cancelacion field (always visible)"""
+        from agenda.forms import CitaForm
+        # On creation
+        form_create = CitaForm()
+        self.assertIn('motivo_cancelacion', form_create.fields)
+        # On edit
+        cita = Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp)
+        form_edit = CitaForm(instance=cita)
+        self.assertIn('motivo_cancelacion', form_edit.fields)
+        # Not required by default (model handles requirement on cancel)
+        self.assertFalse(form_create.fields['motivo_cancelacion'].required)
+
+    def test_disponibilidad_queryset_filters_available(self):
+        """R6.5: disponibilidad queryset only includes active & unoccupied slots"""
+        from agenda.forms import CitaForm
+        # disp1: active, no cita → available
+        disp1 = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 5, 2),
+            hora_inicio=time(10, 0), hora_fin=time(11, 0), activa=True,
+        )
+        # disp2: active, has Cita(Programada) → occupied
+        disp2 = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 5, 3),
+            hora_inicio=time(11, 0), hora_fin=time(12, 0), activa=True,
+        )
+        Cita.objects.create(mascota=self.mascota, disponibilidad=disp2, estado='Programada')
+        # disp3: inactive → not available
+        disp3 = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 5, 4),
+            hora_inicio=time(13, 0), hora_fin=time(14, 0), activa=False,
+        )
+
+        form = CitaForm()
+        qs_pks = list(form.fields['disponibilidad'].queryset.values_list('pk', flat=True))
+        # Should include self.disp (active, no cita) and disp1 (active, no cita)
+        self.assertIn(self.disp.pk, qs_pks)
+        self.assertIn(disp1.pk, qs_pks)
+        # Should NOT include disp2 (occupied) or disp3 (inactive)
+        self.assertNotIn(disp2.pk, qs_pks)
+        self.assertNotIn(disp3.pk, qs_pks)
+
+        # When editing a Cita, its own disponibilidad should still be in queryset
+        cita = Cita.objects.create(mascota=self.mascota, disponibilidad=disp2)
+        form_edit = CitaForm(instance=cita)
+        qs_pks_edit = list(form_edit.fields['disponibilidad'].queryset.values_list('pk', flat=True))
+        self.assertIn(disp2.pk, qs_pks_edit)  # current disp included even if occupied
+
+    def test_inherits_model_validation(self):
+        """R6.6: Form with invalid data triggers model clean() errors in form.errors"""
+        from agenda.forms import CitaForm
+        # Test 1: Overlapping data triggers form error
+        Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp, estado='Programada')
+        form_overlap = CitaForm(data={
+            'mascota': self.mascota.pk,
+            'disponibilidad': self.disp.pk,
+        })
+        self.assertFalse(form_overlap.is_valid())
+        self.assertIn('disponibilidad', form_overlap.errors)
+
+        # Test 2: Blocked state transition triggers form error
+        cita = Cita.objects.create(
+            mascota=self.mascota, disponibilidad=self.disp,
+            estado='Cancelada', motivo_cancelacion='Test cancel',
+        )
+        form_transition = CitaForm(
+            data={
+                'mascota': self.mascota.pk,
+                'disponibilidad': self.disp.pk,
+                'estado': 'Programada',
+                'motivo_cancelacion': '',
+            },
+            instance=cita,
+        )
+        self.assertFalse(form_transition.is_valid())
+        self.assertIn('estado', form_transition.errors)
+
+        # Test 3: Cancel without motivo triggers form error
+        cita2 = Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp)
+        form_cancel = CitaForm(
+            data={
+                'mascota': self.mascota.pk,
+                'disponibilidad': self.disp.pk,
+                'estado': 'Cancelada',
+                'motivo_cancelacion': '',
+            },
+            instance=cita2,
+        )
+        self.assertFalse(form_cancel.is_valid())
+        self.assertIn('motivo_cancelacion', form_cancel.errors)
+
+
+# ========================================
+# CITAS FASE B — Block 3: List + Create Views (REQ-07, REQ-08)
+# ========================================
+
+class CitaListViewTest(TestCase):
+    """REQ-07: List view permissions — 4 scenarios"""
+
+    def setUp(self):
+        from django.test import Client
+        self.client = Client()
+        self.rol_vet = Rol.objects.get_or_create(nombre='Veterinario')[0]
+        self.rol_admin = Rol.objects.get_or_create(nombre='Administrador')[0]
+        self.rol_cliente = Rol.objects.get_or_create(nombre='Cliente')[0]
+        self.vet = Usuario.objects.create_user(
+            username='vet_cl', email='vet_cl@test.com',
+            password='testpass123', rol=self.rol_vet,
+        )
+        self.vet2 = Usuario.objects.create_user(
+            username='vet_cl2', email='vet_cl2@test.com',
+            password='testpass123', rol=self.rol_vet,
+        )
+        self.admin = Usuario.objects.create_user(
+            username='admin_cl', email='admin_cl@test.com',
+            password='testpass123', rol=self.rol_admin,
+        )
+        self.cliente = Usuario.objects.create_user(
+            username='cliente_cl', email='cliente_cl@test.com',
+            password='testpass123', rol=self.rol_cliente,
+        )
+        self.cliente2 = Usuario.objects.create_user(
+            username='cliente_cl2', email='cliente_cl2@test.com',
+            password='testpass123', rol=self.rol_cliente,
+        )
+        # Mascotas
+        self.mascota1 = Mascota.objects.create(
+            nombre='Rex', especie='Canino', sexo='Macho',
+            propietario=self.cliente,
+        )
+        self.mascota2 = Mascota.objects.create(
+            nombre='Mishi', especie='Felino', sexo='Hembra',
+            propietario=self.cliente,
+        )
+        self.mascota3 = Mascota.objects.create(
+            nombre='Loro', especie='Ave', sexo='Macho',
+            propietario=self.cliente2,
+        )
+        # Disponibilidades
+        self.disp1 = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 5, 1),
+            hora_inicio=time(9, 0), hora_fin=time(10, 0),
+        )
+        self.disp2 = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 5, 2),
+            hora_inicio=time(10, 0), hora_fin=time(11, 0),
+        )
+        self.disp3 = Disponibilidad.objects.create(
+            veterinario=self.vet2, fecha=date(2026, 5, 3),
+            hora_inicio=time(14, 0), hora_fin=time(15, 0),
+        )
+        # Citas: vet has 2 citas, vet2 has 1, cliente has 2 pets with citas
+        self.cita_vet1 = Cita.objects.create(
+            mascota=self.mascota1, disponibilidad=self.disp1, estado='Programada',
+        )
+        self.cita_vet2 = Cita.objects.create(
+            mascota=self.mascota2, disponibilidad=self.disp2, estado='Programada',
+        )
+        self.cita_vet2_other = Cita.objects.create(
+            mascota=self.mascota3, disponibilidad=self.disp3, estado='Programada',
+        )
+
+    def test_veterinario_ve_solo_sus_citas(self):
+        """R7.1: Veterinario sees only citas where disponibilidad.veterinario == request.user"""
+        self.client.force_login(self.vet)
+        resp = self.client.get(reverse('agenda:lista_citas'))
+        self.assertEqual(resp.status_code, 200)
+        content = resp.content.decode()
+        # Should see own citas (09:00 and 10:00)
+        self.assertIn('09:00', content)
+        self.assertIn('10:00', content)
+        # Should NOT see vet2's exclusive time slot (14:00)
+        self.assertNotIn('14:00', content)
+
+    def test_admin_ve_todas(self):
+        """R7.2: Administrador sees all citas"""
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse('agenda:lista_citas'))
+        self.assertEqual(resp.status_code, 200)
+        content = resp.content.decode()
+        # Should see all time slots
+        self.assertIn('09:00', content)
+        self.assertIn('10:00', content)
+        self.assertIn('14:00', content)
+
+    def test_cliente_ve_citas_de_sus_mascotas(self):
+        """R7.3: Cliente sees only citas where mascota.propietario == request.user"""
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('agenda:lista_citas'))
+        self.assertEqual(resp.status_code, 200)
+        content = resp.content.decode()
+        # Should see own pets' citas (Rex at 09:00, Mishi at 10:00)
+        self.assertIn('Rex', content)
+        self.assertIn('Mishi', content)
+        # Should NOT see other client's pet (Loro at 14:00)
+        self.assertNotIn('Loro', content)
+
+    def test_no_autenticado_redirige(self):
+        """R7.4: Unauthenticated user gets 302 redirect to login"""
+        resp = self.client.get(reverse('agenda:lista_citas'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/usuarios/login/', resp.url)
+
+
+class CitaCreateViewTest(TestCase):
+    """REQ-08: Create view permissions — 5 scenarios"""
+
+    def setUp(self):
+        from django.test import Client
+        self.client = Client()
+        self.rol_vet = Rol.objects.get_or_create(nombre='Veterinario')[0]
+        self.rol_admin = Rol.objects.get_or_create(nombre='Administrador')[0]
+        self.rol_cliente = Rol.objects.get_or_create(nombre='Cliente')[0]
+        self.vet = Usuario.objects.create_user(
+            username='vet_cr', email='vet_cr@test.com',
+            password='testpass123', rol=self.rol_vet,
+        )
+        self.admin = Usuario.objects.create_user(
+            username='admin_cr', email='admin_cr@test.com',
+            password='testpass123', rol=self.rol_admin,
+        )
+        self.cliente = Usuario.objects.create_user(
+            username='cliente_cr', email='cliente_cr@test.com',
+            password='testpass123', rol=self.rol_cliente,
+        )
+        self.cliente_user = Usuario.objects.create_user(
+            username='cliente_owner', email='cliente_owner@test.com',
+            password='testpass123', rol=self.rol_cliente,
+        )
+        self.mascota = Mascota.objects.create(
+            nombre='Rex', especie='Canino', sexo='Macho',
+            propietario=self.cliente_user,
+        )
+        self.disp1 = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 5, 1),
+            hora_inicio=time(9, 0), hora_fin=time(10, 0),
+        )
+        self.disp2 = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 5, 2),
+            hora_inicio=time(10, 0), hora_fin=time(11, 0),
+        )
+
+    def test_veterinario_crea_cita(self):
+        """R8.1: Veterinario POSTs valid data, Cita created, redirect to lista_citas"""
+        self.client.force_login(self.vet)
+        resp = self.client.post(reverse('agenda:crear_cita'), {
+            'mascota': self.mascota.pk,
+            'disponibilidad': self.disp1.pk,
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertRedirects(resp, reverse('agenda:lista_citas'))
+        self.assertEqual(Cita.objects.count(), 1)
+        cita = Cita.objects.first()
+        self.assertEqual(cita.mascota, self.mascota)
+        self.assertEqual(cita.disponibilidad, self.disp1)
+        self.assertEqual(cita.estado, 'Programada')
+
+    def test_admin_crea_cita(self):
+        """R8.2: Administrador POSTs valid data, Cita created successfully"""
+        self.client.force_login(self.admin)
+        resp = self.client.post(reverse('agenda:crear_cita'), {
+            'mascota': self.mascota.pk,
+            'disponibilidad': self.disp1.pk,
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(Cita.objects.count(), 1)
+        cita = Cita.objects.first()
+        self.assertEqual(cita.mascota, self.mascota)
+        self.assertEqual(cita.disponibilidad, self.disp1)
+
+    def test_cliente_recibe_403(self):
+        """R8.3: Cliente gets 403 on GET and POST"""
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('agenda:crear_cita'))
+        self.assertEqual(resp.status_code, 403)
+        resp = self.client.post(reverse('agenda:crear_cita'), {})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_no_autenticado_redirige(self):
+        """R8.4: Unauthenticated user gets 302 redirect to login"""
+        resp = self.client.get(reverse('agenda:crear_cita'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/usuarios/login/', resp.url)
+
+    def test_formulario_con_errores(self):
+        """R8.5: POST with occupied disponibilidad re-renders form with errors"""
+        # First, occupy disp2 with a Cita
+        other_mascota = Mascota.objects.create(
+            nombre='Mishi', especie='Felino', sexo='Hembra',
+            propietario=self.cliente_user,
+        )
+        Cita.objects.create(mascota=other_mascota, disponibilidad=self.disp2, estado='Programada')
+        # Now try to create another Cita for the same disp2
+        self.client.force_login(self.vet)
+        resp = self.client.post(reverse('agenda:crear_cita'), {
+            'mascota': self.mascota.pk,
+            'disponibilidad': self.disp2.pk,
+        })
+        # Should re-render form (200) with errors
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('form', resp.context)
+        self.assertTrue(resp.context['form'].errors)
+        # No new Cita should be created (only the original one)
+        self.assertEqual(Cita.objects.count(), 1)
+
+
+# ========================================
+# CITAS FASE B — Block 4: Edit + Cancel Views (REQ-09, REQ-10)
+# ========================================
+
+class CitaEditViewTest(TestCase):
+    """REQ-09: Edit view permissions and validation — 8 scenarios"""
+
+    def setUp(self):
+        from django.test import Client
+        self.client = Client()
+        self.rol_vet = Rol.objects.get_or_create(nombre='Veterinario')[0]
+        self.rol_admin = Rol.objects.get_or_create(nombre='Administrador')[0]
+        self.rol_cliente = Rol.objects.get_or_create(nombre='Cliente')[0]
+        self.vet1 = Usuario.objects.create_user(
+            username='vet1_ev', email='vet1_ev@test.com',
+            password='testpass123', rol=self.rol_vet,
+        )
+        self.vet2 = Usuario.objects.create_user(
+            username='vet2_ev', email='vet2_ev@test.com',
+            password='testpass123', rol=self.rol_vet,
+        )
+        self.admin = Usuario.objects.create_user(
+            username='admin_ev', email='admin_ev@test.com',
+            password='testpass123', rol=self.rol_admin,
+        )
+        self.cliente = Usuario.objects.create_user(
+            username='cliente_ev', email='cliente_ev@test.com',
+            password='testpass123', rol=self.rol_cliente,
+        )
+        self.mascota = Mascota.objects.create(
+            nombre='Rex', especie='Canino', sexo='Macho',
+            propietario=self.cliente,
+        )
+        self.disp1 = Disponibilidad.objects.create(
+            veterinario=self.vet1, fecha=date(2026, 5, 1),
+            hora_inicio=time(9, 0), hora_fin=time(10, 0),
+        )
+        self.disp2 = Disponibilidad.objects.create(
+            veterinario=self.vet2, fecha=date(2026, 5, 2),
+            hora_inicio=time(10, 0), hora_fin=time(11, 0),
+        )
+        self.cita = Cita.objects.create(
+            mascota=self.mascota, disponibilidad=self.disp1, estado='Programada',
+        )
+
+    def test_veterinario_edita_propia(self):
+        """R9.1: Veterinario edits own cita (via disponibilidad__veterinario), changes estado to Atendida, redirects to lista_citas"""
+        self.client.force_login(self.vet1)
+        resp = self.client.post(reverse('agenda:editar_cita', kwargs={'pk': self.cita.pk}), {
+            'mascota': self.mascota.pk,
+            'disponibilidad': self.disp1.pk,
+            'estado': 'Atendida',
+            'motivo_cancelacion': '',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertRedirects(resp, reverse('agenda:lista_citas'))
+        self.cita.refresh_from_db()
+        self.assertEqual(self.cita.estado, 'Atendida')
+
+    def test_admin_edita_cualquiera(self):
+        """R9.2: Administrador edits any cita successfully"""
+        self.client.force_login(self.admin)
+        resp = self.client.post(reverse('agenda:editar_cita', kwargs={'pk': self.cita.pk}), {
+            'mascota': self.mascota.pk,
+            'disponibilidad': self.disp1.pk,
+            'estado': 'Atendida',
+            'motivo_cancelacion': '',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.cita.refresh_from_db()
+        self.assertEqual(self.cita.estado, 'Atendida')
+
+    def test_veterinario_cruzado_403(self):
+        """R9.3: Veterinario tries to edit another vet's cita, gets 403 PermissionDenied"""
+        self.client.force_login(self.vet2)
+        resp = self.client.get(reverse('agenda:editar_cita', kwargs={'pk': self.cita.pk}))
+        self.assertEqual(resp.status_code, 403)
+        # Also POST
+        resp = self.client.post(reverse('agenda:editar_cita', kwargs={'pk': self.cita.pk}), {
+            'mascota': self.mascota.pk,
+            'disponibilidad': self.disp1.pk,
+            'estado': 'Atendida',
+            'motivo_cancelacion': '',
+        })
+        self.assertEqual(resp.status_code, 403)
+
+    def test_cliente_recibe_403(self):
+        """R9.4: Cliente gets 403 on editar_cita"""
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('agenda:editar_cita', kwargs={'pk': self.cita.pk}))
+        self.assertEqual(resp.status_code, 403)
+        resp = self.client.post(reverse('agenda:editar_cita', kwargs={'pk': self.cita.pk}), {})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_no_autenticado_redirige(self):
+        """R9.5: Unauthenticated gets 302 redirect to login"""
+        resp = self.client.get(reverse('agenda:editar_cita', kwargs={'pk': self.cita.pk}))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/usuarios/login/', resp.url)
+
+    def test_cancel_sin_motivo_muestra_error(self):
+        """R9.6: POST with estado='Cancelada' and empty motivo_cancelacion, form shows error"""
+        self.client.force_login(self.vet1)
+        resp = self.client.post(reverse('agenda:editar_cita', kwargs={'pk': self.cita.pk}), {
+            'mascota': self.mascota.pk,
+            'disponibilidad': self.disp1.pk,
+            'estado': 'Cancelada',
+            'motivo_cancelacion': '',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('form', resp.context)
+        self.assertIn('motivo_cancelacion', resp.context['form'].errors)
+
+    def test_bloquear_transicion_desde_atendida(self):
+        """R9.7: Attempt to change estado from Atendida to Programada, form/model shows error"""
+        # Bypass clean() to set estado='Atendida'
+        Cita.objects.filter(pk=self.cita.pk).update(estado='Atendida')
+        self.cita.refresh_from_db()
+        self.client.force_login(self.vet1)
+        resp = self.client.post(reverse('agenda:editar_cita', kwargs={'pk': self.cita.pk}), {
+            'mascota': self.mascota.pk,
+            'disponibilidad': self.disp1.pk,
+            'estado': 'Programada',
+            'motivo_cancelacion': '',
+        })
+        # Should redirect with error message (edit blocked for terminal states)
+        self.assertEqual(resp.status_code, 302)
+        self.assertRedirects(resp, reverse('agenda:lista_citas'))
+
+    def test_bloquear_transicion_desde_cancelada(self):
+        """R9.8: Attempt to change estado from Cancelada to Programada, form/model shows error"""
+        Cita.objects.filter(pk=self.cita.pk).update(estado='Cancelada', motivo_cancelacion='Test')
+        self.cita.refresh_from_db()
+        self.client.force_login(self.vet1)
+        resp = self.client.post(reverse('agenda:editar_cita', kwargs={'pk': self.cita.pk}), {
+            'mascota': self.mascota.pk,
+            'disponibilidad': self.disp1.pk,
+            'estado': 'Programada',
+            'motivo_cancelacion': '',
+        })
+        # Should redirect with error message (edit blocked for terminal states)
+        self.assertEqual(resp.status_code, 302)
+        self.assertRedirects(resp, reverse('agenda:lista_citas'))
+
+
+class CitaCancelViewTest(TestCase):
+    """REQ-10: Delete (Cancel) view — soft cancel with motivo — 6 scenarios"""
+
+    def setUp(self):
+        from django.test import Client
+        self.client = Client()
+        self.rol_vet = Rol.objects.get_or_create(nombre='Veterinario')[0]
+        self.rol_admin = Rol.objects.get_or_create(nombre='Administrador')[0]
+        self.rol_cliente = Rol.objects.get_or_create(nombre='Cliente')[0]
+        self.vet1 = Usuario.objects.create_user(
+            username='vet1_cv', email='vet1_cv@test.com',
+            password='testpass123', rol=self.rol_vet,
+        )
+        self.vet2 = Usuario.objects.create_user(
+            username='vet2_cv', email='vet2_cv@test.com',
+            password='testpass123', rol=self.rol_vet,
+        )
+        self.admin = Usuario.objects.create_user(
+            username='admin_cv', email='admin_cv@test.com',
+            password='testpass123', rol=self.rol_admin,
+        )
+        self.cliente = Usuario.objects.create_user(
+            username='cliente_cv', email='cliente_cv@test.com',
+            password='testpass123', rol=self.rol_cliente,
+        )
+        self.mascota = Mascota.objects.create(
+            nombre='Rex', especie='Canino', sexo='Macho',
+            propietario=self.cliente,
+        )
+        self.disp1 = Disponibilidad.objects.create(
+            veterinario=self.vet1, fecha=date(2026, 5, 1),
+            hora_inicio=time(9, 0), hora_fin=time(10, 0),
+        )
+        self.disp2 = Disponibilidad.objects.create(
+            veterinario=self.vet2, fecha=date(2026, 5, 2),
+            hora_inicio=time(10, 0), hora_fin=time(11, 0),
+        )
+        self.cita = Cita.objects.create(
+            mascota=self.mascota, disponibilidad=self.disp1, estado='Programada',
+        )
+
+    def test_veterinario_cancela_propia_get(self):
+        """R10.1: Vet GETs cancel page for own cita, sees confirmation form with motivo_cancelacion field (status 200)"""
+        self.client.force_login(self.vet1)
+        resp = self.client.get(reverse('agenda:eliminar_cita', kwargs={'pk': self.cita.pk}))
+        self.assertEqual(resp.status_code, 200)
+        content = resp.content.decode()
+        self.assertIn('motivo_cancelacion', content)
+        self.assertIn('Rex', content)
+
+    def test_veterinario_cancela_propia_post(self):
+        """R10.2: Vet POSTs cancel with motivo_cancelacion, cita.estado becomes 'Cancelada', redirect to lista"""
+        self.client.force_login(self.vet1)
+        resp = self.client.post(reverse('agenda:eliminar_cita', kwargs={'pk': self.cita.pk}), {
+            'motivo_cancelacion': 'El cliente no pudo asistir',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertRedirects(resp, reverse('agenda:lista_citas'))
+        self.cita.refresh_from_db()
+        self.assertEqual(self.cita.estado, 'Cancelada')
+        self.assertEqual(self.cita.motivo_cancelacion, 'El cliente no pudo asistir')
+
+    def test_admin_cancela_cualquiera(self):
+        """R10.3: Admin can cancel any cita"""
+        self.client.force_login(self.admin)
+        resp = self.client.post(reverse('agenda:eliminar_cita', kwargs={'pk': self.cita.pk}), {
+            'motivo_cancelacion': 'Cancelada por admin',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.cita.refresh_from_db()
+        self.assertEqual(self.cita.estado, 'Cancelada')
+
+    def test_veterinario_cruzado_403(self):
+        """R10.4: Vet tries to cancel another vet's cita, gets 403"""
+        self.client.force_login(self.vet2)
+        resp = self.client.get(reverse('agenda:eliminar_cita', kwargs={'pk': self.cita.pk}))
+        self.assertEqual(resp.status_code, 403)
+        # Also POST
+        resp = self.client.post(reverse('agenda:eliminar_cita', kwargs={'pk': self.cita.pk}), {
+            'motivo_cancelacion': 'Test',
+        })
+        self.assertEqual(resp.status_code, 403)
+
+    def test_cliente_recibe_403(self):
+        """R10.5: Cliente gets 403 on eliminar_cita"""
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('agenda:eliminar_cita', kwargs={'pk': self.cita.pk}))
+        self.assertEqual(resp.status_code, 403)
+        resp = self.client.post(reverse('agenda:eliminar_cita', kwargs={'pk': self.cita.pk}), {})
+        self.assertEqual(resp.status_code, 403)
+
+    def test_no_autenticado_redirige(self):
+        """R10.6: Unauthenticated gets 302 redirect to login"""
+        resp = self.client.get(reverse('agenda:eliminar_cita', kwargs={'pk': self.cita.pk}))
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/usuarios/login/', resp.url)
