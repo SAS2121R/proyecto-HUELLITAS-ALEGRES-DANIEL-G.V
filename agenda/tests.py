@@ -1727,8 +1727,19 @@ class CitaCancelViewTest(TestCase):
         resp = self.client.post(reverse('agenda:eliminar_cita', kwargs={'pk': self.cita.pk}), {})
         self.assertEqual(resp.status_code, 403)
 
+    def test_bloquear_cancel_atendida(self):
+        """R10.6: Cancel view blocks cancellation of Atendida cita (terminal state)"""
+        # Set the cita to Atendida bypassing clean()
+        Cita.objects.filter(pk=self.cita.pk).update(estado='Atendida')
+        self.cita.refresh_from_db()
+        self.client.force_login(self.vet1)
+        resp = self.client.get(reverse('agenda:eliminar_cita', kwargs={'pk': self.cita.pk}), follow=True)
+        # Should redirect to lista_citas with error message (Atendida is terminal)
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, 'motivo_cancelacion')  # No cancel form shown
+
     def test_no_autenticado_redirige(self):
-        """R10.6: Unauthenticated gets 302 redirect to login"""
+        """R10.7: Unauthenticated gets 302 redirect to login"""
         resp = self.client.get(reverse('agenda:eliminar_cita', kwargs={'pk': self.cita.pk}))
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/usuarios/login/', resp.url)
