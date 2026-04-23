@@ -28,4 +28,5 @@ urlpatterns = [
     path('', redirect_to_auth, name='inicio'),
     path('usuarios/', include(('usuarios.urls', 'usuarios'), namespace='usuarios')),
     path('productos/', include(('productos.urls', 'productos'), namespace='productos')),
+    path('mascotas/', include(('mascotas.urls', 'mascotas'), namespace='mascotas')),
 ]

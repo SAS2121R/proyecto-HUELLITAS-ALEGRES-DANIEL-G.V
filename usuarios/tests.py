@@ -652,11 +652,11 @@ class GetRedirectUrlHelperTest(TestCase):
         url = get_redirect_url(self.vet_user)
         self.assertEqual(url, reverse('usuarios:vet_dashboard'))
 
-    def test_returns_productos_url_for_cliente(self):
-        """R8 scenario 3: Returns productos URL for Cliente"""
+    def test_returns_mascotas_url_for_cliente(self):
+        """R8 scenario 3: Returns mascotas URL for Cliente"""
         from .views import get_redirect_url
         url = get_redirect_url(self.cliente_user)
-        self.assertEqual(url, reverse('productos:lista'))
+        self.assertEqual(url, reverse('mascotas:lista'))
 
     def test_returns_productos_url_for_domiciliario(self):
         """R8 scenario 4: Returns productos URL for Domiciliario"""
@@ -804,14 +804,14 @@ class LoginRedirectHtmlTest(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertIn(reverse('usuarios:admin_user_list'), resp.url)
 
-    def test_client_redirected_to_productos(self):
-        """R6 scenario 3: Client user redirected to productos after login"""
+    def test_client_redirected_to_mascotas(self):
+        """R6 scenario 3: Client user redirected to mascotas after login"""
         resp = self.client.post(reverse('usuarios:login'), {
             'email': 'cliente_r6@test.com',
             'password': 'pass123',
         })
         self.assertEqual(resp.status_code, 302)
-        self.assertIn(reverse('productos:lista'), resp.url)
+        self.assertIn(reverse('mascotas:lista'), resp.url)
 
 
 class LoginRedirectApiTest(TestCase):
@@ -860,8 +860,8 @@ class LoginRedirectApiTest(TestCase):
         self.assertTrue(data['success'])
         self.assertIn(reverse('usuarios:admin_user_list'), data['redirect_url'])
 
-    def test_client_api_login_returns_productos_url(self):
-        """R7 scenario 3: Client login API returns productos redirect_url"""
+    def test_client_api_login_returns_mascotas_url(self):
+        """R7 scenario 3: Client login API returns mascotas redirect_url"""
         resp = self.client.post(
             reverse('usuarios:api_login'),
             data=json.dumps({'email': 'cliente_r7@test.com', 'password': 'pass123'}),
@@ -870,4 +870,4 @@ class LoginRedirectApiTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         data = json.loads(resp.content)
         self.assertTrue(data['success'])
-        self.assertIn(reverse('productos:lista'), data['redirect_url'])
+        self.assertIn(reverse('mascotas:lista'), data['redirect_url'])

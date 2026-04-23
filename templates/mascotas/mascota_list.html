@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4">Listado de Mascotas</h1>
+  <div class="d-flex justify-content-end mb-3">
+    {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+    <a href="{% url 'mascotas:nuevo' %}" class="btn btn-success">Nueva mascota</a>
+    {% endif %}
+  </div>
+  {% if mascotas %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>Nombre</th>
+            <th>Especie</th>
+            <th>Raza</th>
+            <th>Sexo</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in mascotas %}
+          <tr>
+            <td>{{ m.nombre }}</td>
+            <td>{{ m.especie }}</td>
+            <td>{{ m.raza|default:'-' }}</td>
+            <td>{{ m.sexo }}</td>
+            <td>
+              <a href="{% url 'mascotas:editar' m.pk %}" class="btn btn-sm btn-warning">Editar</a>
+              {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+              <a href="{% url 'mascotas:eliminar' m.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <!-- Paginación -->
+    <nav aria-label="Page navigation">
+      <ul class="pagination justify-content-center">
+        {% if mascotas.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ mascotas.previous_page_number }}">&laquo; Anterior</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
+        {% endif %}
+        {% for num in mascotas.paginator.page_range %}
+          {% if mascotas.number == num %}
+          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% elif num >= mascotas.number|add:-2 and num <= mascotas.number|add:2 %}
+          <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+          {% endif %}
+        {% endfor %}
+        {% if mascotas.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ mascotas.next_page_number }}">Siguiente &raquo;</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Siguiente &raquo;</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% else %}
+    <div class="alert alert-info text-center">
+      No hay mascotas registradas.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

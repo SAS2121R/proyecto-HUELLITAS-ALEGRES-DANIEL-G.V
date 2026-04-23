@@ -13,7 +13,7 @@
             <a href="#" class="list-group-item list-group-item-action">
                 <i class="bi bi-calendar3"></i> Mi Agenda
             </a>
-            <a href="#" class="list-group-item list-group-item-action">
+            <a href="{% url 'mascotas:lista' %}" class="list-group-item list-group-item-action">
                 <i class="bi bi-heart-pulse"></i> Pacientes
             </a>
             <a href="#" class="list-group-item list-group-item-action">
@@ -49,7 +49,7 @@
                     <div class="card-body">
                         <h5 class="card-title">Pacientes</h5>
                         <p class="card-text text-muted">Consulta el registro de mascotas.</p>
-                        <a href="#" class="btn btn-outline-success btn-sm">Ver Pacientes</a>
+                        <a href="{% url 'mascotas:lista' %}" class="btn btn-outline-success btn-sm">Ver Pacientes</a>
                     </div>
                 </div>
             </div>

@@ -48,6 +48,8 @@ def get_redirect_url(user):
         return reverse('usuarios:admin_user_list')
     elif rol_nombre == 'Veterinario':
         return reverse('usuarios:vet_dashboard')
+    elif rol_nombre == 'Cliente':
+        return reverse('mascotas:lista')
     else:
         return reverse('productos:lista')
 

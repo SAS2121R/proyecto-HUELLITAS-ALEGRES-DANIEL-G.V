@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'productos', # aplicacion personalizada para manejar productos de la tienda
     'usuarios', # aplicacion personalizada para manejar autenticacion de usuarios
+    'mascotas', # aplicacion para manejar mascotas (pacientes) de la clinica
 ]
 
 MIDDLEWARE = [
