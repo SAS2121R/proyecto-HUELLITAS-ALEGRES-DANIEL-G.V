@@ -28,6 +28,11 @@
 
   <!-- Species filter badges -->
   <div class="mb-3">
+    <a href="?{% if q %}q={{ q }}{% endif %}"
+       class="badge rounded-pill {% if not especie %}bg-primary{% else %}bg-secondary{% endif %} text-decoration-none me-1"
+       style="font-size: 0.9rem;">
+      Todos
+    </a>
     {% for value, label in especie_choices %}
     <a href="?{% if q %}q={{ q }}&{% endif %}especie={{ value }}"
        class="badge rounded-pill {% if especie == value %}bg-primary{% else %}bg-secondary{% endif %} text-decoration-none me-1"
@@ -35,12 +40,6 @@
       {{ label }}
     </a>
     {% endfor %}
-    {% if especie %}
-    <a href="?{% if q %}q={{ q }}{% endif %}"
-       class="badge rounded-pill bg-danger text-decoration-none" style="font-size: 0.9rem;">
-      ✕ Quitar filtro
-    </a>
-    {% endif %}
   </div>
 
   {% if mascotas %}

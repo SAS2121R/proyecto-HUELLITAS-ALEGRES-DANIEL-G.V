@@ -27,8 +27,9 @@ def lista_mascotas(request):
             | Q(propietario__cedula__icontains=q)
         )
 
-    # Filter by especie
-    if especie:
+    # Filter by especie — only filter if valid species choice
+    valid_species = [choice[0] for choice in ESPECIE_CHOICES]
+    if especie and especie in valid_species:
         mascotas_list = mascotas_list.filter(especie=especie)
 
     mascotas_list = mascotas_list.order_by('nombre')

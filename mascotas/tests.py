@@ -855,13 +855,14 @@ class MascotaSpeciesFilterTest(TestCase):
         self.assertContains(resp, 'Mishi')
         self.assertNotContains(resp, 'Fido')
 
-    def test_filter_invalid_species_shows_empty(self):
-        """R6.3: Filter by invalid species shows empty (strict filter)"""
+    def test_filter_invalid_species_shows_all(self):
+        """R6.3: Filter by invalid species shows all mascotas (ignores invalid filter)"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'), {'especie': 'Dinosaurio'})
         self.assertEqual(resp.status_code, 200)
-        self.assertNotContains(resp, 'Fido')
-        self.assertNotContains(resp, 'Mishi')
+        self.assertContains(resp, 'Fido')
+        self.assertContains(resp, 'Mishi')
+        self.assertContains(resp, 'Piolin')
 
     def test_filter_no_especie_shows_all(self):
         """R6.4: No especie filter shows all mascotas"""
@@ -913,11 +914,12 @@ class MascotaSearchUITest(TestCase):
         self.assertContains(resp, 'name="q"')
 
     def test_species_badges_present(self):
-        """Species filter badges render in list page"""
+        """Species filter badges render in list page including Todos"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'))
         self.assertContains(resp, 'Canino')
         self.assertContains(resp, 'Felino')
+        self.assertContains(resp, 'Todos')
 
 
 class PaginationPreservationTest(TestCase):
@@ -1041,6 +1043,12 @@ class MascotaDetailViewTest(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/usuarios/login/', resp.url)
 
+    def test_detail_nonexistent_mascota_returns_404(self):
+        """R7.6: Detail view for nonexistent mascota returns 404"""
+        self.client.force_login(self.vet_user)
+        resp = self.client.get(reverse('mascotas:detalle', kwargs={'pk': 99999}))
+        self.assertEqual(resp.status_code, 404)
+
     def test_agendar_cita_link_present(self):
         """Agendar Cita link is present on detail page"""
         self.client.force_login(self.vet_user)
@@ -1078,6 +1086,17 @@ class AllergyBannerTest(TestCase):
         m = Mascota.objects.create(
             nombre='Sano', especie='Canino', sexo='Macho',
             propietario=self.vet_user, alergias='Ninguna',
+        )
+        self.client.force_login(self.vet_user)
+        resp = self.client.get(reverse('mascotas:detalle', kwargs={'pk': m.pk}))
+        self.assertNotContains(resp, 'ALERTA')
+
+    def test_allergy_banner_hidden_when_empty_string(self):
+        """R8.3: Mascota with alergias='' (empty string) does NOT show banner"""
+        from mascotas.models import Mascota
+        m = Mascota.objects.create(
+            nombre='Vacio', especie='Canino', sexo='Macho',
+            propietario=self.vet_user, alergias='',
         )
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:detalle', kwargs={'pk': m.pk}))
@@ -1161,6 +1180,30 @@ class LastVisitTest(TestCase):
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:detalle', kwargs={'pk': self.mascota.pk}))
         self.assertContains(resp, 'Sin visitas registradas')
+
+    def test_last_visit_shows_most_recent(self):
+        """R9.5: Multiple Atendida citas show the most recent one"""
+        from agenda.models import Disponibilidad, Cita
+        from datetime import timedelta
+        # Create an older availability
+        old_date = date.today() - timedelta(days=30)
+        disp_old = Disponibilidad.objects.create(
+            fecha=old_date, hora_inicio='09:00', hora_fin='10:00',
+            veterinario=self.vet_user,
+        )
+        Cita.objects.create(
+            mascota=self.mascota, disponibilidad=disp_old,
+            estado='Atendida',
+        )
+        # The existing self.disp is today (more recent)
+        Cita.objects.create(
+            mascota=self.mascota, disponibilidad=self.disp,
+            estado='Atendida',
+        )
+        self.client.force_login(self.vet_user)
+        resp = self.client.get(reverse('mascotas:detalle', kwargs={'pk': self.mascota.pk}))
+        # Should show today's date (most recent), not 30 days ago
+        self.assertContains(resp, str(date.today().year))
 
 
 # ========================================
