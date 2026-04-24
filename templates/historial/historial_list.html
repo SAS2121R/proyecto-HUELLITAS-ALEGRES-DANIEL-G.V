@@ -2,15 +2,16 @@
 {% block content %}
 <div class="container py-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Historial Clínico</h1>
+    <h1>📋 Historial Clínico</h1>
     {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
-    <a href="{% url 'historial:crear' %}" class="btn btn-success">Nuevo Historial</a>
+    <a href="{% url 'historial:crear' %}" class="btn btn-success">+ Nuevo Historial</a>
     {% endif %}
   </div>
 
   <!-- Search -->
-  <form method="get" class="mb-3">
+  <form method="get" class="mb-4">
     <div class="input-group">
+      <span class="input-group-text">🔍</span>
       <input type="text" name="q" class="form-control" placeholder="Buscar por mascota, diagnóstico u observaciones..." value="{{ search|default:'' }}">
       <button class="btn btn-outline-secondary" type="submit">Buscar</button>
       {% if search %}
@@ -20,39 +21,68 @@
   </form>
 
   {% if page_obj %}
-    <div class="table-responsive">
-      <table class="table table-hover align-middle">
-        <thead class="table-dark">
-          <tr>
-            <th>Fecha</th>
-            <th>Mascota</th>
-            <th>Tipo</th>
-            <th>Motivo</th>
-            <th>Diagnóstico</th>
-            <th>Veterinario</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for hc in page_obj %}
-          <tr>
-            <td>{{ hc.fecha_consulta|date:"d/m/Y" }}</td>
-            <td><a href="{% url 'historial:por_mascota' mascota_pk=hc.mascota.pk %}">{{ hc.mascota.nombre }}</a></td>
-            <td>{{ hc.get_tipo_consulta_display }}</td>
-            <td>{{ hc.motivo_consulta }}</td>
-            <td>{{ hc.diagnostico }}</td>
-            <td>{{ hc.veterinario.get_full_name|default:hc.veterinario.email }}</td>
-            <td>
-              <a href="{% url 'historial:detalle' hc.pk %}" class="btn btn-sm btn-info">Ver</a>
-              {% if user.rol.nombre == 'Veterinario' and hc.veterinario == user or user.rol.nombre == 'Administrador' %}
-              <a href="{% url 'historial:editar' hc.pk %}" class="btn btn-sm btn-warning">Editar</a>
+    {% for hc in page_obj %}
+    <div class="card mb-3 shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center {% if hc.tipo_consulta == 'urgencia' %}bg-danger text-white{% elif hc.tipo_consulta == 'cirugia' %}bg-warning{% elif hc.tipo_consulta == 'vacunacion' %}bg-info text-white{% else %}bg-light{% endif %}">
+        <div>
+          <strong>{{ hc.mascota.nombre }}</strong>
+          <span class="badge {% if hc.tipo_consulta == 'urgencia' %}bg-dark{% elif hc.tipo_consulta == 'vacunacion' %}bg-dark{% else %}bg-secondary{% endif %} ms-2">{{ hc.get_tipo_consulta_display }}</span>
+        </div>
+        <small>{{ hc.fecha_consulta|date:"d/m/Y H:i" }}</small>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-8">
+            <p class="mb-1"><strong>Motivo:</strong> {{ hc.motivo_consulta }}</p>
+            <p class="mb-1"><strong>Diagnóstico:</strong> {{ hc.diagnostico }}</p>
+            {% if hc.tratamiento %}
+            <p class="mb-1"><strong>Tratamiento:</strong> {{ hc.tratamiento }}</p>
+            {% endif %}
+            {% if hc.observaciones %}
+            <p class="mb-1 text-muted"><strong>Observaciones:</strong> {{ hc.observaciones }}</p>
+            {% endif %}
+            <small class="text-muted">Veterinario: {{ hc.veterinario.get_full_name|default:hc.veterinario.email }}</small>
+          </div>
+          <!-- Vital Signs -->
+          <div class="col-md-4">
+            {% if hc.peso or hc.temperatura or hc.frecuencia_cardiaca or hc.frecuencia_respiratoria %}
+            <div class="d-flex flex-wrap gap-1">
+              {% if hc.peso %}
+              <span class="badge bg-primary fs-6 p-2">⚖️ {{ hc.peso }} kg</span>
               {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+              {% if hc.temperatura %}
+              <span class="badge bg-warning text-dark fs-6 p-2">🌡️ {{ hc.temperatura }} °C</span>
+              {% endif %}
+              {% if hc.frecuencia_cardiaca %}
+              <span class="badge bg-danger fs-6 p-2">❤️ {{ hc.frecuencia_cardiaca }} lpm</span>
+              {% endif %}
+              {% if hc.frecuencia_respiratoria %}
+              <span class="badge bg-success fs-6 p-2">🫁 {{ hc.frecuencia_respiratoria }} rpm</span>
+              {% endif %}
+            </div>
+            {% endif %}
+            {% if hc.vacuna_aplicada %}
+            <div class="mt-2">
+              <span class="badge bg-success">💉 {{ hc.vacuna_aplicada }}</span>
+              {% if hc.proxima_vacunacion %}
+              <span class="badge bg-outline-success">Próxima: {{ hc.proxima_vacunacion|date:"d/m/Y" }}</span>
+              {% endif %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <a href="{% url 'historial:por_mascota' mascota_pk=hc.mascota.pk %}" class="btn btn-sm btn-outline-secondary">Ver historial de {{ hc.mascota.nombre }}</a>
+        <div class="d-flex gap-1">
+          <a href="{% url 'historial:detalle' hc.pk %}" class="btn btn-sm btn-info text-white">Ver detalle</a>
+          {% if user.rol.nombre == 'Veterinario' and hc.veterinario == user or user.rol.nombre == 'Administrador' %}
+          <a href="{% url 'historial:editar' hc.pk %}" class="btn btn-sm btn-warning">✏️ Editar</a>
+          {% endif %}
+        </div>
+      </div>
     </div>
+    {% endfor %}
 
     <!-- Pagination -->
     <nav aria-label="Page navigation">

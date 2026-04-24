@@ -51,8 +51,9 @@
       </div>
 
       <!-- Actions -->
-      <div class="d-flex gap-2">
-        <a href="{% url 'agenda:crear_cita' %}" class="btn btn-primary">📋 Agendar Cita</a>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'historial:por_mascota' mascota.pk %}" class="btn btn-info text-white">📋 Historial Clínico</a>
+        <a href="{% url 'agenda:crear_cita' %}" class="btn btn-primary">📅 Agendar Cita</a>
         <a href="{% url 'mascotas:editar' mascota.pk %}" class="btn btn-warning">✏️ Editar</a>
         <a href="{% url 'mascotas:lista' %}" class="btn btn-secondary">← Volver</a>
       </div>

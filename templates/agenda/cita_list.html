@@ -36,17 +36,20 @@
               <span class="badge bg-danger">{{ cita.get_estado_display }}</span>
               {% endif %}
             </td>
-            <td>
-              <a href="{% url 'mascotas:editar' cita.mascota.id %}" class="btn btn-sm btn-outline-info" title="Ver Mascota">👁️</a>
-              {% if cita.estado == 'Programada' %}
-              <a href="{% url 'agenda:editar_cita' cita.pk %}" class="btn btn-sm btn-warning">Editar</a>
-              {% else %}
-              <span class="text-muted" title="No se puede editar una cita {{ cita.get_estado_display }}">Editar</span>
-              {% endif %}
-              {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
-              <a href="{% url 'agenda:eliminar_cita' cita.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de cancelar esta cita?')">Cancelar</a>
-              {% endif %}
-            </td>
+<td>
+               <a href="{% url 'mascotas:editar' cita.mascota.id %}" class="btn btn-sm btn-outline-info" title="Ver Mascota">👁️</a>
+               {% if cita.estado == 'Programada' %}
+                 {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+                 <a href="{% url 'historial:atender_cita' cita.pk %}" class="btn btn-sm btn-success" title="Atender cita y crear historial">🩺 Atender</a>
+                 {% endif %}
+               <a href="{% url 'agenda:editar_cita' cita.pk %}" class="btn btn-sm btn-warning">Editar</a>
+               {% else %}
+               <span class="text-muted" title="No se puede editar una cita {{ cita.get_estado_display }}">Editar</span>
+               {% endif %}
+               {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+               <a href="{% url 'agenda:eliminar_cita' cita.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de cancelar esta cita?')">Cancelar</a>
+               {% endif %}
+             </td>
           </tr>
           {% endfor %}
         </tbody>

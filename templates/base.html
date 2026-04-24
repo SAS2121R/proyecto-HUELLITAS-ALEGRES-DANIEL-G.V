@@ -17,9 +17,12 @@
      <a class="navbar-brand" href="{% url 'inicio' %}">{{ tienda }}</a>
      <div class="collapse navbar-collapse">
        <ul class="navbar-nav ms-auto">
-         {% if user.is_authenticated %}
-           <li class="nav-item"><a href="{% url 'productos:lista' %}" class="nav-link">Productos</a></li>
-           <li class="nav-item dropdown">
+{% if user.is_authenticated %}
+            <li class="nav-item"><a href="{% url 'productos:lista' %}" class="nav-link">Productos</a></li>
+            <li class="nav-item"><a href="{% url 'mascotas:lista' %}" class="nav-link">Mascotas</a></li>
+            <li class="nav-item"><a href="{% url 'agenda:lista_citas' %}" class="nav-link">Citas</a></li>
+            <li class="nav-item"><a href="{% url 'historial:lista' %}" class="nav-link">Historial</a></li>
+            <li class="nav-item dropdown">
              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                Bienvenido, {{ user.email }}
              </a>

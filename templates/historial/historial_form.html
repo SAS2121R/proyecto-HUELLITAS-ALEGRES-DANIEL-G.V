@@ -6,28 +6,96 @@
     <div class="col-md-8">
       <form method="post" novalidate>
         {% csrf_token %}
-        {% for field in form %}
+
+        <!-- Mascota (for direct creation only — not in atender_cita) -->
+        {% if form.mascota %}
         <div class="mb-3">
-          {% if field.field.widget_type == 'checkbox' %}
-          <div class="form-check">
-            {{ field }}
-            <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}</label>
-          </div>
-          {% else %}
-          <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-          {{ field }}
-          {% endif %}
-          {% if field.errors %}
+          <label for="{{ form.mascota.id_for_label }}" class="form-label">Mascota</label>
+          {{ form.mascota }}
+          {% if form.mascota.errors %}
           <div class="invalid-feedback d-block">
-            {% for error in field.errors %}
-            {{ error }}
-            {% endfor %}
+            {% for error in form.mascota.errors %}{{ error }}{% endfor %}
           </div>
           {% endif %}
         </div>
-        {% endfor %}
+        {% endif %}
+
+        <!-- Datos de la consulta -->
+        <fieldset class="mb-4">
+          <legend class="h6 text-primary border-bottom pb-2 mb-3">📋 Datos de la consulta</legend>
+          {% for field in form %}
+            {% if field.name == 'tipo_consulta' or field.name == 'motivo_consulta' or field.name == 'diagnostico' %}
+            <div class="mb-3">
+              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in field.errors %}{{ error }}{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            {% endif %}
+          {% endfor %}
+        </fieldset>
+
+        <!-- Tratamiento -->
+        <fieldset class="mb-4">
+          <legend class="h6 text-success border-bottom pb-2 mb-3">💊 Tratamiento</legend>
+          {% for field in form %}
+            {% if field.name == 'tratamiento' or field.name == 'observaciones' %}
+            <div class="mb-3">
+              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in field.errors %}{{ error }}{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            {% endif %}
+          {% endfor %}
+        </fieldset>
+
+        <!-- Signos Vitales -->
+        <fieldset class="mb-4">
+          <legend class="h6 text-danger border-bottom pb-2 mb-3">🩺 Signos Vitales</legend>
+          <div class="row">
+            {% for field in form %}
+              {% if field.name == 'peso' or field.name == 'temperatura' or field.name == 'frecuencia_cardiaca' or field.name == 'frecuencia_respiratoria' %}
+              <div class="col-md-6 mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <div class="invalid-feedback d-block">
+                  {% for error in field.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+              </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        <!-- Vacunación -->
+        <fieldset class="mb-4">
+          <legend class="h6 text-info border-bottom pb-2 mb-3">💉 Vacunación</legend>
+          {% for field in form %}
+            {% if field.name == 'vacuna_aplicada' or field.name == 'proxima_vacunacion' %}
+            <div class="mb-3">
+              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in field.errors %}{{ error }}{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            {% endif %}
+          {% endfor %}
+        </fieldset>
+
         <div class="d-grid gap-2">
-          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="submit" class="btn btn-primary">💾 Guardar</button>
           <a href="{% url 'historial:lista' %}" class="btn btn-secondary">Cancelar</a>
         </div>
       </form>

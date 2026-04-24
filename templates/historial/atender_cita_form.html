@@ -1,46 +1,125 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container py-4">
-  <h1 class="mb-4">Atender Cita</h1>
+  <h1 class="mb-4">🩺 Atender Cita</h1>
 
-  <div class="card mb-4 border-info">
+  <!-- Cita Info Card -->
+  <div class="card mb-4 border-info shadow-sm">
     <div class="card-header bg-info text-white">
       <h6 class="mb-0">Datos de la cita</h6>
     </div>
     <div class="card-body">
-      <p><strong>Mascota:</strong> {{ cita.mascota.nombre }}</p>
-      <p><strong>Fecha:</strong> {{ cita.disponibilidad.fecha|date:"d/m/Y" }}</p>
-      <p><strong>Hora:</strong> {{ cita.disponibilidad.hora_inicio }}</p>
-      <p><strong>Motivo:</strong> {{ cita.motivo }}</p>
+      <div class="row">
+        <div class="col-md-6">
+          <table class="table table-sm table-borderless mb-0">
+            <tr><th style="width: 130px;">Mascota</th><td>{{ cita.mascota.nombre }}</td></tr>
+            <tr><th>Propietario</th><td>{{ cita.mascota.propietario.get_full_name|default:cita.mascota.propietario.username }}</td></tr>
+            {% if cita.mascota.alergias and cita.mascota.alergias != 'Ninguna' %}
+            <tr><th>Alergias</th><td class="text-danger fw-bold">⚠️ {{ cita.mascota.alergias }}</td></tr>
+            {% endif %}
+          </table>
+        </div>
+        <div class="col-md-6">
+          <table class="table table-sm table-borderless mb-0">
+            <tr><th style="width: 130px;">Fecha</th><td>{{ cita.disponibilidad.fecha|date:"d/m/Y" }}</td></tr>
+            <tr><th>Hora</th><td>{{ cita.disponibilidad.hora_inicio }}</td></tr>
+            <tr><th>Motivo</th><td>{{ cita.motivo }}</td></tr>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
+  <!-- Allergy Alert -->
+  {% if cita.mascota.alergias and cita.mascota.alergias != 'Ninguna' %}
+  <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+    <span class="me-2" style="font-size: 1.5rem;">⚠️</span>
+    <div><strong>¡ALERTA MÉDICA!</strong> Este paciente es alérgico a: <strong>{{ cita.mascota.alergias }}</strong></div>
+  </div>
+  {% endif %}
+
+  <!-- Form -->
   <div class="row justify-content-center">
     <div class="col-md-8">
       <form method="post" novalidate>
         {% csrf_token %}
-        {% for field in form %}
-        <div class="mb-3">
-          {% if field.field.widget_type == 'checkbox' %}
-          <div class="form-check">
-            {{ field }}
-            <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}</label>
-          </div>
-          {% else %}
-          <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-          {{ field }}
-          {% endif %}
-          {% if field.errors %}
-          <div class="invalid-feedback d-block">
-            {% for error in field.errors %}
-            {{ error }}
+
+        <!-- Datos de la consulta -->
+        <fieldset class="mb-4">
+          <legend class="h6 text-primary border-bottom pb-2 mb-3">📋 Datos de la consulta</legend>
+          {% for field in form %}
+            {% if field.name == 'tipo_consulta' or field.name == 'motivo_consulta' or field.name == 'diagnostico' %}
+            <div class="mb-3">
+              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in field.errors %}{{ error }}{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            {% endif %}
+          {% endfor %}
+        </fieldset>
+
+        <!-- Tratamiento -->
+        <fieldset class="mb-4">
+          <legend class="h6 text-success border-bottom pb-2 mb-3">💊 Tratamiento</legend>
+          {% for field in form %}
+            {% if field.name == 'tratamiento' or field.name == 'observaciones' %}
+            <div class="mb-3">
+              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in field.errors %}{{ error }}{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            {% endif %}
+          {% endfor %}
+        </fieldset>
+
+        <!-- Signos Vitales -->
+        <fieldset class="mb-4">
+          <legend class="h6 text-danger border-bottom pb-2 mb-3">🩺 Signos Vitales</legend>
+          <div class="row">
+            {% for field in form %}
+              {% if field.name == 'peso' or field.name == 'temperatura' or field.name == 'frecuencia_cardiaca' or field.name == 'frecuencia_respiratoria' %}
+              <div class="col-md-6 mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <div class="invalid-feedback d-block">
+                  {% for error in field.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+              </div>
+              {% endif %}
             {% endfor %}
           </div>
-          {% endif %}
-        </div>
-        {% endfor %}
+        </fieldset>
+
+        <!-- Vacunación -->
+        <fieldset class="mb-4">
+          <legend class="h6 text-info border-bottom pb-2 mb-3">💉 Vacunación</legend>
+          {% for field in form %}
+            {% if field.name == 'vacuna_aplicada' or field.name == 'proxima_vacunacion' %}
+            <div class="mb-3">
+              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in field.errors %}{{ error }}{% endfor %}
+              </div>
+              {% endif %}
+            </div>
+            {% endif %}
+          {% endfor %}
+        </fieldset>
+
         <div class="d-grid gap-2">
-          <button type="submit" class="btn btn-primary">Guardar Historial</button>
+          <button type="submit" class="btn btn-success">✅ Guardar Historial y Atender Cita</button>
           <a href="{% url 'agenda:lista_citas' %}" class="btn btn-secondary">Cancelar</a>
         </div>
       </form>

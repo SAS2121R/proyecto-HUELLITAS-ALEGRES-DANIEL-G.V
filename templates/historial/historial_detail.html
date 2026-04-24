@@ -2,104 +2,137 @@
 {% block content %}
 <div class="container py-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Detalle Historial Clínico</h1>
-    <a href="{% url 'historial:lista' %}" class="btn btn-secondary">← Volver</a>
+    <h1>📋 Detalle Historial Clínico</h1>
+    <a href="{% url 'historial:lista' %}" class="btn btn-secondary">← Volver al listado</a>
   </div>
 
-  <div class="card mb-4">
-    <div class="card-header bg-primary text-white">
-      <h5 class="mb-0">{{ historial.mascota.nombre }} — {{ historial.get_tipo_consulta_display }}</h5>
+  <!-- Header Card -->
+  <div class="card mb-4 shadow">
+    <div class="card-header d-flex justify-content-between align-items-center {% if historial.tipo_consulta == 'urgencia' %}bg-danger text-white{% elif historial.tipo_consulta == 'cirugia' %}bg-warning{% elif historial.tipo_consulta == 'vacunacion' %}bg-info text-white{% else %}bg-primary text-white{% endif %}">
+      <h5 class="mb-0">
+        {{ historial.mascota.nombre }} — {{ historial.get_tipo_consulta_display }}
+      </h5>
+      <span>{{ historial.fecha_consulta|date:"d/m/Y H:i" }}</span>
     </div>
     <div class="card-body">
-      <div class="row">
+      <!-- Patient & Vet Info -->
+      <div class="row mb-3">
         <div class="col-md-6">
-          <table class="table table-sm">
-            <tr><th>Fecha</th><td>{{ historial.fecha_consulta|date:"d/m/Y H:i" }}</td></tr>
-            <tr><th>Mascota</th><td>{{ historial.mascota.nombre }}</td></tr>
-            <tr><th>Veterinario</th><td>{{ historial.veterinario.get_full_name|default:historial.veterinario.email }}</td></tr>
-            <tr><th>Tipo de consulta</th><td>{{ historial.get_tipo_consulta_display }}</td></tr>
+          <table class="table table-sm table-borderless">
+            <tr><th class="text-muted" style="width: 140px;">Paciente</th><td><a href="{% url 'historial:por_mascota' mascota_pk=historial.mascota.pk %}">{{ historial.mascota.nombre }}</a> <span class="text-muted">({{ historial.mascota.especie }})</span></td></tr>
+            <tr><th class="text-muted">Veterinario</th><td>{{ historial.veterinario.get_full_name|default:historial.veterinario.email }}</td></tr>
+            <tr><th class="text-muted">Tipo consulta</th><td>{{ historial.get_tipo_consulta_display }}</td></tr>
             {% if historial.cita %}
-            <tr><th>Cita asociada</th><td>Sí (#{{ historial.cita.pk }})</td></tr>
-            {% endif %}
-          </table>
-        </div>
-        <div class="col-md-6">
-          <table class="table table-sm">
-            <tr><th>Motivo</th><td>{{ historial.motivo_consulta }}</td></tr>
-            <tr><th>Diagnóstico</th><td>{{ historial.diagnostico }}</td></tr>
-            {% if historial.tratamiento %}
-            <tr><th>Tratamiento</th><td>{{ historial.tratamiento }}</td></tr>
-            {% endif %}
-            {% if historial.observaciones %}
-            <tr><th>Observaciones</th><td>{{ historial.observaciones }}</td></tr>
+            <tr><th class="text-muted">Cita asociada</th><td>Sí (#{{ historial.cita.pk }})</td></tr>
             {% endif %}
           </table>
         </div>
       </div>
 
-      <!-- Vital Signs -->
-      {% if historial.peso or historial.temperatura or historial.frecuencia_cardiaca or historial.frecuencia_respiratoria %}
-      <h6 class="mt-3">Signos Vitales</h6>
-      <div class="row">
-        {% if historial.peso %}
-        <div class="col-md-3">
-          <div class="card text-white bg-info mb-2" style="border-radius: 10px;">
-            <div class="card-body text-center">
-              <small>Peso</small>
-              <h5>{{ historial.peso }} kg</h5>
-            </div>
-          </div>
+      <hr>
+
+      <!-- Clinical Data -->
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <h6 class="text-primary">Motivo de consulta</h6>
+          <p>{{ historial.motivo_consulta }}</p>
         </div>
-        {% endif %}
-        {% if historial.temperatura %}
-        <div class="col-md-3">
-          <div class="card text-white bg-warning mb-2" style="border-radius: 10px;">
-            <div class="card-body text-center">
-              <small>Temperatura</small>
-              <h5>{{ historial.temperatura }} °C</h5>
-            </div>
-          </div>
+        <div class="col-md-6">
+          <h6 class="text-danger">Diagnóstico</h6>
+          <p>{{ historial.diagnostico }}</p>
         </div>
-        {% endif %}
-        {% if historial.frecuencia_cardiaca %}
-        <div class="col-md-3">
-          <div class="card text-white bg-danger mb-2" style="border-radius: 10px;">
-            <div class="card-body text-center">
-              <small>Frecuencia Cardíaca</small>
-              <h5>{{ historial.frecuencia_cardiaca }} lpm</h5>
-            </div>
-          </div>
+      </div>
+
+      {% if historial.tratamiento %}
+      <div class="row mb-3">
+        <div class="col-12">
+          <h6 class="text-success">💊 Tratamiento</h6>
+          <p>{{ historial.tratamiento }}</p>
         </div>
-        {% endif %}
-        {% if historial.frecuencia_respiratoria %}
-        <div class="col-md-3">
-          <div class="card text-white bg-success mb-2" style="border-radius: 10px;">
-            <div class="card-body text-center">
-              <small>Frecuencia Respiratoria</small>
-              <h5>{{ historial.frecuencia_respiratoria }} rpm</h5>
-            </div>
-          </div>
-        </div>
-        {% endif %}
       </div>
       {% endif %}
 
-      {% if historial.vacuna_aplicada %}
-      <div class="alert alert-success mt-3">
-        <strong>Vacuna aplicada:</strong> {{ historial.vacuna_aplicada }}
-        {% if historial.proxima_vacunacion %}
-        — <strong>Próxima vacunación:</strong> {{ historial.proxima_vacunacion|date:"d/m/Y" }}
-        {% endif %}
+      {% if historial.observaciones %}
+      <div class="row mb-3">
+        <div class="col-12">
+          <h6 class="text-muted">📝 Observaciones</h6>
+          <p class="text-muted">{{ historial.observaciones }}</p>
+        </div>
       </div>
       {% endif %}
     </div>
   </div>
 
-  <div class="d-flex gap-2">
+  <!-- Vital Signs Cards -->
+  {% if historial.peso or historial.temperatura or historial.frecuencia_cardiaca or historial.frecuencia_respiratoria %}
+  <h5 class="mb-3">🩺 Signos Vitales</h5>
+  <div class="row mb-4">
+    {% if historial.peso %}
+    <div class="col-md-3 col-6 mb-2">
+      <div class="card text-white bg-primary shadow-sm h-100" style="border-radius: 12px;">
+        <div class="card-body text-center">
+          <div style="font-size: 1.5rem;">⚖️</div>
+          <small>Peso</small>
+          <h4 class="mb-0">{{ historial.peso }} <small>kg</small></h4>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% if historial.temperatura %}
+    <div class="col-md-3 col-6 mb-2">
+      <div class="card text-white bg-warning shadow-sm h-100" style="border-radius: 12px;">
+        <div class="card-body text-center">
+          <div style="font-size: 1.5rem;">🌡️</div>
+          <small>Temperatura</small>
+          <h4 class="mb-0">{{ historial.temperatura }} <small>°C</small></h4>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% if historial.frecuencia_cardiaca %}
+    <div class="col-md-3 col-6 mb-2">
+      <div class="card text-white bg-danger shadow-sm h-100" style="border-radius: 12px;">
+        <div class="card-body text-center">
+          <div style="font-size: 1.5rem;">❤️</div>
+          <small>Frec. Cardíaca</small>
+          <h4 class="mb-0">{{ historial.frecuencia_cardiaca }} <small>lpm</small></h4>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% if historial.frecuencia_respiratoria %}
+    <div class="col-md-3 col-6 mb-2">
+      <div class="card text-white bg-success shadow-sm h-100" style="border-radius: 12px;">
+        <div class="card-body text-center">
+          <div style="font-size: 1.5rem;">🫁</div>
+          <small>Frec. Respiratoria</small>
+          <h4 class="mb-0">{{ historial.frecuencia_respiratoria }} <small>rpm</small></h4>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Vaccine Info -->
+  {% if historial.vacuna_aplicada %}
+  <div class="alert alert-success d-flex align-items-center shadow-sm" style="border-radius: 12px;">
+    <span style="font-size: 1.5rem;" class="me-2">💉</span>
+    <div>
+      <strong>Vacuna aplicada:</strong> {{ historial.vacuna_aplicada }}
+      {% if historial.proxima_vacunacion %}
+      — <strong>Próxima vacunación:</strong> {{ historial.proxima_vacunacion|date:"d/m/Y" }}
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Actions -->
+  <div class="d-flex gap-2 flex-wrap">
     {% if user.rol.nombre == 'Veterinario' and historial.veterinario == user or user.rol.nombre == 'Administrador' %}
     <a href="{% url 'historial:editar' historial.pk %}" class="btn btn-warning">✏️ Editar</a>
     {% endif %}
-    <a href="{% url 'historial:por_mascota' mascota_pk=historial.mascota.pk %}" class="btn btn-secondary">Ver historial de {{ historial.mascota.nombre }}</a>
+    <a href="{% url 'historial:por_mascota' mascota_pk=historial.mascota.pk %}" class="btn btn-outline-secondary">📋 Historial de {{ historial.mascota.nombre }}</a>
   </div>
 </div>
 {% endblock %}
