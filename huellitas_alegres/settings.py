@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'usuarios', # aplicacion personalizada para manejar autenticacion de usuarios
     'mascotas', # aplicacion para manejar mascotas (pacientes) de la clinica
     'agenda', # aplicacion para gestion de disponibilidades y citas
+    'historial', # aplicacion para historial clinico veterinario
 ]
 
 MIDDLEWARE = [

@@ -32,6 +32,7 @@ urlpatterns = [
     path('productos/', include(('productos.urls', 'productos'), namespace='productos')),
     path('mascotas/', include(('mascotas.urls', 'mascotas'), namespace='mascotas')),
     path('agenda/', include(('agenda.urls', 'agenda'), namespace='agenda')),
+    path('historial/', include(('historial.urls', 'historial'), namespace='historial')),
 ]
 
 if settings.DEBUG:

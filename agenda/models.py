@@ -83,6 +83,12 @@ class Cita(models.Model):
         default='Programada',
         verbose_name='Estado',
     )
+    motivo = models.CharField(
+        max_length=200,
+        blank=True,
+        default='',
+        verbose_name='Motivo de consulta',
+    )
     motivo_cancelacion = models.TextField(
         blank=True,
         default='',
