@@ -23,6 +23,7 @@ class Usuario(AbstractUser):
     fecha_registro = models.DateTimeField(default=timezone.now, verbose_name='Fecha de Registro')
     is_active = models.BooleanField(default=True, verbose_name='Activo')
     telefono = models.CharField(max_length=15, blank=True, default='', verbose_name='Teléfono')
+    cedula = models.CharField(max_length=20, blank=True, default='', db_index=True, verbose_name='Cédula')
     rol = models.ForeignKey(
         Rol, on_delete=models.PROTECT, verbose_name='Rol',
         related_name='usuarios'

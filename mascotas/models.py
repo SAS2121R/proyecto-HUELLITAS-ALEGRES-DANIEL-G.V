@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.db import models
 from django.conf import settings
 
@@ -32,12 +34,54 @@ class Mascota(models.Model):
         related_name='mascotas',
         verbose_name='Propietario',
     )
+    alergias = models.TextField(default='Ninguna', blank=True, verbose_name='Alergias')
+    esterilizado = models.BooleanField(default=False, verbose_name='Esterilizado')
+    foto = models.ImageField(upload_to='mascotas/', blank=True, null=True, verbose_name='Foto')
 
     class Meta:
         verbose_name = 'Mascota'
         verbose_name_plural = 'Mascotas'
         db_table = 'mascotas_mascota'
         ordering = ['nombre']
+
+    def get_edad(self):
+        """Calcula la edad dinámica de la mascota en español.
+
+        Returns:
+            str: 'X años, Y meses', '1 año', '2 meses', 'Recién nacido', o 'Edad desconocida'
+        """
+        if self.fecha_nacimiento is None:
+            return 'Edad desconocida'
+
+        today = date.today()
+        birth = self.fecha_nacimiento
+
+        if birth > today:
+            return 'Edad desconocida'
+
+        years = today.year - birth.year
+        months = today.month - birth.month
+
+        # Adjust if the birthday hasn't occurred this month
+        if today.day < birth.day:
+            months -= 1
+
+        if months < 0:
+            years -= 1
+            months += 12
+
+        # Born today
+        if years == 0 and months == 0:
+            return 'Recién nacido'
+
+        # Build the string with proper singular/plural
+        parts = []
+        if years > 0:
+            parts.append(f'{years} año{"s" if years != 1 else ""}')
+        if months > 0:
+            parts.append(f'{months} mes{"es" if months != 1 else ""}')
+
+        return ', '.join(parts)
 
     def __str__(self):
         return f"{self.nombre} ({self.especie})"

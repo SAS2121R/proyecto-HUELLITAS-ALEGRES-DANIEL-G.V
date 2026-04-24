@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <!-- Allergy Banner -->
+  {% if mascota.alergias and mascota.alergias != 'Ninguna' %}
+  <div class="alert alert-danger d-flex align-items-center" role="alert">
+    <span class="me-2" style="font-size: 1.5rem;">⚠️</span>
+    <div>
+      <strong>¡ALERTA MÉDICA!</strong> Este paciente es alérgico a: <strong>{{ mascota.alergias }}</strong>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="row">
+    <!-- Photo -->
+    <div class="col-md-4 text-center mb-4">
+      {% if mascota.foto %}
+      <img src="{{ mascota.foto.url }}" alt="{{ mascota.nombre }}" class="img-thumbnail rounded" style="max-width: 250px;">
+      {% else %}
+      <div class="bg-light rounded d-flex align-items-center justify-content-center mx-auto" style="width: 200px; height: 200px;">
+        <span style="font-size: 5rem;">🐾</span>
+      </div>
+      {% endif %}
+    </div>
+    <!-- Info -->
+    <div class="col-md-8">
+      <h2>{{ mascota.nombre }}</h2>
+      <table class="table">
+        <tr><th>Especie</th><td>{{ mascota.especie }}</td></tr>
+        <tr><th>Raza</th><td>{{ mascota.raza|default:'-' }}</td></tr>
+        <tr><th>Sexo</th><td>{{ mascota.sexo }}</td></tr>
+        <tr><th>Edad</th><td>{{ mascota.get_edad }}</td></tr>
+        <tr><th>Esterilizado</th><td>{% if mascota.esterilizado %}✅ Sí{% else %}❌ No{% endif %}</td></tr>
+        <tr><th>Alergias</th><td>{{ mascota.alergias }}</td></tr>
+        <tr><th>Propietario</th><td>{{ mascota.propietario.get_full_name|default:mascota.propietario.username }}</td></tr>
+        {% if mascota.propietario.cedula %}
+        <tr><th>Cédula</th><td>{{ mascota.propietario.cedula }}</td></tr>
+        {% endif %}
+      </table>
+
+      <!-- Last Visit -->
+      <div class="card mb-3">
+        <div class="card-header">📅 Última visita</div>
+        <div class="card-body">
+          {% if ultima_cita %}
+          <p class="mb-0"><strong>{{ ultima_cita.disponibilidad.fecha }}</strong> — {{ ultima_cita.disponibilidad.hora_inicio }}</p>
+          {% else %}
+          <p class="mb-0 text-muted">Sin visitas registradas</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="d-flex gap-2">
+        <a href="{% url 'agenda:crear_cita' %}" class="btn btn-primary">📋 Agendar Cita</a>
+        <a href="{% url 'mascotas:editar' mascota.pk %}" class="btn btn-warning">✏️ Editar</a>
+        <a href="{% url 'mascotas:lista' %}" class="btn btn-secondary">← Volver</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

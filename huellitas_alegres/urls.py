@@ -17,6 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
+from django.conf import settings
+from django.conf.urls.static import static
 
 # Función para redirigir la página principal al sistema de autenticación
 def redirect_to_auth(request):
@@ -31,3 +33,6 @@ urlpatterns = [
     path('mascotas/', include(('mascotas.urls', 'mascotas'), namespace='mascotas')),
     path('agenda/', include(('agenda.urls', 'agenda'), namespace='agenda')),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

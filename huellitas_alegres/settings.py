@@ -123,3 +123,7 @@ AUTH_USER_MODEL = 'usuarios.Usuario'
 
 # URL de inicio de sesión (usada por @login_required y autenticación)
 LOGIN_URL = '/usuarios/login/'
+
+# Media files (uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

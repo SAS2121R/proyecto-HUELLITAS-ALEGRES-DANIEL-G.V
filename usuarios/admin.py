@@ -12,14 +12,14 @@ class RolAdmin(admin.ModelAdmin):
 
 # Configuración personalizada del admin para Usuario
 class UsuarioAdmin(UserAdmin):
-    list_display = ('email', 'username', 'first_name', 'rol', 'telefono', 'is_active', 'fecha_registro')
+    list_display = ('email', 'username', 'first_name', 'cedula', 'rol', 'telefono', 'is_active', 'fecha_registro')
     list_filter = ('is_active', 'is_staff', 'rol', 'fecha_registro')
-    search_fields = ('email', 'username', 'first_name', 'last_name')
+    search_fields = ('email', 'username', 'first_name', 'last_name', 'cedula')
     ordering = ('-fecha_registro',)
     
     # Campos que se muestran en el formulario de edición
     fieldsets = UserAdmin.fieldsets + (
-        ('Información Adicional', {'fields': ('telefono', 'rol', 'fecha_registro')}),
+        ('Información Adicional', {'fields': ('cedula', 'telefono', 'rol', 'fecha_registro')}),
     )
     
     # Campos de solo lectura
