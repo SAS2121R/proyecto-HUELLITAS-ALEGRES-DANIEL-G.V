@@ -2,55 +2,144 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Producto
-from .forms import ProductoForm
+from django.db.models import Q
+from django.core.exceptions import PermissionDenied
+
+from usuarios.decorators import role_required
+from .models import Producto, MovimientoInventario, CATEGORIAS
+from .forms import ProductoForm, MovimientoInventarioForm
 
 
-@login_required(login_url='/usuarios/')
+@login_required(login_url='/usuarios/login/')
 def lista_productos(request):
-   productos_list = Producto.objects.all().order_by('-fecha_ultima_modificacion')
-   paginator = Paginator(productos_list, 10)
-   page = request.GET.get('page', 1)
-   try:
-       productos = paginator.page(page)
-   except (PageNotAnInteger, EmptyPage):
-       productos = paginator.page(1)
-   return render(request, 'productos/product_list.html', {'productos': productos})
+    """List active products with search and category filter.
+
+    Uses Producto.objects (default manager) which filters esta_activo=True.
+    """
+    qs = Producto.objects.select_related().order_by('nombre')
+
+    search = request.GET.get('q', '').strip()
+    if search:
+        qs = qs.filter(
+            Q(nombre__icontains=search)
+            | Q(proveedor__icontains=search)
+        )
+
+    categoria = request.GET.get('categoria', '').strip()
+    if categoria:
+        qs = qs.filter(categoria=categoria)
+
+    paginator = Paginator(qs, 10)
+    page = request.GET.get('page', 1)
+    try:
+        page_obj = paginator.page(page)
+    except (PageNotAnInteger, EmptyPage):
+        page_obj = paginator.page(1)
+
+    # Products with stock alerts for the sidebar
+    alert_products = [p for p in Producto.objects.all() if p.estado_stock != 'verde']
+
+    return render(request, 'productos/product_list.html', {
+        'page_obj': page_obj,
+        'search': search,
+        'categoria': categoria,
+        'categorias': CATEGORIAS,
+        'alert_products': alert_products,
+    })
 
 
-@login_required(login_url='/usuarios/')
+@role_required('Veterinario', 'Administrador')
 def create_product(request):
-   form = ProductoForm(request.POST or None)
-   if request.method == 'POST' and form.is_valid():
-       form.save()
-       return redirect('productos:lista')
-   return render(request, 'productos/product_form.html', {'form': form})
+    """Create a new product. Requires Vet or Admin role."""
+    form = ProductoForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Producto creado exitosamente.')
+        return redirect('productos:lista')
+    return render(request, 'productos/product_form.html', {'form': form})
 
 
-@login_required(login_url='/usuarios/')
+@role_required('Veterinario', 'Administrador')
 def edit_product(request, pk):
-   prod = get_object_or_404(Producto, pk=pk)
-   form = ProductoForm(request.POST or None, instance=prod)
-   if request.method == 'POST' and form.is_valid():
-       form.save()
-       return redirect('productos:lista')
-   return render(request, 'productos/product_form.html', {'form': form})
+    """Edit an existing product. Requires Vet or Admin role."""
+    prod = get_object_or_404(Producto.all_objects, pk=pk)
+    form = ProductoForm(request.POST or None, instance=prod)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Producto actualizado exitosamente.')
+        return redirect('productos:lista')
+    return render(request, 'productos/product_form.html', {'form': form, 'producto': prod})
 
 
-@login_required(login_url='/usuarios/')
+@role_required('Veterinario', 'Administrador')
 def delete_product(request, pk):
-   prod = get_object_or_404(Producto, pk=pk)
-   if request.method == 'POST':
-       prod.delete()
-       return redirect('productos:lista')
-   return render(request, 'productos/product_confirm_delete.html', {'producto': prod})
+    """Soft-delete a product (sets esta_activo=False). Requires Vet or Admin role."""
+    prod = get_object_or_404(Producto.all_objects, pk=pk)
+    if request.method == 'POST':
+        prod.esta_activo = False
+        prod.save()
+        messages.success(request, f'Producto "{prod.nombre}" desactivado exitosamente.')
+        return redirect('productos:lista')
+    return render(request, 'productos/product_confirm_delete.html', {'producto': prod})
 
-@login_required(login_url='/usuarios/')
+
+@role_required('Veterinario', 'Administrador')
+def entrada_inventario(request):
+    """Manual stock entry (entrada). Creates MovimientoInventario and updates stock."""
+    form = MovimientoInventarioForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        mov = form.save(commit=False)
+        mov.usuario = request.user
+        mov.tipo_movimiento = 'entrada'  # Force entrada for this view
+        mov.save()
+        # Update stock
+        producto = mov.producto
+        producto.cantidad_stock += mov.cantidad
+        producto.save(update_fields=['cantidad_stock'])
+        messages.success(request, f'Entrada de {mov.cantidad} unidades de "{producto.nombre}" registrada.')
+        return redirect('productos:lista')
+    return render(request, 'productos/movimiento_form.html', {
+        'form': form,
+        'tipo': 'Entrada',
+    })
+
+
+@login_required(login_url='/usuarios/login/')
+def kardex_producto(request, pk):
+    """Kardex — movement history for a specific product."""
+    producto = get_object_or_404(Producto.all_objects, pk=pk)
+    movimientos = MovimientoInventario.objects.filter(
+        producto=producto
+    ).select_related('usuario', 'historial_clinico').order_by('-fecha')
+
+    paginator = Paginator(movimientos, 15)
+    page = request.GET.get('page', 1)
+    try:
+        page_obj = paginator.page(page)
+    except (PageNotAnInteger, EmptyPage):
+        page_obj = paginator.page(1)
+
+    return render(request, 'productos/kardex.html', {
+        'producto': producto,
+        'page_obj': page_obj,
+    })
+
+
+@login_required(login_url='/usuarios/login/')
+def alertas_stock(request):
+    """Show products with stock alerts (estado_stock != 'verde')."""
+    alert_products = [p for p in Producto.objects.all() if p.estado_stock != 'verde']
+    return render(request, 'productos/alertas.html', {
+        'alert_products': alert_products,
+    })
+
+
+@login_required(login_url='/usuarios/login/')
 def inicio(request):
-   """Vista para la página de inicio de productos - requiere autenticación."""
-   context = {
-       'tienda': 'huellitas_alegres',
-       'descripcion': 'Venta de productos para clinica veterinaria',
-       'usuario': request.user
-   }
-   return render(request, 'inicio.html', context)
+    """Vista para la página de inicio de productos."""
+    context = {
+        'tienda': 'huellitas_alegres',
+        'descripcion': 'Venta de productos para clinica veterinaria',
+        'usuario': request.user,
+    }
+    return render(request, 'inicio.html', context)

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Alertas de Stock</h1>
+    <a href="{% url 'productos:lista' %}" class="btn btn-outline-secondary">Volver a Productos</a>
+  </div>
+
+  {% if alert_products %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>Producto</th>
+            <th>Categoría</th>
+            <th>Stock Actual</th>
+            <th>Stock Mínimo</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in alert_products %}
+          <tr class="{% if p.estado_stock == 'rojo' %}table-danger{% else %}table-warning{% endif %}">
+            <td>{{ p.nombre }}</td>
+            <td>{{ p.get_categoria_display }}</td>
+            <td>{{ p.cantidad_stock }}</td>
+            <td>{{ p.stock_minimo }}</td>
+            <td>
+              {% if p.estado_stock == 'rojo' %}
+              <span class="badge bg-danger">Sin Stock</span>
+              {% else %}
+              <span class="badge bg-warning text-dark">Stock Bajo</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'productos:kardex' p.pk %}" class="btn btn-sm btn-info">Kardex</a>
+              <a href="{% url 'productos:entrada' %}" class="btn btn-sm btn-success">Registrar Entrada</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-success text-center">
+      <h4 class="alert-heading">¡Todo en orden!</h4>
+      <p>No hay productos con alertas de stock.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

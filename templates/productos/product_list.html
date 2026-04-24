@@ -1,31 +1,75 @@
-
 {% extends 'base.html' %}
 {% block content %}
 <div class="container py-4">
   <h1 class="mb-4">Listado de Productos</h1>
-  <div class="d-flex justify-content-end mb-3">
-    <a href="{% url 'productos:nuevo' %}" class="btn btn-success">Nuevo producto</a>
+
+  <!-- Search and filter bar -->
+  <form method="get" class="row g-3 mb-3">
+    <div class="col-md-5">
+      <input type="text" name="q" class="form-control" placeholder="Buscar por nombre o proveedor..." value="{{ search|default:'' }}">
+    </div>
+    <div class="col-md-3">
+      <select name="categoria" class="form-select">
+        <option value="">Todas las categorías</option>
+        {% for val, label in categorias %}
+        <option value="{{ val }}" {% if categoria == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+    </div>
+    <div class="col-md-2">
+      <a href="{% url 'productos:lista' %}" class="btn btn-outline-secondary w-100">Limpiar</a>
+    </div>
+  </form>
+
+  <div class="d-flex justify-content-between mb-3">
+    <div>
+      <a href="{% url 'productos:alertas' %}" class="btn btn-outline-danger">
+        Alertas Stock {% if alert_products %}<span class="badge bg-danger">{{ alert_products|length }}</span>{% endif %}
+      </a>
+    </div>
+    <div>
+      <a href="{% url 'productos:nuevo' %}" class="btn btn-success">Nuevo producto</a>
+      <a href="{% url 'productos:entrada' %}" class="btn btn-outline-primary">Entrada inventario</a>
+    </div>
   </div>
-  {% if productos %}
+
+  {% if page_obj %}
     <div class="table-responsive">
       <table class="table table-hover align-middle">
         <thead class="table-dark">
           <tr>
             <th>Nombre</th>
+            <th>Categoría</th>
             <th>Precio</th>
             <th>Stock</th>
-            <th>Actualizado</th>
+            <th>Estado</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {% for p in productos %}
+          {% for p in page_obj %}
           <tr>
-            <td>{{ p.nombre }}</td>
+            <td>
+              {{ p.nombre }}
+              {% if not p.esta_activo %}<span class="badge bg-secondary">Inactivo</span>{% endif %}
+            </td>
+            <td>{{ p.get_categoria_display }}</td>
             <td>${{ p.precio }}</td>
             <td>{{ p.cantidad_stock }}</td>
-            <td>{{ p.fecha_ultima_modificacion|default:'-' }}</td>
             <td>
+              {% if p.estado_stock == 'verde' %}
+              <span class="badge bg-success">OK</span>
+              {% elif p.estado_stock == 'amarillo' %}
+              <span class="badge bg-warning text-dark">Bajo</span>
+              {% else %}
+              <span class="badge bg-danger">Crítico</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'productos:kardex' p.pk %}" class="btn btn-sm btn-info" title="Kardex">Kardex</a>
               <a href="{% url 'productos:editar' p.pk %}" class="btn btn-sm btn-warning">Editar</a>
               <a href="{% url 'productos:eliminar' p.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
             </td>
@@ -37,20 +81,20 @@
     <!-- Paginación -->
     <nav aria-label="Page navigation">
       <ul class="pagination justify-content-center">
-        {% if productos.has_previous %}
-        <li class="page-item"><a class="page-link" href="?page={{ productos.previous_page_number }}">&laquo; Anterior</a></li>
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if categoria %}&categoria={{ categoria }}{% endif %}">&laquo; Anterior</a></li>
         {% else %}
         <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
         {% endif %}
-        {% for num in productos.paginator.page_range %}
-          {% if productos.number == num %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
           <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-          {% elif num >= productos.number|add:-2 and num <= productos.number|add:2 %}
-          <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+          {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+          <li class="page-item"><a class="page-link" href="?page={{ num }}{% if search %}&q={{ search }}{% endif %}{% if categoria %}&categoria={{ categoria }}{% endif %}">{{ num }}</a></li>
           {% endif %}
         {% endfor %}
-        {% if productos.has_next %}
-        <li class="page-item"><a class="page-link" href="?page={{ productos.next_page_number }}">Siguiente &raquo;</a></li>
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}{% if categoria %}&categoria={{ categoria }}{% endif %}">Siguiente &raquo;</a></li>
         {% else %}
         <li class="page-item disabled"><span class="page-link">Siguiente &raquo;</span></li>
         {% endif %}

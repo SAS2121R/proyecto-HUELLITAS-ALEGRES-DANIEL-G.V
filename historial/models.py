@@ -104,6 +104,15 @@ class HistorialClinico(models.Model):
         default='',
         verbose_name='Vacuna aplicada',
     )
+    producto_aplicado = models.ForeignKey(
+        'productos.Producto',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='historiales_clinicos',
+        verbose_name='Producto aplicado',
+        help_text='Producto del inventario utilizado en esta consulta.',
+    )
     proxima_vacunacion = models.DateField(
         null=True,
         blank=True,
