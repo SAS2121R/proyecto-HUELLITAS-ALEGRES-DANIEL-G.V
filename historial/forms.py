@@ -11,7 +11,7 @@ class HistorialClinicoForm(forms.ModelForm):
     class Meta:
         model = HistorialClinico
         fields = [
-            'mascota', 'veterinario', 'tipo_consulta',
+            'mascota', 'tipo_consulta',
             'motivo_consulta', 'diagnostico', 'tratamiento',
             'observaciones', 'peso', 'temperatura',
             'frecuencia_cardiaca', 'frecuencia_respiratoria',

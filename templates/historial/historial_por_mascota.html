@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Historial de {{ mascota.nombre }}</h1>
+    <div>
+      <a href="{% url 'mascotas:detalle' mascota.pk %}" class="btn btn-secondary">← Volver a {{ mascota.nombre }}</a>
+      <a href="{% url 'historial:lista' %}" class="btn btn-outline-primary">Todos los historiales</a>
+    </div>
+  </div>
+
+  {% if historiales %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Motivo</th>
+            <th>Diagnóstico</th>
+            <th>Veterinario</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for hc in historiales %}
+          <tr>
+            <td>{{ hc.fecha_consulta|date:"d/m/Y" }}</td>
+            <td>{{ hc.get_tipo_consulta_display }}</td>
+            <td>{{ hc.motivo_consulta }}</td>
+            <td>{{ hc.diagnostico }}</td>
+            <td>{{ hc.veterinario.get_full_name|default:hc.veterinario.email }}</td>
+            <td>
+              <a href="{% url 'historial:detalle' hc.pk %}" class="btn btn-sm btn-info">Ver</a>
+              {% if user.rol.nombre == 'Veterinario' and hc.veterinario == user or user.rol.nombre == 'Administrador' %}
+              <a href="{% url 'historial:editar' hc.pk %}" class="btn btn-sm btn-warning">Editar</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info text-center">
+      No hay historiales clínicos registrados para {{ mascota.nombre }}.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

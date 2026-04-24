@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4">Atender Cita</h1>
+
+  <div class="card mb-4 border-info">
+    <div class="card-header bg-info text-white">
+      <h6 class="mb-0">Datos de la cita</h6>
+    </div>
+    <div class="card-body">
+      <p><strong>Mascota:</strong> {{ cita.mascota.nombre }}</p>
+      <p><strong>Fecha:</strong> {{ cita.disponibilidad.fecha|date:"d/m/Y" }}</p>
+      <p><strong>Hora:</strong> {{ cita.disponibilidad.hora_inicio }}</p>
+      <p><strong>Motivo:</strong> {{ cita.motivo }}</p>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="mb-3">
+          {% if field.field.widget_type == 'checkbox' %}
+          <div class="form-check">
+            {{ field }}
+            <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}</label>
+          </div>
+          {% else %}
+          <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% endif %}
+          {% if field.errors %}
+          <div class="invalid-feedback d-block">
+            {% for error in field.errors %}
+            {{ error }}
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-primary">Guardar Historial</button>
+          <a href="{% url 'agenda:lista_citas' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

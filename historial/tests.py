@@ -1,20 +1,23 @@
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta
 
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.conf import settings
-from django.core.exceptions import ValidationError
-from django.db.models import ProtectedError
+from django.urls import reverse
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.contrib.auth import get_user_model
+from django.db.models import ProtectedError
 
-from usuarios.models import Rol, Usuario
+from usuarios.models import Rol
 from mascotas.models import Mascota
 from agenda.models import Cita, Disponibilidad
+
+User = get_user_model()
 
 
 def create_user_with_role(rol_nombre, **kwargs):
     """Helper to create a Usuario with the given role."""
     rol, _ = Rol.objects.get_or_create(nombre=rol_nombre)
-    user = Usuario.objects.create_user(
+    user = User.objects.create_user(
         username=kwargs.get('username', f'user_{rol_nombre.lower()}'),
         email=kwargs.get('email', f'{rol_nombre.lower()}@test.com'),
         password='testpass123',
@@ -25,7 +28,7 @@ def create_user_with_role(rol_nombre, **kwargs):
 
 
 # ========================================
-# PHASE 1: Historial Clinico Model + Migration + Admin + URLs
+# PHASE 1: Model Tests (REQ-01 through REQ-07)
 # ========================================
 
 class HistorialClinicoModelTest(TestCase):
@@ -344,24 +347,15 @@ class HistorialAdminTest(TestCase):
 
 
 # ========================================
-# PHASE 2: Form Layer
+# PHASE 2: Form Layer Tests
 # ========================================
 
 class HistorialClinicoFormTest(TestCase):
     """REQ-HC03: HistorialClinicoForm — validation and fields"""
 
     def setUp(self):
-        self.vet_rol = Rol.objects.get(nombre='Veterinario')
-        self.cliente_rol = Rol.objects.get(nombre='Cliente')
-        User = get_user_model()
-        self.vet = User.objects.create_user(
-            username='vet_form', email='vet_form@test.com',
-            password='pass123', rol=self.vet_rol,
-        )
-        self.cliente = User.objects.create_user(
-            username='cliente_form', email='cliente_form@test.com',
-            password='pass123', rol=self.cliente_rol,
-        )
+        self.vet = create_user_with_role('Veterinario', username='vet_form', email='vet_form@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cliente_form', email='cliente_form@test.com')
         self.mascota = Mascota.objects.create(
             nombre='Firulais', especie='Canino', sexo='Macho',
             propietario=self.cliente,
@@ -374,7 +368,6 @@ class HistorialClinicoFormTest(TestCase):
             'mascota': self.mascota.pk,
             'veterinario': self.vet.pk,
             'tipo_consulta': 'consulta',
-            # missing motivo_consulta and diagnostico
         })
         self.assertFalse(form.is_valid())
         self.assertIn('motivo_consulta', form.errors)
@@ -474,17 +467,8 @@ class AtenderCitaFormTest(TestCase):
     """REQ-HC04: AtenderCitaForm — smart tipo_consulta inference and pre-fill"""
 
     def setUp(self):
-        self.vet_rol = Rol.objects.get(nombre='Veterinario')
-        self.cliente_rol = Rol.objects.get(nombre='Cliente')
-        User = get_user_model()
-        self.vet = User.objects.create_user(
-            username='vet_atender', email='vet_atender@test.com',
-            password='pass123', rol=self.vet_rol,
-        )
-        self.cliente = User.objects.create_user(
-            username='cliente_atender', email='cliente_atender@test.com',
-            password='pass123', rol=self.cliente_rol,
-        )
+        self.vet = create_user_with_role('Veterinario', username='vet_atender', email='vet_atender@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cliente_atender', email='cliente_atender@test.com')
         self.mascota = Mascota.objects.create(
             nombre='Firulais', especie='Canino', sexo='Macho',
             propietario=self.cliente,
@@ -563,7 +547,346 @@ class AtenderCitaFormTest(TestCase):
         form_upper = AtenderCitaForm(cita=cita_upper)
         self.assertEqual(form_upper.fields['tipo_consulta'].initial, 'cirugia')
 
-        # Test lowercase accented
         cita_lower = self._create_cita(motivo='vacunación anual')
         form_lower = AtenderCitaForm(cita=cita_lower)
         self.assertEqual(form_lower.fields['tipo_consulta'].initial, 'vacunacion')
+
+
+# ========================================
+# PHASE 3: View Tests
+# ========================================
+
+class ListaHistorialesViewTest(TestCase):
+    """REQ-HC05: lista_historiales — role-based filtering, search, pagination"""
+
+    def setUp(self):
+        self.vet = create_user_with_role('Veterinario', username='vet_list', email='vet_list@test.com')
+        self.admin = create_user_with_role('Administrador', username='admin_list', email='admin_list@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cliente_list', email='cliente_list@test.com')
+        self.other_cliente = create_user_with_role('Cliente', username='other_list', email='other_list@test.com')
+        self.mascota1 = Mascota.objects.create(
+            nombre='Fido', especie='Canino', sexo='Macho', propietario=self.cliente,
+        )
+        self.mascota2 = Mascota.objects.create(
+            nombre='Mishi', especie='Felino', sexo='Hembra', propietario=self.other_cliente,
+        )
+        from historial.models import HistorialClinico
+        self.hc1 = HistorialClinico.objects.create(
+            mascota=self.mascota1, veterinario=self.vet,
+            tipo_consulta='consulta', motivo_consulta='Revisión', diagnostico='Sano',
+        )
+        self.hc2 = HistorialClinico.objects.create(
+            mascota=self.mascota2, veterinario=self.vet,
+            tipo_consulta='vacunacion', motivo_consulta='Vacunación', diagnostico='OK',
+        )
+
+    def test_vet_sees_own_historiales(self):
+        """Vet sees only historiales where they are the vet"""
+        self.client.force_login(self.vet)
+        resp = self.client.get(reverse('historial:lista'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Revisión')
+        self.assertContains(resp, 'Vacunación')
+
+    def test_admin_sees_all_historiales(self):
+        """Admin sees all historiales"""
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse('historial:lista'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Fido')
+        self.assertContains(resp, 'Mishi')
+
+    def test_cliente_sees_own_pets_historiales(self):
+        """Cliente sees only historiales of own pets"""
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('historial:lista'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Fido')
+        self.assertNotContains(resp, 'Mishi')
+
+    def test_search_by_mascota_nombre(self):
+        """Search filters by mascota nombre"""
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse('historial:lista'), {'q': 'Fido'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Revisión')
+        self.assertNotContains(resp, 'Vacunación')
+
+    def test_search_by_diagnostico(self):
+        """Search filters by diagnostico"""
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse('historial:lista'), {'q': 'Sano'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Fido')
+        self.assertNotContains(resp, 'Mishi')
+
+    def test_anonymous_redirected_to_login(self):
+        """Anonymous user redirected to login"""
+        resp = self.client.get(reverse('historial:lista'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/usuarios/login/', resp.url)
+
+
+class CrearHistorialViewTest(TestCase):
+    """REQ-HC06: crear_historial — Vet/Admin can create, Cliente 403"""
+
+    def setUp(self):
+        self.vet = create_user_with_role('Veterinario', username='vet_crear', email='vet_crear@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cliente_crear', email='cliente_crear@test.com')
+        self.mascota = Mascota.objects.create(
+            nombre='Fido', especie='Canino', sexo='Macho', propietario=self.cliente,
+        )
+
+    def test_vet_creates_historial(self):
+        """Vet creates historial directly"""
+        self.client.force_login(self.vet)
+        resp = self.client.post(reverse('historial:crear'), {
+            'mascota': self.mascota.pk,
+            'tipo_consulta': 'consulta',
+            'motivo_consulta': 'Chequeo general',
+            'diagnostico': 'Animal sano',
+        })
+        self.assertEqual(resp.status_code, 302)
+        from historial.models import HistorialClinico
+        hc = HistorialClinico.objects.get(motivo_consulta='Chequeo general')
+        self.assertEqual(hc.veterinario, self.vet)
+
+    def test_cliente_cannot_create_403(self):
+        """Cliente gets 403 when trying to create historial"""
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('historial:crear'))
+        self.assertEqual(resp.status_code, 403)
+
+
+class DetalleHistorialViewTest(TestCase):
+    """REQ-HC07: detalle_historial — object-level permissions"""
+
+    def setUp(self):
+        self.vet = create_user_with_role('Veterinario', username='vet_det', email='vet_det@test.com')
+        self.admin = create_user_with_role('Administrador', username='admin_det', email='admin_det@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cliente_det', email='cliente_det@test.com')
+        self.other_cliente = create_user_with_role('Cliente', username='other_det', email='other_det@test.com')
+        self.mascota_own = Mascota.objects.create(
+            nombre='Fido', especie='Canino', sexo='Macho', propietario=self.cliente,
+        )
+        self.mascota_other = Mascota.objects.create(
+            nombre='Mishi', especie='Felino', sexo='Hembra', propietario=self.other_cliente,
+        )
+        from historial.models import HistorialClinico
+        self.hc_own = HistorialClinico.objects.create(
+            mascota=self.mascota_own, veterinario=self.vet,
+            tipo_consulta='consulta', motivo_consulta='Test own', diagnostico='OK',
+        )
+        self.hc_other = HistorialClinico.objects.create(
+            mascota=self.mascota_other, veterinario=self.vet,
+            tipo_consulta='consulta', motivo_consulta='Test other', diagnostico='OK',
+        )
+
+    def test_vet_views_own_historial(self):
+        """Vet can view own historial"""
+        self.client.force_login(self.vet)
+        resp = self.client.get(reverse('historial:detalle', kwargs={'pk': self.hc_own.pk}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_admin_views_any_historial(self):
+        """Admin can view any historial"""
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse('historial:detalle', kwargs={'pk': self.hc_other.pk}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_cliente_views_own_pet_historial(self):
+        """Cliente can view historial of own pet"""
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('historial:detalle', kwargs={'pk': self.hc_own.pk}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_cliente_cannot_view_other_pet_historial(self):
+        """Cliente gets 403 for other pet's historial"""
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('historial:detalle', kwargs={'pk': self.hc_other.pk}))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_nonexistent_historial_404(self):
+        """Nonexistent historial returns 404"""
+        self.client.force_login(self.vet)
+        resp = self.client.get(reverse('historial:detalle', kwargs={'pk': 99999}))
+        self.assertEqual(resp.status_code, 404)
+
+    def test_anonymous_redirected_to_login(self):
+        """Anonymous user redirected to login"""
+        resp = self.client.get(reverse('historial:detalle', kwargs={'pk': self.hc_own.pk}))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/usuarios/login/', resp.url)
+
+
+class EditarHistorialViewTest(TestCase):
+    """REQ-HC08: editar_historial — ownership checks"""
+
+    def setUp(self):
+        self.vet1 = create_user_with_role('Veterinario', username='vet_edit1', email='vet_edit1@test.com')
+        self.vet2 = create_user_with_role('Veterinario', username='vet_edit2', email='vet_edit2@test.com')
+        self.admin = create_user_with_role('Administrador', username='admin_edit', email='admin_edit@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cliente_edit', email='cliente_edit@test.com')
+        self.mascota = Mascota.objects.create(
+            nombre='Fido', especie='Canino', sexo='Macho', propietario=self.cliente,
+        )
+        from historial.models import HistorialClinico
+        self.hc = HistorialClinico.objects.create(
+            mascota=self.mascota, veterinario=self.vet1,
+            tipo_consulta='consulta', motivo_consulta='Original', diagnostico='Test',
+        )
+
+    def test_vet_edits_own_historial(self):
+        """Vet can edit own historial"""
+        self.client.force_login(self.vet1)
+        resp = self.client.post(reverse('historial:editar', kwargs={'pk': self.hc.pk}), {
+            'mascota': self.mascota.pk,
+            'tipo_consulta': 'consulta',
+            'motivo_consulta': 'Updated motivo',
+            'diagnostico': 'Updated diag',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.hc.refresh_from_db()
+        self.assertEqual(self.hc.motivo_consulta, 'Updated motivo')
+
+    def test_vet_cannot_edit_other_vet_historial(self):
+        """Vet gets 403 for other vet's historial"""
+        self.client.force_login(self.vet2)
+        resp = self.client.get(reverse('historial:editar', kwargs={'pk': self.hc.pk}))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_cliente_cannot_edit_historial(self):
+        """Cliente always gets 403 for edit"""
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('historial:editar', kwargs={'pk': self.hc.pk}))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_admin_edits_any_historial(self):
+        """Admin can edit any historial"""
+        self.client.force_login(self.admin)
+        resp = self.client.post(reverse('historial:editar', kwargs={'pk': self.hc.pk}), {
+            'mascota': self.mascota.pk,
+            'tipo_consulta': 'consulta',
+            'motivo_consulta': 'Admin edit',
+            'diagnostico': 'Admin diag',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.hc.refresh_from_db()
+        self.assertEqual(self.hc.motivo_consulta, 'Admin edit')
+
+
+class HistorialPorMascotaViewTest(TestCase):
+    """REQ-HC09: historial_por_mascota — client isolation"""
+
+    def setUp(self):
+        self.vet = create_user_with_role('Veterinario', username='vet_masc', email='vet_masc@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cliente_masc', email='cliente_masc@test.com')
+        self.other_cliente = create_user_with_role('Cliente', username='other_masc', email='other_masc@test.com')
+        self.mascota_own = Mascota.objects.create(
+            nombre='Fido', especie='Canino', sexo='Macho', propietario=self.cliente,
+        )
+        self.mascota_other = Mascota.objects.create(
+            nombre='Mishi', especie='Felino', sexo='Hembra', propietario=self.other_cliente,
+        )
+        from historial.models import HistorialClinico
+        HistorialClinico.objects.create(
+            mascota=self.mascota_own, veterinario=self.vet,
+            tipo_consulta='consulta', motivo_consulta='Test', diagnostico='OK',
+        )
+
+    def test_cliente_views_own_pet_history(self):
+        """Cliente views own pet's full history"""
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('historial:por_mascota', kwargs={'mascota_pk': self.mascota_own.pk}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_cliente_cannot_view_other_pet_history(self):
+        """Cliente gets 403 for other pet's history"""
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('historial:por_mascota', kwargs={'mascota_pk': self.mascota_other.pk}))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_vet_views_any_pet_history(self):
+        """Vet can view any pet's history"""
+        self.client.force_login(self.vet)
+        resp = self.client.get(reverse('historial:por_mascota', kwargs={'mascota_pk': self.mascota_own.pk}))
+        self.assertEqual(resp.status_code, 200)
+
+
+class AtenderCitaViewTest(TestCase):
+    """REQ-HC10: atender_cita — atomic transaction, state validation, role access"""
+
+    def setUp(self):
+        self.vet = create_user_with_role('Veterinario', username='vet_at', email='vet_at@test.com')
+        self.admin = create_user_with_role('Administrador', username='admin_at', email='admin_at@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cliente_at', email='cliente_at@test.com')
+        self.mascota = Mascota.objects.create(
+            nombre='Fido', especie='Canino', sexo='Macho', propietario=self.cliente,
+        )
+        self.disp = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 6, 1),
+            hora_inicio='10:00', hora_fin='11:00',
+        )
+
+    def _create_programada(self, motivo=''):
+        return Cita.objects.create(
+            mascota=self.mascota, disponibilidad=self.disp,
+            estado='Programada', motivo=motivo,
+        )
+
+    def test_vet_attends_cita_successfully(self):
+        """Vet attends scheduled cita — creates HistorialClinico + Cita becomes Atendida"""
+        from historial.models import HistorialClinico
+        cita = self._create_programada(motivo='Vacunación anual')
+        self.client.force_login(self.vet)
+        resp = self.client.post(reverse('historial:atender_cita', kwargs={'cita_pk': cita.pk}), {
+            'tipo_consulta': 'vacunacion',
+            'motivo_consulta': 'Vacunación anual',
+            'diagnostico': 'Sano, vacuna aplicada',
+        })
+        self.assertEqual(resp.status_code, 302)
+        cita.refresh_from_db()
+        self.assertEqual(cita.estado, 'Atendida')
+        hc = HistorialClinico.objects.get(cita=cita)
+        self.assertEqual(hc.veterinario, self.vet)
+        self.assertEqual(hc.mascota, self.mascota)
+
+    def test_cannot_attend_already_atendida(self):
+        """Cannot attend a cita that is already Atendida"""
+        cita = self._create_programada(motivo='Test')
+        cita.estado = 'Atendida'
+        cita.save()
+        self.client.force_login(self.vet)
+        resp = self.client.get(reverse('historial:atender_cita', kwargs={'cita_pk': cita.pk}))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_cannot_attend_cancelled_cita(self):
+        """Cannot attend a cancelled cita"""
+        cita = self._create_programada(motivo='Test')
+        cita.estado = 'Cancelada'
+        cita.motivo_cancelacion = 'No asistió'
+        cita.save()
+        self.client.force_login(self.vet)
+        resp = self.client.get(reverse('historial:atender_cita', kwargs={'cita_pk': cita.pk}))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_cliente_cannot_attend_cita(self):
+        """Cliente gets 403 when trying to attend a cita"""
+        cita = self._create_programada(motivo='Test')
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('historial:atender_cita', kwargs={'cita_pk': cita.pk}))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_nonexistent_cita_404(self):
+        """Nonexistent cita returns 404"""
+        self.client.force_login(self.vet)
+        resp = self.client.get(reverse('historial:atender_cita', kwargs={'cita_pk': 99999}))
+        self.assertEqual(resp.status_code, 404)
+
+    def test_attend_cita_pre_fills_form(self):
+        """GET atender_cita shows form with pre-filled data from cita"""
+        cita = self._create_programada(motivo='Vacunación contra rabia')
+        self.client.force_login(self.vet)
+        resp = self.client.get(reverse('historial:atender_cita', kwargs={'cita_pk': cita.pk}))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Vacunación contra rabia')
