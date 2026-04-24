@@ -45,7 +45,10 @@ class CitaForm(forms.ModelForm):
 
     class Meta:
         model = Cita
-        fields = ['mascota', 'disponibilidad', 'estado', 'motivo_cancelacion']
+        fields = ['mascota', 'disponibilidad', 'estado', 'motivo_cancelacion', 'motivo']
+        widgets = {
+            'motivo': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Describa el motivo de la consulta'}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
