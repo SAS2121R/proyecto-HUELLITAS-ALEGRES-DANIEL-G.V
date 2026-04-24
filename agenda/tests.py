@@ -1061,7 +1061,7 @@ class CitaURLTest(TestCase):
         self.assertEqual(url_editar, '/agenda/citas/editar/5/')
 
         url_eliminar = reverse('agenda:eliminar_cita', kwargs={'pk': 5})
-        self.assertEqual(url_eliminar, '/agenda/citas/eliminar/5')
+        self.assertEqual(url_eliminar, '/agenda/citas/eliminar/5/')
 
 
 class CitaAdminTest(TestCase):
