@@ -3,6 +3,7 @@ from . import views
 
 app_name = 'agenda'
 urlpatterns = [
+    path('', views.dashboard_vet, name='dashboard_vet'),
     path('disponibilidades/', views.lista_disponibilidades, name='lista_disponibilidad'),
     path('disponibilidades/nuevo/', views.crear_disponibilidad, name='crear_disponibilidad'),
     path('disponibilidades/editar/<int:pk>/', views.editar_disponibilidad, name='editar_disponibilidad'),

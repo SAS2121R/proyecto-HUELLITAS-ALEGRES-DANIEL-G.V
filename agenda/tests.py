@@ -498,10 +498,13 @@ class DisponibilidadCreateViewTest(TestCase):
             'hora_inicio': '09:00',
             'hora_fin': '11:00',
             'activa': True,
+            'veterinario': self.vet_user.pk,
         })
         self.assertEqual(resp.status_code, 302)
         from agenda.models import Disponibilidad
         self.assertEqual(Disponibilidad.objects.count(), 1)
+        d = Disponibilidad.objects.first()
+        self.assertEqual(d.veterinario, self.vet_user)
 
     def test_cliente_recibe_403(self):
         """R6.3: Cliente gets 403 Forbidden on GET and POST"""
@@ -593,6 +596,7 @@ class DisponibilidadEditViewTest(TestCase):
             'hora_inicio': '08:00',
             'hora_fin': '10:00',
             'activa': True,
+            'veterinario': self.vet2_user.pk,
         })
         self.assertEqual(resp.status_code, 302)
         self.disp2.refresh_from_db()
@@ -1743,3 +1747,132 @@ class CitaCancelViewTest(TestCase):
         resp = self.client.get(reverse('agenda:eliminar_cita', kwargs={'pk': self.cita.pk}))
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/usuarios/login/', resp.url)
+
+
+# ========================================
+# PHASE 7: Dashboard Vet & Delete Protection
+# ========================================
+
+class VetDashboardViewTest(TestCase):
+    """Tests for combined vet dashboard showing disponibilidades + citas."""
+
+    def setUp(self):
+        self.vet1 = create_user_with_role('Veterinario', username='vet_dash1', email='vet_dash1@test.com')
+        self.vet2 = create_user_with_role('Veterinario', username='vet_dash2', email='vet_dash2@test.com')
+        self.admin = create_user_with_role('Administrador', username='admin_dash', email='admin_dash@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cli_dash', email='cli_dash@test.com')
+        self.mascota = Mascota.objects.create(
+            nombre='Firulais', especie='Canino', sexo='Macho', propietario=self.cliente,
+        )
+        self.disp1 = Disponibilidad.objects.create(
+            veterinario=self.vet1, fecha=date(2026, 6, 15),
+            hora_inicio=time(9, 0), hora_fin=time(10, 0),
+        )
+        self.disp2 = Disponibilidad.objects.create(
+            veterinario=self.vet2, fecha=date(2026, 6, 16),
+            hora_inicio=time(11, 0), hora_fin=time(12, 0),
+        )
+        self.cita1 = Cita.objects.create(
+            mascota=self.mascota, disponibilidad=self.disp1, estado='Programada',
+        )
+
+    def test_vet_sees_own_disponibilidades(self):
+        """D1.1: Vet dashboard shows only their own disponibilidades"""
+        self.client.force_login(self.vet1)
+        resp = self.client.get(reverse('agenda:dashboard_vet'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, '15/06/2026')  # vet1's date
+        self.assertNotContains(resp, '16/06/2026')  # vet2's date
+
+    def test_vet_sees_own_citas(self):
+        """D1.2: Vet dashboard shows only their own citas"""
+        self.client.force_login(self.vet1)
+        resp = self.client.get(reverse('agenda:dashboard_vet'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Firulais')  # cita1's mascota
+
+    def test_vet2_sees_different_data(self):
+        """D1.3: Vet2 sees only their own disponibilidades"""
+        self.client.force_login(self.vet2)
+        resp = self.client.get(reverse('agenda:dashboard_vet'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, '16/06/2026')  # vet2's date
+        self.assertNotContains(resp, '15/06/2026')  # vet1's date
+
+    def test_admin_sees_all(self):
+        """D1.4: Admin dashboard shows all disponibilidades"""
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse('agenda:dashboard_vet'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, '15/06/2026')
+        self.assertContains(resp, '16/06/2026')
+
+    def test_cliente_gets_403(self):
+        """D1.5: Cliente gets 403 on dashboard"""
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('agenda:dashboard_vet'))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_anonymous_redirected(self):
+        """D1.6: Anonymous user redirected to login"""
+        resp = self.client.get(reverse('agenda:dashboard_vet'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/usuarios/login/', resp.url)
+
+
+class DisponibilidadDeleteProtectionTest(TestCase):
+    """Tests for deleting disponibilidad with linked citas — ProtectedError handling."""
+
+    def setUp(self):
+        self.vet = create_user_with_role('Veterinario', username='vet_delprot', email='vet_delprot@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cli_delprot', email='cli_delprot@test.com')
+        self.mascota = Mascota.objects.create(
+            nombre='Firulais', especie='Canino', sexo='Macho', propietario=self.cliente,
+        )
+        self.disp = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 7, 1),
+            hora_inicio=time(10, 0), hora_fin=time(11, 0),
+        )
+
+    def test_delete_disponibilidad_with_cita_shows_error(self):
+        """D2.1: Deleting disponibilidad with citas shows friendly error message"""
+        Cita.objects.create(mascota=self.mascota, disponibilidad=self.disp, estado='Programada')
+        self.client.force_login(self.vet)
+        resp = self.client.post(reverse('agenda:eliminar_disponibilidad', kwargs={'pk': self.disp.pk}))
+        self.assertEqual(resp.status_code, 200)  # Re-renders with error
+        self.assertContains(resp, 'citas')  # Error message mentions citas
+        # Disponibilidad should NOT be deleted
+        self.assertTrue(Disponibilidad.objects.filter(pk=self.disp.pk).exists())
+
+    def test_delete_disponibilidad_without_cita_succeeds(self):
+        """D2.2: Deleting disponibilidad without citas succeeds"""
+        self.client.force_login(self.vet)
+        resp = self.client.post(reverse('agenda:eliminar_disponibilidad', kwargs={'pk': self.disp.pk}))
+        self.assertEqual(resp.status_code, 302)  # Redirect on success
+        self.assertEqual(Disponibilidad.objects.count(), 0)
+
+    def test_delete_disponibilidad_client_403(self):
+        """D2.3: Cliente gets 403 trying to delete disponibilidad"""
+        self.client.force_login(self.cliente)
+        resp = self.client.post(reverse('agenda:eliminar_disponibilidad', kwargs={'pk': self.disp.pk}))
+        self.assertEqual(resp.status_code, 403)
+
+
+class AdminDisponibilidadFormTest(TestCase):
+    """Tests for Admin being able to choose vet in DisponibilidadForm."""
+
+    def setUp(self):
+        self.admin = create_user_with_role('Administrador', username='admin_dispform', email='admin_dispform@test.com')
+        self.vet = create_user_with_role('Veterinario', username='vet_dispform', email='vet_dispform@test.com')
+
+    def test_admin_sees_veterinario_field(self):
+        """D3.1: Admin sees veterinario field in DisponibilidadForm"""
+        from agenda.forms import DisponibilidadForm
+        form = DisponibilidadForm(user=self.admin)
+        self.assertIn('veterinario', form.fields)
+
+    def test_vet_does_not_see_veterinario_field(self):
+        """D3.2: Vet does not see veterinario field (auto-set to themselves)"""
+        from agenda.forms import DisponibilidadForm
+        form = DisponibilidadForm(user=self.vet)
+        self.assertNotIn('veterinario', form.fields)

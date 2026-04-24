@@ -16,19 +16,36 @@ class DisponibilidadForm(forms.ModelForm):
             'activa': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        # Admin can choose which vet to assign; Vet auto-assigns to themselves
+        if user and user.rol.nombre == 'Administrador':
+            self.fields['veterinario'] = forms.ModelChoiceField(
+                queryset=user.__class__.objects.filter(rol__nombre='Veterinario'),
+                required=True,
+                label='Veterinario',
+            )
+            # If editing, pre-select current vet
+            if self.instance and self.instance.veterinario_id:
+                self.initial['veterinario'] = self.instance.veterinario_id
+
     def clean(self):
         cleaned_data = super().clean()
-        # Create instance with form data to validate via model's clean()
-        instance = Disponibilidad(**cleaned_data)
+        # Build instance for model validation
+        instance = Disponibilidad(**{
+            k: v for k, v in cleaned_data.items()
+            if k not in ('veterinario',)
+        })
+        # Set veterinario: Admin chose it from the form field; Vet is set by the view
+        vet = cleaned_data.get('veterinario')
+        if vet:
+            instance.veterinario = vet
+        elif self.instance and self.instance.veterinario_id:
+            instance.veterinario = self.instance.veterinario
         if self.instance.pk:
             instance.pk = self.instance.pk
-        # If veterinario is set on the form instance (from view), pass it through
-        if hasattr(self, 'instance') and self.instance.veterinario_id:
-            instance.veterinario = self.instance.veterinario
         try:
-            # Use clean() instead of full_clean() to avoid FK limit_choices_to
-            # validation and unique checks. Field validation is already done
-            # by the form; we only need business logic validation.
             instance.clean()
         except ValidationError as e:
             for field, msgs in e.message_dict.items():
@@ -38,6 +55,14 @@ class DisponibilidadForm(forms.ModelForm):
                     else:
                         self.add_error(None, msg)
         return cleaned_data
+
+    def save(self, commit=True):
+        """Override save to handle veterinario for Admin users."""
+        # veterinario is in Meta.exclude, so ModelForm won't save it.
+        # If Admin submitted it via the dynamic field, set it manually.
+        if 'veterinario' in self.cleaned_data:
+            self.instance.veterinario = self.cleaned_data['veterinario']
+        return super().save(commit=commit)
 
 
 class CitaForm(forms.ModelForm):

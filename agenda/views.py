@@ -3,9 +3,40 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import ProtectedError
 from usuarios.decorators import role_required
 from .models import Disponibilidad, Cita
 from .forms import DisponibilidadForm, CitaForm
+
+
+@login_required(login_url='/usuarios/login/')
+def dashboard_vet(request):
+    """Dashboard veterinario — disponibilidades + citas del usuario actual."""
+    if request.user.rol.nombre == 'Cliente':
+        raise PermissionDenied
+    if request.user.rol.nombre == 'Veterinario':
+        disponibilidades = Disponibilidad.objects.filter(veterinario=request.user)
+        citas = Cita.objects.filter(disponibilidad__veterinario=request.user)
+    else:  # Administrador
+        disponibilidades = Disponibilidad.objects.all()
+        citas = Cita.objects.all()
+    citas = citas.select_related('mascota', 'disponibilidad', 'disponibilidad__veterinario')
+    disponibilidad_paginator = Paginator(disponibilidades, 10)
+    cita_paginator = Paginator(citas, 10)
+    disp_page = request.GET.get('disp_page', 1)
+    cita_page = request.GET.get('cita_page', 1)
+    try:
+        page_obj_disp = disponibilidad_paginator.page(disp_page)
+    except (PageNotAnInteger, EmptyPage):
+        page_obj_disp = disponibilidad_paginator.page(1)
+    try:
+        page_obj_citas = cita_paginator.page(cita_page)
+    except (PageNotAnInteger, EmptyPage):
+        page_obj_citas = cita_paginator.page(1)
+    return render(request, 'agenda/dashboard_vet.html', {
+        'page_obj_disp': page_obj_disp,
+        'page_obj_citas': page_obj_citas,
+    })
 
 
 @login_required(login_url='/usuarios/login/')
@@ -28,16 +59,17 @@ def lista_disponibilidades(request):
 
 @role_required('Veterinario', 'Administrador')
 def crear_disponibilidad(request):
-    """Crear nueva disponibilidad — Vet crea propia, Admin puede crear."""
+    """Crear nueva disponibilidad — Vet crea propia, Admin puede elegir vet."""
     if request.method == 'POST':
-        form = DisponibilidadForm(request.POST)
-        form.instance.veterinario = request.user
+        form = DisponibilidadForm(request.POST, user=request.user)
+        if request.user.rol.nombre == 'Veterinario':
+            form.instance.veterinario = request.user
         if form.is_valid():
             form.save()
             messages.success(request, 'Disponibilidad creada exitosamente.')
             return redirect('agenda:lista_disponibilidad')
     else:
-        form = DisponibilidadForm()
+        form = DisponibilidadForm(user=request.user)
     return render(request, 'agenda/disponibilidad_form.html', {'form': form})
 
 
@@ -50,13 +82,13 @@ def editar_disponibilidad(request, pk):
     if request.user.rol.nombre == 'Veterinario' and disponibilidad.veterinario != request.user:
         raise PermissionDenied
     if request.method == 'POST':
-        form = DisponibilidadForm(request.POST, instance=disponibilidad)
+        form = DisponibilidadForm(request.POST, instance=disponibilidad, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, 'Disponibilidad actualizada exitosamente.')
             return redirect('agenda:lista_disponibilidad')
     else:
-        form = DisponibilidadForm(instance=disponibilidad)
+        form = DisponibilidadForm(instance=disponibilidad, user=request.user)
     return render(request, 'agenda/disponibilidad_form.html', {'form': form})
 
 
@@ -69,9 +101,13 @@ def eliminar_disponibilidad(request, pk):
     if request.user.rol.nombre == 'Veterinario' and disponibilidad.veterinario != request.user:
         raise PermissionDenied
     if request.method == 'POST':
-        disponibilidad.delete()
-        messages.success(request, 'Disponibilidad eliminada exitosamente.')
-        return redirect('agenda:lista_disponibilidad')
+        try:
+            disponibilidad.delete()
+            messages.success(request, 'Disponibilidad eliminada exitosamente.')
+            return redirect('agenda:lista_disponibilidad')
+        except ProtectedError:
+            messages.error(request, 'No se puede eliminar esta disponibilidad porque tiene citas vinculadas. Cancele o reasigne las citas primero.')
+            return render(request, 'agenda/disponibilidad_confirm_delete.html', {'disponibilidad': disponibilidad})
     return render(request, 'agenda/disponibilidad_confirm_delete.html', {'disponibilidad': disponibilidad})
 
 
