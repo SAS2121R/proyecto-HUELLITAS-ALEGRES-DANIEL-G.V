@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <div class="card border-danger">
+    <div class="card-header bg-danger text-white">
+      <h4 class="mb-0">Confirmar Eliminación de Archivo</h4>
+    </div>
+    <div class="card-body">
+      <p>¿Está seguro de que desea eliminar el archivo <strong>"{{ adjunto.archivo.name.split|last }}"</strong>?</p>
+      <p class="text-muted">Tipo: {{ adjunto.get_tipo_display }} | Subido: {{ adjunto.fecha_subida|date:"d/m/Y H:i" }}</p>
+      {% if adjunto.descripcion %}
+      <p><strong>Descripción:</strong> {{ adjunto.descripcion }}</p>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Sí, eliminar archivo</button>
+        <a href="{% url 'historial:detalle' adjunto.historial_clinico_id %}" class="btn btn-outline-secondary">Cancelar</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

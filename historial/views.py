@@ -7,9 +7,9 @@ from django.db import transaction
 from django.db.models import Q
 
 from usuarios.decorators import role_required
-from .models import HistorialClinico
-from .forms import HistorialClinicoForm, AtenderCitaForm
-from agenda.models import Cita
+from .models import HistorialClinico, Adjunto
+from .forms import HistorialClinicoForm, AtenderCitaForm, AdjuntoForm
+from agenda.models import Cita, Disponibilidad
 from mascotas.models import Mascota
 
 
@@ -188,4 +188,65 @@ def atender_cita(request, cita_pk):
     return render(request, 'historial/atender_cita_form.html', {
         'form': form,
         'cita': cita,
+    })
+
+
+# ========================================
+# Adjunto Views (file uploads)
+# ========================================
+
+@role_required('Veterinario', 'Administrador')
+def subir_adjunto(request, pk):
+    """Upload a file attachment to a HistorialClinico record.
+
+    Only the vet who created the historial or an Admin can upload.
+    File size must not exceed MAX_ADJUNTO_SIZE (5MB).
+    """
+    historial = get_object_or_404(HistorialClinico, pk=pk)
+
+    # Permission check: only own vet or admin
+    if request.user.rol.nombre == 'Veterinario' and historial.veterinario != request.user:
+        raise PermissionDenied
+
+    if request.method == 'POST':
+        form = AdjuntoForm(request.POST, request.FILES)
+        if form.is_valid():
+            adjunto = form.save(commit=False)
+            adjunto.historial_clinico = historial
+            adjunto.subido_por = request.user
+            adjunto.save()
+            messages.success(request, f'Archivo "{adjunto.archivo.name.split("/")[-1]}" subido exitosamente.')
+            return redirect('historial:detalle', pk=historial.pk)
+    else:
+        form = AdjuntoForm()
+
+    return render(request, 'historial/adjunto_form.html', {
+        'form': form,
+        'historial': historial,
+    })
+
+
+@role_required('Veterinario', 'Administrador')
+def eliminar_adjunto(request, pk):
+    """Delete a file attachment.
+
+    Only the vet who uploaded it or an Admin can delete.
+    POST required (no GET delete).
+    """
+    adjunto = get_object_or_404(Adjunto, pk=pk)
+
+    # Permission check: only the uploader (vet) or admin
+    if request.user.rol.nombre == 'Veterinario' and adjunto.subido_por != request.user:
+        raise PermissionDenied
+
+    if request.method == 'POST':
+        historial_pk = adjunto.historial_clinico_id
+        # Delete the actual file from storage
+        adjunto.archivo.delete(save=False)
+        adjunto.delete()
+        messages.success(request, 'Archivo eliminado exitosamente.')
+        return redirect('historial:detalle', pk=historial_pk)
+
+    return render(request, 'historial/adjunto_confirm_delete.html', {
+        'adjunto': adjunto,
     })

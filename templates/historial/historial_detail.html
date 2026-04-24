@@ -127,6 +127,55 @@
   </div>
   {% endif %}
 
+  <!-- Attached Files Section -->
+  <h5 class="mb-3 mt-4">📎 Archivos Adjuntos</h5>
+
+  {% if user.rol.nombre == 'Veterinario' and historial.veterinario == user or user.rol.nombre == 'Administrador' %}
+  <a href="{% url 'historial:subir_adjunto' historial.pk %}" class="btn btn-outline-primary btn-sm mb-3">
+    + Subir Archivo
+  </a>
+  {% endif %}
+
+  {% if historial.adjuntos.all %}
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Tipo</th>
+          <th>Archivo</th>
+          <th>Descripción</th>
+          <th>Subido por</th>
+          <th>Fecha</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for adjunto in historial.adjuntos.all %}
+        <tr>
+          <td>
+            {% if adjunto.tipo == 'radiografia' %}<span class="badge bg-info">Radiografía</span>
+            {% elif adjunto.tipo == 'laboratorio' %}<span class="badge bg-success">Laboratorio</span>
+            {% elif adjunto.tipo == 'foto' %}<span class="badge bg-warning text-dark">Fotografía</span>
+            {% else %}<span class="badge bg-secondary">Otro</span>{% endif %}
+          </td>
+          <td><a href="{{ adjunto.archivo.url }}" target="_blank">{{ adjunto.archivo.name|cut:"adjuntos/" }}</a></td>
+          <td>{{ adjunto.descripcion|default:"—" }}</td>
+          <td>{{ adjunto.subido_por.email|default:"—" }}</td>
+          <td>{{ adjunto.fecha_subida|date:"d/m/Y H:i" }}</td>
+          <td>
+            {% if user.rol.nombre == 'Veterinario' and adjunto.subido_por == user or user.rol.nombre == 'Administrador' %}
+            <a href="{% url 'historial:eliminar_adjunto' adjunto.pk %}" class="btn btn-sm btn-outline-danger">Eliminar</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-light text-center">No hay archivos adjuntos para este historial.</div>
+  {% endif %}
+
   <!-- Actions -->
   <div class="d-flex gap-2 flex-wrap">
     {% if user.rol.nombre == 'Veterinario' and historial.veterinario == user or user.rol.nombre == 'Administrador' %}

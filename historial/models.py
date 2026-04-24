@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
 
 TIPO_CONSULTA_CHOICES = [
     ('consulta', 'Consulta general'),
@@ -131,3 +132,76 @@ class HistorialClinico(models.Model):
 
     def __str__(self):
         return f"{self.mascota} - {self.get_tipo_consulta_display()} ({self.fecha_consulta.strftime('%d/%m/%Y')})"
+
+
+# Maximum file size for attachments: 5 MB
+MAX_ADJUNTO_SIZE = 5 * 1024 * 1024  # 5242880 bytes
+
+TIPO_ADJUNTO_CHOICES = [
+    ('radiografia', 'Radiografía'),
+    ('laboratorio', 'Laboratorio'),
+    ('foto', 'Fotografía'),
+    ('otro', 'Otro'),
+]
+
+
+def adjunto_upload_path(instance, filename):
+    """Upload path: media/adjuntos/<historial_pk>/<filename>"""
+    return f'adjuntos/{instance.historial_clinico_id}/{filename}'
+
+
+class Adjunto(models.Model):
+    """Archivo adjunto a un registro de historial clínico."""
+
+    historial_clinico = models.ForeignKey(
+        HistorialClinico,
+        on_delete=models.PROTECT,
+        related_name='adjuntos',
+        verbose_name='Historial clínico',
+    )
+    archivo = models.FileField(
+        upload_to=adjunto_upload_path,
+        verbose_name='Archivo',
+    )
+    tipo = models.CharField(
+        max_length=20,
+        choices=TIPO_ADJUNTO_CHOICES,
+        default='otro',
+        verbose_name='Tipo de archivo',
+    )
+    descripcion = models.CharField(
+        max_length=200,
+        blank=True,
+        default='',
+        verbose_name='Descripción',
+    )
+    fecha_subida = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Fecha de subida',
+    )
+    subido_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Subido por',
+    )
+
+    class Meta:
+        db_table = 'historial_adjunto'
+        ordering = ['-fecha_subida']
+        verbose_name = 'Adjunto'
+        verbose_name_plural = 'Adjuntos'
+
+    def __str__(self):
+        tipo_display = self.get_tipo_display()
+        filename = self.archivo.name.split('/')[-1] if self.archivo.name else 'Sin archivo'
+        return f"{tipo_display} — {filename}"
+
+    def clean(self):
+        """Validate file size does not exceed MAX_ADJUNTO_SIZE."""
+        super().clean()
+        if self.archivo and self.archivo.size > MAX_ADJUNTO_SIZE:
+            raise ValidationError(
+                f'El archivo excede el tamaño máximo permitido de {MAX_ADJUNTO_SIZE // (1024*1024)} MB.'
+            )

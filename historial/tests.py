@@ -10,6 +10,7 @@ from django.db.models import ProtectedError
 from usuarios.models import Rol
 from mascotas.models import Mascota
 from agenda.models import Cita, Disponibilidad
+from historial.models import HistorialClinico
 
 User = get_user_model()
 
@@ -890,3 +891,264 @@ class AtenderCitaViewTest(TestCase):
         resp = self.client.get(reverse('historial:atender_cita', kwargs={'cita_pk': cita.pk}))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'Vacunación contra rabia')
+
+
+# ========================================
+# PHASE 6: Adjunto Model & Upload Tests
+# ========================================
+
+import io
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+
+def _create_test_file(content=b'test file content', name='test.pdf', content_type='application/pdf'):
+    """Helper to create a SimpleUploadedFile for testing."""
+    return SimpleUploadedFile(name, content, content_type=content_type)
+
+
+class AdjuntoModelTest(TestCase):
+    """Tests for Adjunto model — fields, constraints, file size validation."""
+
+    def setUp(self):
+        self.vet = create_user_with_role('Veterinario', username='vet_adj', email='vet_adj@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cli_adj', email='cli_adj@test.com')
+        self.mascota = Mascota.objects.create(
+            nombre='Firulais', especie='Canino', sexo='Macho', propietario=self.cliente,
+        )
+        self.hc = HistorialClinico.objects.create(
+            mascota=self.mascota, veterinario=self.vet,
+            tipo_consulta='consulta', motivo_consulta='Test', diagnostico='OK',
+        )
+
+    def test_adjunto_creation(self):
+        """A6.1: Adjunto can be created with file and linked to HistorialClinico"""
+        from historial.models import Adjunto
+        adj = Adjunto.objects.create(
+            historial_clinico=self.hc,
+            archivo=_create_test_file(name='radiografia.png', content_type='image/png'),
+            tipo='radiografia',
+            descripcion='Radiografía torácica',
+            subido_por=self.vet,
+        )
+        self.assertEqual(adj.historial_clinico, self.hc)
+        self.assertEqual(adj.tipo, 'radiografia')
+        self.assertEqual(adj.subido_por, self.vet)
+        self.assertIsNotNone(adj.fecha_subida)
+
+    def test_adjunto_tipos_choices(self):
+        """A6.2: TIPO_ADJUNTO_CHOICES contains expected types"""
+        from historial.models import TIPO_ADJUNTO_CHOICES
+        tipos = [t[0] for t in TIPO_ADJUNTO_CHOICES]
+        self.assertIn('radiografia', tipos)
+        self.assertIn('laboratorio', tipos)
+        self.assertIn('foto', tipos)
+        self.assertIn('otro', tipos)
+
+    def test_adjunto_fk_protect(self):
+        """A6.3: Cannot delete HistorialClinico with Adjunto records"""
+        from historial.models import Adjunto
+        Adjunto.objects.create(
+            historial_clinico=self.hc,
+            archivo=_create_test_file(),
+            tipo='otro',
+            subido_por=self.vet,
+        )
+        with self.assertRaises(ProtectedError):
+            self.hc.delete()
+
+    def test_adjunto_file_size_limit(self):
+        """A6.4: Adjunto file exceeding 5MB is rejected"""
+        from historial.models import Adjunto, MAX_ADJUNTO_SIZE
+        self.assertEqual(MAX_ADJUNTO_SIZE, 5 * 1024 * 1024)
+        big_file = SimpleUploadedFile('big.pdf', b'x' * (5 * 1024 * 1024 + 1), content_type='application/pdf')
+        adj = Adjunto(
+            historial_clinico=self.hc,
+            archivo=big_file,
+            tipo='otro',
+            subido_por=self.vet,
+        )
+        with self.assertRaises(ValidationError):
+            adj.clean()
+
+    def test_adjunto_file_size_within_limit(self):
+        """A6.5: Adjunto file under 5MB passes validation"""
+        from historial.models import Adjunto
+        small_file = SimpleUploadedFile('small.pdf', b'x' * 1024, content_type='application/pdf')
+        adj = Adjunto(
+            historial_clinico=self.hc,
+            archivo=small_file,
+            tipo='otro',
+            subido_por=self.vet,
+        )
+        # Should NOT raise
+        adj.clean()
+
+    def test_adjunto_multiple_per_historial(self):
+        """A6.6: Multiple Adjuntos can be linked to same HistorialClinico (1:N)"""
+        from historial.models import Adjunto
+        Adjunto.objects.create(
+            historial_clinico=self.hc,
+            archivo=_create_test_file(name='file1.pdf'),
+            tipo='radiografia',
+            subido_por=self.vet,
+        )
+        Adjunto.objects.create(
+            historial_clinico=self.hc,
+            archivo=_create_test_file(name='file2.pdf'),
+            tipo='laboratorio',
+            subido_por=self.vet,
+        )
+        self.assertEqual(self.hc.adjuntos.count(), 2)
+
+    def test_adjunto_descripcion_blank(self):
+        """A6.7: descripcion can be blank"""
+        from historial.models import Adjunto
+        adj = Adjunto.objects.create(
+            historial_clinico=self.hc,
+            archivo=_create_test_file(),
+            tipo='otro',
+            descripcion='',
+            subido_por=self.vet,
+        )
+        self.assertEqual(adj.descripcion, '')
+
+    def test_adjunto_str_format(self):
+        """A6.8: Adjunto __str__ returns readable format"""
+        from historial.models import Adjunto
+        adj = Adjunto.objects.create(
+            historial_clinico=self.hc,
+            archivo=_create_test_file(name='rx_torax.png'),
+            tipo='radiografia',
+            subido_por=self.vet,
+        )
+        self.assertIn('Radiograf', str(adj))
+
+
+class AdjuntoViewTest(TestCase):
+    """Tests for Adjunto upload/delete views — permissions, file validation."""
+
+    def setUp(self):
+        self.vet = create_user_with_role('Veterinario', username='vet_av', email='vet_av@test.com')
+        self.admin = create_user_with_role('Administrador', username='admin_av', email='admin_av@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cli_av', email='cli_av@test.com')
+        self.other_vet = create_user_with_role('Veterinario', username='vet_av2', email='vet_av2@test.com')
+        self.mascota = Mascota.objects.create(
+            nombre='Firulais', especie='Canino', sexo='Macho', propietario=self.cliente,
+        )
+        self.hc = HistorialClinico.objects.create(
+            mascota=self.mascota, veterinario=self.vet,
+            tipo_consulta='consulta', motivo_consulta='Test', diagnostico='OK',
+        )
+
+    def _upload_url(self):
+        from django.urls import reverse
+        return reverse('historial:subir_adjunto', kwargs={'pk': self.hc.pk})
+
+    def test_vet_can_see_upload_form(self):
+        """A7.1: Vet sees upload form on historial detail"""
+        self.client.force_login(self.vet)
+        resp = self.client.get(reverse('historial:detalle', kwargs={'pk': self.hc.pk}))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_vet_can_upload_adjunto(self):
+        """A7.2: Vet can upload an attachment to own historial"""
+        from historial.models import Adjunto
+        self.client.force_login(self.vet)
+        upload_file = _create_test_file(name='radiografia.png', content_type='image/png')
+        resp = self.client.post(self._upload_url(), {
+            'archivo': upload_file,
+            'tipo': 'radiografia',
+            'descripcion': 'RX tórax',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(Adjunto.objects.count(), 1)
+
+    def test_cliente_cannot_upload_adjunto(self):
+        """A7.3: Cliente gets 403 when trying to upload"""
+        self.client.force_login(self.cliente)
+        upload_file = _create_test_file()
+        resp = self.client.post(self._upload_url(), {
+            'archivo': upload_file,
+            'tipo': 'otro',
+            'descripcion': 'Test',
+        })
+        self.assertEqual(resp.status_code, 403)
+
+    def test_other_vet_cannot_upload_adjunto(self):
+        """A7.4: Other vet gets 403 for historial they didn't create"""
+        self.client.force_login(self.other_vet)
+        upload_file = _create_test_file()
+        resp = self.client.post(self._upload_url(), {
+            'archivo': upload_file,
+            'tipo': 'otro',
+            'descripcion': 'Test',
+        })
+        self.assertEqual(resp.status_code, 403)
+
+    def test_admin_can_upload_adjunto(self):
+        """A7.5: Admin can upload attachment to any historial"""
+        from historial.models import Adjunto
+        self.client.force_login(self.admin)
+        upload_file = _create_test_file(name='lab.pdf', content_type='application/pdf')
+        resp = self.client.post(self._upload_url(), {
+            'archivo': upload_file,
+            'tipo': 'laboratorio',
+            'descripcion': 'Hemograma',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(Adjunto.objects.count(), 1)
+
+    def test_upload_file_too_large_rejected(self):
+        """A7.6: Upload exceeding 5MB is rejected by the form"""
+        from historial.models import MAX_ADJUNTO_SIZE
+        self.client.force_login(self.vet)
+        big_content = b'x' * (MAX_ADJUNTO_SIZE + 1)
+        big_file = SimpleUploadedFile('big.pdf', big_content, content_type='application/pdf')
+        resp = self.client.post(self._upload_url(), {
+            'archivo': big_file,
+            'tipo': 'otro',
+            'descripcion': 'Big file',
+        })
+        self.assertEqual(resp.status_code, 200)  # Re-renders form with errors
+        self.assertFalse(resp.context['form'].is_valid())
+
+    def test_vet_can_delete_own_adjunto(self):
+        """A7.7: Vet can delete their own attachment"""
+        from historial.models import Adjunto
+        adj = Adjunto.objects.create(
+            historial_clinico=self.hc,
+            archivo=_create_test_file(),
+            tipo='otro',
+            subido_por=self.vet,
+        )
+        self.client.force_login(self.vet)
+        resp = self.client.post(reverse('historial:eliminar_adjunto', kwargs={'pk': adj.pk}))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(Adjunto.objects.count(), 0)
+
+    def test_other_vet_cannot_delete_adjunto(self):
+        """A7.8: Other vet gets 403 trying to delete attachment"""
+        from historial.models import Adjunto
+        adj = Adjunto.objects.create(
+            historial_clinico=self.hc,
+            archivo=_create_test_file(),
+            tipo='otro',
+            subido_por=self.vet,
+        )
+        self.client.force_login(self.other_vet)
+        resp = self.client.post(reverse('historial:eliminar_adjunto', kwargs={'pk': adj.pk}))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_admin_can_delete_any_adjunto(self):
+        """A7.9: Admin can delete any attachment"""
+        from historial.models import Adjunto
+        adj = Adjunto.objects.create(
+            historial_clinico=self.hc,
+            archivo=_create_test_file(),
+            tipo='otro',
+            subido_por=self.vet,
+        )
+        self.client.force_login(self.admin)
+        resp = self.client.post(reverse('historial:eliminar_adjunto', kwargs={'pk': adj.pk}))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(Adjunto.objects.count(), 0)

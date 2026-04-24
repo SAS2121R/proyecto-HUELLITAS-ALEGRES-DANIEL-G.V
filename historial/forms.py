@@ -4,7 +4,7 @@ from datetime import date
 from django import forms
 from django.core.exceptions import ValidationError
 
-from .models import HistorialClinico
+from .models import HistorialClinico, Adjunto, MAX_ADJUNTO_SIZE
 
 
 class HistorialClinicoForm(forms.ModelForm):
@@ -93,3 +93,22 @@ class AtenderCitaForm(forms.ModelForm):
         if fecha and fecha < date.today():
             raise ValidationError('La próxima vacunación debe ser una fecha futura.')
         return fecha
+
+
+class AdjuntoForm(forms.ModelForm):
+    """Form for uploading attachments to a HistorialClinico record."""
+
+    class Meta:
+        model = Adjunto
+        fields = ['archivo', 'tipo', 'descripcion']
+        widgets = {
+            'tipo': forms.Select(attrs={'class': 'form-select'}),
+            'descripcion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Descripción del archivo (opcional)'}),
+        }
+
+    def clean_archivo(self):
+        archivo = self.cleaned_data.get('archivo')
+        if archivo and archivo.size > MAX_ADJUNTO_SIZE:
+            max_mb = MAX_ADJUNTO_SIZE // (1024 * 1024)
+            raise ValidationError(f'El archivo excede el tamaño máximo permitido de {max_mb} MB.')
+        return archivo
