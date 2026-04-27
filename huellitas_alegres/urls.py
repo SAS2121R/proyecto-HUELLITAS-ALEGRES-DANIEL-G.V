@@ -35,6 +35,7 @@ urlpatterns = [
     path('historial/', include(('historial.urls', 'historial'), namespace='historial')),
     
     path('reportes/', include(('reportes.urls', 'reportes'), namespace='reportes')),
+    path('entregas/', include(('entregas.urls', 'entregas'), namespace='entregas')),
     path('servicios/', include(('servicios.urls', 'servicios'), namespace='servicios')),
 ]
 

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Entregas — Huellitas Alegres{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4"><i class="bi bi-truck"></i> Mis Entregas</h1>
+
+    <!-- Filter bar -->
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a href="{% url 'entregas:dashboard' %}" class="btn btn-outline-secondary {% if not estado_filter %}active{% endif %}">
+            <i class="bi bi-list-ul"></i> Todas
+        </a>
+        {% for value, label in estados %}
+        <a href="?estado={{ value }}" class="btn btn-outline-secondary {% if estado_filter == value %}active{% endif %}">
+            {% if value == 'pendiente' %}<i class="bi bi-clock"></i>
+            {% elif value == 'en_camino' %}<i class="bi bi-scooter"></i>
+            {% elif value == 'entregado' %}<i class="bi bi-box-seam"></i>
+            {% elif value == 'cancelado' %}<i class="bi bi-x-circle"></i>{% endif %}
+            {{ label }}
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if page_obj %}
+    <!-- Mobile-first cards -->
+    <div class="row g-3">
+        {% for pedido in page_obj %}
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-{% if pedido.estado == 'pendiente' %}warning{% elif pedido.estado == 'en_camino' %}info{% elif pedido.estado == 'entregado' %}success{% else %}danger{% endif %}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-title mb-0">Pedido #{{ pedido.pk }}</h5>
+                        <span class="badge bg-{% if pedido.estado == 'pendiente' %}warning text-dark{% elif pedido.estado == 'en_camino' %}info{% elif pedido.estado == 'entregado' %}success{% else %}danger{% endif %}">
+                            {{ pedido.get_estado_display }}
+                        </span>
+                    </div>
+                    <p class="card-text mb-1"><i class="bi bi-geo-alt-fill"></i> {{ pedido.direccion_entrega }}</p>
+                    <p class="card-text mb-1"><i class="bi bi-telephone"></i> {{ pedido.telefono_contacto }}</p>
+                    <p class="card-text mb-1"><i class="bi bi-person"></i> {{ pedido.cliente.get_full_name }}</p>
+                    {% if pedido.notas %}
+                    <p class="card-text text-muted small mb-1"><i class="bi bi-chat-left-text"></i> {{ pedido.notas|truncatechars:60 }}</p>
+                    {% endif %}
+                    <p class="card-text small text-muted"><i class="bi bi-clock"></i> {{ pedido.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'entregas:detalle' pedido.pk %}" class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-arrow-right-circle"></i> Ver Detalle
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Paginación" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}">&laquo;</a></li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}">{{ num }}</a></li>
+            {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}">&raquo;</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-inbox"></i> No hay pedidos asignados.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
