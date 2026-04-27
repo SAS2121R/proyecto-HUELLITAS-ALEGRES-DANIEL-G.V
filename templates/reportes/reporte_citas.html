@@ -1,0 +1,44 @@
+{% extends "reportes/base_reporte.html" %}
+{% block content %}
+<div class="summary-box">
+    <h4>Resumen de Citas</h4>
+    <table>
+        <tr><td><strong>Total:</strong></td><td>{{ total }}</td><td><strong>Confirmadas:</strong></td><td>{{ confirmadas }}</td></tr>
+        <tr><td><strong>Pendientes:</strong></td><td>{{ pendientes }}</td><td><strong>Canceladas:</strong></td><td>{{ canceladas }}</td></tr>
+    </table>
+</div>
+<table>
+    <thead>
+        <tr>
+            <th>Mascota</th>
+            <th>Veterinario</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Estado</th>
+            <th>Motivo</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in citas %}
+        <tr>
+            <td>{{ c.mascota.nombre }}</td>
+            <td>{{ c.disponibilidad.veterinario.get_full_name }}</td>
+            <td>{{ c.disponibilidad.fecha }}</td>
+            <td>{{ c.disponibilidad.hora_inicio }}</td>
+            <td>
+                {% if c.estado == 'confirmada' %}
+                <span class="badge badge-success">Confirmada</span>
+                {% elif c.estado == 'pendiente' %}
+                <span class="badge badge-warning">Pendiente</span>
+                {% else %}
+                <span class="badge badge-danger">Cancelada</span>
+                {% endif %}
+            </td>
+            <td>{{ c.motivo|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" style="text-align:center;">No se encontraron citas.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

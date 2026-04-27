@@ -33,6 +33,8 @@ urlpatterns = [
     path('mascotas/', include(('mascotas.urls', 'mascotas'), namespace='mascotas')),
     path('agenda/', include(('agenda.urls', 'agenda'), namespace='agenda')),
     path('historial/', include(('historial.urls', 'historial'), namespace='historial')),
+    
+    path('reportes/', include(('reportes.urls', 'reportes'), namespace='reportes')),
     path('servicios/', include(('servicios.urls', 'servicios'), namespace='servicios')),
 ]
 

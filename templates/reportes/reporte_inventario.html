@@ -1,0 +1,46 @@
+{% extends "reportes/base_reporte.html" %}
+{% block content %}
+<div class="summary-box">
+    <h4>Resumen de Inventario</h4>
+    <table>
+        <tr><td><strong>Total productos:</strong></td><td>{{ total_productos }}</td><td><strong>Valor total:</strong></td><td>{{ total_valor|floatformat:0 }}</td></tr>
+        <tr><td><strong>Stock critico:</strong></td><td>{{ critico }}</td><td><strong>Stock bajo:</strong></td><td>{{ bajo }}</td></tr>
+    </table>
+</div>
+<table>
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Categoria</th>
+            <th>Precio</th>
+            <th>Stock</th>
+            <th>Stock Min.</th>
+            <th>Estado</th>
+            <th>Proveedor</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in productos %}
+        <tr>
+            <td>{{ p.nombre }}</td>
+            <td>{{ p.get_categoria_display }}</td>
+            <td>{{ p.precio|floatformat:0 }}</td>
+            <td>{{ p.cantidad_stock }}</td>
+            <td>{{ p.stock_minimo }}</td>
+            <td>
+                {% if p.estado_stock == 'verde' %}
+                <span class="badge badge-success">OK</span>
+                {% elif p.estado_stock == 'amarillo' %}
+                <span class="badge badge-warning">Bajo</span>
+                {% elif p.estado_stock == 'rojo' %}
+                <span class="badge badge-danger">Critico</span>
+                {% endif %}
+            </td>
+            <td>{{ p.proveedor|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" style="text-align:center;">No se encontraron productos.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
