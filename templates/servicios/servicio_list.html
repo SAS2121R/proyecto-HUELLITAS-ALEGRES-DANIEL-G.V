@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4">Servicios</h1>
+  <div class="d-flex justify-content-between mb-3">
+    <form method="get" class="d-flex gap-2">
+      <input type="text" name="q" value="{{ search|default:'' }}" class="form-control" placeholder="Buscar servicio...">
+      <select name="categoria" class="form-select">
+        <option value="">Todas las categorías</option>
+        {% for value, label in categorias %}
+        <option value="{{ value }}" {% if categoria == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+    </form>
+    {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+    <a href="{% url 'servicios:crear' %}" class="btn btn-success">Nuevo Servicio</a>
+    {% endif %}
+  </div>
+  {% if page_obj %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Tarifa</th>
+            <th>Duración</th>
+            {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+            <th>Acciones</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in page_obj %}
+          <tr>
+            <td>{{ s.nombre }}</td>
+            <td>{{ s.get_categoria_display }}</td>
+            <td>${{ s.tarifa|floatformat:0 }}</td>
+            <td>{{ s.duracion_minutos }} min</td>
+            {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+            <td>
+              <a href="{% url 'servicios:editar' s.pk %}" class="btn btn-sm btn-warning">Editar</a>
+              <a href="{% url 'servicios:eliminar' s.pk %}" class="btn btn-sm btn-danger">Desactivar</a>
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <nav aria-label="Page navigation">
+      <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search|default:'' }}&categoria={{ categoria|default:'' }}">&laquo; Anterior</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+          <li class="page-item"><a class="page-link" href="?page={{ num }}&q={{ search|default:'' }}&categoria={{ categoria|default:'' }}">{{ num }}</a></li>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search|default:'' }}&categoria={{ categoria|default:'' }}">Siguiente &raquo;</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Siguiente &raquo;</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% else %}
+    <div class="alert alert-info text-center">No hay servicios registrados.</div>
+  {% endif %}
+</div>
+{% endblock %}

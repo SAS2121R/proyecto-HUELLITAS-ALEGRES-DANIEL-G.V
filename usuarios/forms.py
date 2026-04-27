@@ -1,7 +1,7 @@
 import re
 from django import forms
 from django.contrib.auth import get_user_model
-from .models import Rol
+from .models import Rol, Perfil
 
 Usuario = get_user_model()
 
@@ -86,3 +86,23 @@ class RolChangeForm(forms.ModelForm):
         widgets = {
             'rol': forms.Select(attrs={'class': 'form-control'}),
         }
+
+
+class PerfilForm(forms.ModelForm):
+    """Formulario para editar el perfil de usuario (foto y bio)."""
+
+    class Meta:
+        model = Perfil
+        fields = ['foto', 'bio']
+        widgets = {
+            'bio': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
+        }
+
+    def clean_foto(self):
+        from .models import MAX_PERFIL_FOTO_SIZE
+        foto = self.cleaned_data.get('foto')
+        if foto and hasattr(foto, 'size') and foto.size > MAX_PERFIL_FOTO_SIZE:
+            raise forms.ValidationError(
+                f'La foto excede el tamaño máximo permitido de {MAX_PERFIL_FOTO_SIZE // (1024*1024)} MB.'
+            )
+        return foto

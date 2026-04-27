@@ -33,8 +33,8 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.urls import reverse
 from .decorators import admin_required, veterinario_required
-from .forms import RolChangeForm
-from .models import Rol
+from .forms import RolChangeForm, PerfilForm
+from .models import Rol, Perfil
 import json
 
 # Obtener el modelo de usuario personalizado configurado en settings.py
@@ -365,3 +365,29 @@ def admin_user_edit(request, pk):
 def vet_dashboard(request):
     """Vista del dashboard para veterinarios."""
     return render(request, 'usuarios/dashboard_vet.html')
+
+
+@login_required
+def mi_perfil(request):
+    """Vista para que el usuario vea y edite su propio perfil."""
+    perfil, created = Perfil.objects.get_or_create(usuario=request.user)
+    if request.method == 'POST':
+        form = PerfilForm(request.POST, request.FILES, instance=perfil)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Perfil actualizado exitosamente.')
+            return redirect('usuarios:mi_perfil')
+    else:
+        form = PerfilForm(instance=perfil)
+    return render(request, 'usuarios/perfil.html', {
+        'form': form,
+        'perfil': perfil,
+    })
+
+
+@login_required
+@admin_required
+def lista_usuarios(request):
+    """Vista para listar todos los usuarios (solo Administrador)."""
+    users = Usuario.objects.select_related('rol').all().order_by('pk')
+    return render(request, 'usuarios/usuario_list.html', {'users': users})

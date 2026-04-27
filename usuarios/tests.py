@@ -4,6 +4,7 @@ from django.db.models import ProtectedError
 from django.urls import path, reverse
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
+from django.core.exceptions import ValidationError
 import json
 
 from .models import Rol
@@ -871,3 +872,131 @@ class LoginRedirectApiTest(TestCase):
         data = json.loads(resp.content)
         self.assertTrue(data['success'])
         self.assertIn(reverse('mascotas:lista'), data['redirect_url'])
+
+
+# ========================================
+# Perfil Model Tests (Fase E)
+# ========================================
+
+class PerfilModelTest(TestCase):
+    """Tests for Perfil model — 4 tests (p1.1 - p1.4)"""
+
+    def test_p1_1_creacion_perfil_linked_to_usuario(self):
+        """p1.1: Perfil creation linked to Usuario"""
+        User = get_user_model()
+        cliente_rol = Rol.objects.get(nombre='Cliente')
+        user = User.objects.create_user(
+            username='perfil_user', email='perfil@test.com',
+            password='testpass123', rol=cliente_rol,
+        )
+        from .models import Perfil
+        perfil = Perfil.objects.create(usuario=user, bio='Test bio')
+        self.assertEqual(perfil.usuario, user)
+        self.assertEqual(perfil.bio, 'Test bio')
+        self.assertEqual(str(perfil), f'Perfil de {user.email}')
+
+    def test_p1_2_perfil_foto_exceeds_5mb_validation_error(self):
+        """p1.2: Perfil foto exceeds 5MB raises ValidationError"""
+        from .models import Perfil, MAX_PERFIL_FOTO_SIZE
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        User = get_user_model()
+        cliente_rol = Rol.objects.get(nombre='Cliente')
+        user = User.objects.create_user(
+            username='foto_user', email='foto@test.com',
+            password='testpass123', rol=cliente_rol,
+        )
+
+        large_file = SimpleUploadedFile(
+            'test.jpg', b'x' * (MAX_PERFIL_FOTO_SIZE + 1024),
+            content_type='image/jpeg'
+        )
+
+        perfil = Perfil(usuario=user, bio='Test')
+        perfil.foto = large_file
+        with self.assertRaises(ValidationError):
+            perfil.full_clean()
+
+    def test_p1_3_perfil_str_returns_user_email(self):
+        """p1.3: Perfil __str__ returns user email"""
+        from .models import Perfil
+        User = get_user_model()
+        cliente_rol = Rol.objects.get(nombre='Cliente')
+        user = User.objects.create_user(
+            username='str_user', email='str@test.com',
+            password='testpass123', rol=cliente_rol,
+        )
+        perfil = Perfil.objects.create(usuario=user)
+        self.assertEqual(str(perfil), 'Perfil de str@test.com')
+
+    def test_p1_4_delete_user_cascades_to_perfil(self):
+        """p1.4: Deleting user cascades to perfil"""
+        from .models import Perfil
+        User = get_user_model()
+        cliente_rol = Rol.objects.get(nombre='Cliente')
+        user = User.objects.create_user(
+            username='cascade_user', email='cascade@test.com',
+            password='testpass123', rol=cliente_rol,
+        )
+        perfil = Perfil.objects.create(usuario=user, bio='Cascade test')
+        user_id = user.pk
+        user.delete()
+        self.assertFalse(Perfil.objects.filter(usuario_id=user_id).exists())
+
+
+# ========================================
+# Perfil View Tests (Fase E)
+# ========================================
+
+class PerfilViewTest(TestCase):
+    """Tests for Perfil views — 5 tests (p2.1 - p2.5)"""
+
+    def setUp(self):
+        User = get_user_model()
+        self.cliente_rol = Rol.objects.get(nombre='Cliente')
+        self.admin_rol = Rol.objects.get(nombre='Administrador')
+        self.cliente = User.objects.create_user(
+            username='perfil_cli', email='perfil_cli@test.com',
+            password='testpass123', rol=self.cliente_rol,
+        )
+        self.admin = User.objects.create_user(
+            username='perfil_admin', email='perfil_admin@test.com',
+            password='testpass123', rol=self.admin_rol,
+        )
+
+    def test_p2_1_mi_perfil_shows_current_user_profile(self):
+        """p2.1: mi_perfil shows current user's profile"""
+        from .models import Perfil
+        Perfil.objects.create(usuario=self.cliente, bio='Mi bio')
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('usuarios:mi_perfil'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Mi bio')
+
+    def test_p2_2_mi_perfil_post_updates_bio(self):
+        """p2.2: mi_perfil POST updates bio"""
+        from .models import Perfil
+        Perfil.objects.create(usuario=self.cliente, bio='Vieja bio')
+        self.client.force_login(self.cliente)
+        resp = self.client.post(reverse('usuarios:mi_perfil'), {'bio': 'Nueva bio actualizada'})
+        self.assertEqual(resp.status_code, 302)
+        perfil = Perfil.objects.get(usuario=self.cliente)
+        self.assertEqual(perfil.bio, 'Nueva bio actualizada')
+
+    def test_p2_3_mi_perfil_requires_login(self):
+        """p2.3: mi_perfil requires login (302 redirect)"""
+        resp = self.client.get(reverse('usuarios:mi_perfil'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/usuarios/login/', resp.url)
+
+    def test_p2_4_lista_usuarios_admin_can_see_all(self):
+        """p2.4: lista_usuarios Admin can see all users"""
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse('usuarios:lista_usuarios'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_p2_5_lista_usuarios_cliente_gets_403(self):
+        """p2.5: lista_usuarios Cliente gets 403"""
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('usuarios:lista_usuarios'))
+        self.assertEqual(resp.status_code, 403)

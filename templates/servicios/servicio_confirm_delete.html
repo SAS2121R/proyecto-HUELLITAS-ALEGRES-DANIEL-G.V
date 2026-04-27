@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4">Desactivar Servicio</h1>
+  <div class="alert alert-warning">
+    <p>¿Está seguro de que desea desactivar el servicio <strong>"{{ servicio.nombre }}"</strong>?</p>
+    <p>El servicio no se eliminará permanentemente, solo se marcará como inactivo.</p>
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Confirmar Desactivación</button>
+    <a href="{% url 'servicios:lista' %}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

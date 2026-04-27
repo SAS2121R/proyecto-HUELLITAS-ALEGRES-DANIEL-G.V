@@ -1,6 +1,15 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
+from django.conf import settings
+from django.core.exceptions import ValidationError
+
+
+MAX_PERFIL_FOTO_SIZE = 5 * 1024 * 1024  # 5MB — reuse Adjunto pattern
+
+
+def perfil_foto_path(instance, filename):
+    return f'perfiles/{instance.usuario_id}/{filename}'
 
 
 class Rol(models.Model):
@@ -40,3 +49,34 @@ class Usuario(AbstractUser):
     
     def __str__(self):
         return f'{self.email} - {self.username}'
+
+
+class Perfil(models.Model):
+    """Modelo para el perfil de usuario con foto y bio."""
+
+    usuario = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='perfil',
+        verbose_name='Usuario'
+    )
+    foto = models.ImageField(
+        upload_to=perfil_foto_path,
+        blank=True,
+        default='',
+        verbose_name='Foto de perfil'
+    )
+    bio = models.TextField(blank=True, default='', verbose_name='Biografía')
+
+    class Meta:
+        db_table = 'usuarios_perfil'
+        verbose_name = 'Perfil'
+        verbose_name_plural = 'Perfiles'
+
+    def __str__(self):
+        return f'Perfil de {self.usuario.email}'
+
+    def clean(self):
+        super().clean()
+        if self.foto and hasattr(self.foto, 'size') and self.foto.size > MAX_PERFIL_FOTO_SIZE:
+            raise ValidationError(f'La foto excede el tamaño máximo permitido de {MAX_PERFIL_FOTO_SIZE // (1024*1024)} MB.')
