@@ -13,6 +13,11 @@
         <i class="bi bi-pencil"></i> Editar Pedido
     </a>
     {% endif %}
+    {% if user.rol.nombre == 'Cliente' %}
+    <a href="{% url 'entregas:mis_pedidos' %}" class="btn btn-outline-secondary mb-3">
+        <i class="bi bi-arrow-left"></i> Volver a Mis Pedidos
+    </a>
+    {% endif %}
 
     <!-- Pedido Info Card -->
     <div class="card shadow-sm mb-4 border-{% if pedido.estado == 'pendiente' %}warning{% elif pedido.estado == 'en_camino' %}info{% elif pedido.estado == 'entregado' %}success{% else %}danger{% endif %}">
@@ -191,9 +196,21 @@
     <div class="alert alert-success text-center">
         <i class="bi bi-check-circle-fill"></i> Este pedido ya fue entregado exitosamente.
     </div>
+    {% if pedido.estado == 'entregado' %}
+    <div class="text-center mt-3">
+        <a href="{% url 'entregas:comprobante_pdf' pedido.pk %}" class="btn btn-primary btn-lg" target="_blank">
+            <i class="bi bi-file-earmark-pdf"></i> Descargar Comprobante PDF
+        </a>
+    </div>
+    {% endif %}
     {% elif pedido.estado == 'cancelado' %}
     <div class="alert alert-danger text-center">
         <i class="bi bi-x-circle-fill"></i> Este pedido fue cancelado.
+    </div>
+    {% endif %}
+    {% if not estado_form and pedido.estado != 'entregado' and pedido.estado != 'cancelado' %}
+    <div class="alert alert-info text-center mt-2">
+        <i class="bi bi-info-circle"></i> Tu pedido está en proceso. Recibirás actualizaciones pronto.
     </div>
     {% endif %}
 </div>

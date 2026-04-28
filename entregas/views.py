@@ -1,9 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.http import Http404, HttpResponse
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.http import HttpResponse
+from django.template.loader import render_to_string
 from django.utils import timezone
+from xhtml2pdf import pisa
+import io
 
 from usuarios.decorators import role_required
 from .models import Pedido, ESTADO_CHOICES
@@ -45,26 +50,30 @@ def dashboard(request):
 
 @login_required(login_url='/usuarios/login/')
 def pedido_detalle(request, pk):
-    """Detail view for a single pedido."""
-    if request.user.rol.nombre == 'Cliente':
-        raise PermissionDenied
-
+    """Detail view for a single pedido.
+    Admin/Domiciliario see their pedidos with action buttons.
+    Cliente sees their own pedidos (read-only, no action buttons)."""
     pedido = get_object_or_404(Pedido, pk=pk)
+
+    # Cliente can only see their own pedidos
+    if request.user.rol.nombre == 'Cliente' and pedido.cliente != request.user:
+        raise PermissionDenied
 
     # Domiciliario can only see their own pedidos
     if request.user.rol.nombre == 'Domiciliario' and pedido.domiciliario != request.user:
         raise PermissionDenied
 
     # Determine valid next states for the state change form
+    # Only show for Domiciliario and Admin (not Cliente)
     estado_form = None
     evidencia_form = None
 
-    if pedido.estado == 'pendiente' or pedido.estado == 'en_camino':
-        estado_form = CambiarEstadoForm(estado_actual=pedido.estado)
+    if request.user.rol.nombre != 'Cliente':
+        if pedido.estado == 'pendiente' or pedido.estado == 'en_camino':
+            estado_form = CambiarEstadoForm(estado_actual=pedido.estado)
 
-    if pedido.estado == 'en_camino':
-        # Show evidence form when transitioning to entregado
-        evidencia_form = EvidenciaForm(instance=pedido)
+        if pedido.estado == 'en_camino':
+            evidencia_form = EvidenciaForm(instance=pedido)
 
     return render(request, 'entregas/detalle.html', {
         'pedido': pedido,
@@ -121,6 +130,7 @@ def cambiar_estado(request, pk):
     pedido.estado = nuevo_estado
     if nuevo_estado == 'cancelado':
         pedido.incidente_notas = incidente_notas
+        pedido.incidente_fecha = timezone.now()
     if nuevo_estado == 'entregado':
         pedido.fecha_entrega = timezone.now()
         # Deduct stock from each item's product
@@ -224,3 +234,37 @@ def editar_pedido(request, pk):
         'form': form,
         'pedido': pedido,
     })
+
+
+@login_required(login_url='/usuarios/login/')
+def comprobante_pdf(request, pk):
+    """Generate PDF comprobante for an entregado pedido.
+    Only available when estado == 'entregado'.
+    Admin/Domiciliario see any; Cliente sees only their own."""
+    pedido = get_object_or_404(Pedido, pk=pk)
+
+    # Only entregado pedidos have a comprobante
+    if pedido.estado != 'entregado':
+        raise Http404('Comprobante solo disponible para pedidos entregados.')
+
+    # Cliente can only see their own comprobantes
+    if request.user.rol.nombre == 'Cliente' and pedido.cliente != request.user:
+        raise Http404('Pedido no encontrado.')
+
+    # Domiciliario can only see their own comprobantes
+    if request.user.rol.nombre == 'Domiciliario' and pedido.domiciliario != request.user:
+        raise PermissionDenied
+
+    context = {
+        'pedido': pedido,
+        'items': pedido.items.select_related('producto').all(),
+    }
+    html = render_to_string('entregas/comprobante_pdf.html', context)
+    buf = io.BytesIO()
+    pisa_status = pisa.CreatePDF(html, dest=buf)
+    if pisa_status.err:
+        return HttpResponse('Error generating PDF', status=500)
+    buf.seek(0)
+    response = HttpResponse(buf.read(), content_type='application/pdf')
+    response['Content-Disposition'] = f'filename="comprobante_pedido_{pedido.pk}.pdf"'
+    return response

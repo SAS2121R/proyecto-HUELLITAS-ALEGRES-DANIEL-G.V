@@ -1,0 +1,38 @@
+{% extends "reportes/base_reporte.html" %}
+
+{% block content %}
+<h4>Comprobante de Entrega — Pedido #{{ pedido.pk }}</h4>
+<p><strong>Estado:</strong> {{ pedido.get_estado_display }} &nbsp;&nbsp; <strong>Fecha de entrega:</strong> {{ pedido.fecha_entrega|date:"d/m/Y H:i" }}</p>
+<p><strong>Cliente:</strong> {{ pedido.cliente.get_full_name }} &nbsp;&nbsp; <strong>Teléfono:</strong> {{ pedido.telefono_contacto }}</p>
+<p><strong>Domiciliario:</strong> {{ pedido.domiciliario.get_full_name }} &nbsp;&nbsp; <strong>Dirección:</strong> {{ pedido.direccion_entrega }}</p>
+{% if pedido.notas %}
+<p><strong>Instrucciones:</strong> {{ pedido.notas }}</p>
+{% endif %}
+
+<table>
+    <thead>
+        <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio Unitario</th>
+            <th>Subtotal</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+        <tr>
+            <td>{{ item.producto.nombre }}</td>
+            <td>{{ item.cantidad }}</td>
+            <td>${{ item.producto.precio|floatformat:0 }}</td>
+            <td>${{ item.subtotal|floatformat:0 }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<p style="text-align: right; font-weight: bold; font-size: 12pt;">Total: ${{ pedido.total|floatformat:0 }}</p>
+
+{% if pedido.incidente_notas %}
+<p><strong>Notas de Incidente:</strong> {{ pedido.incidente_notas }}
+{% if pedido.incidente_fecha %} — Registrado: {{ pedido.incidente_fecha|date:"d/m/Y H:i" }}{% endif %}</p>
+{% endif %}
+{% endblock %}

@@ -4,6 +4,7 @@ from django.urls import reverse, resolve
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
 
 from usuarios.models import Rol, Usuario
 from productos.models import Producto
@@ -877,3 +878,184 @@ class EditarPedidoViewTests(TestCase):
         self.pedido.refresh_from_db()
         self.assertEqual(self.pedido.domiciliario, self.domiciliario2)
         self.assertEqual(self.pedido.direccion_entrega, 'Calle 99 # 1-2')
+
+
+# ========================================
+# PHASE 5: Bug Fix + PDF Comprobante + Cliente Detalle
+# ========================================
+
+
+class IncidenteFechaTest(TestCase):
+    """Test that cancellation sets incidente_fecha automatically."""
+
+    def setUp(self):
+        self.client_test = Client()
+        self.domiciliario = create_user_with_role('Domiciliario', username='domic_inc', email='domic_inc@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cli_inc', email='cli_inc@test.com')
+        self.pedido = Pedido.objects.create(
+            cliente=self.cliente,
+            domiciliario=self.domiciliario,
+            direccion_entrega='Calle 70 # 20-10',
+            telefono_contacto='3007778888',
+        )
+
+    def test_cancelacion_sets_incidente_fecha(self):
+        """Cancelling a pedido should set incidente_fecha to now."""
+        self.client_test.force_login(self.domiciliario)
+        self.client_test.post(
+            reverse('entregas:cambiar_estado', kwargs={'pk': self.pedido.pk}),
+            {'nuevo_estado': 'cancelado', 'incidente_notas': 'Cliente no encontrado'},
+        )
+        self.pedido.refresh_from_db()
+        self.assertIsNotNone(self.pedido.incidente_fecha)
+        self.assertEqual(self.pedido.estado, 'cancelado')
+        self.assertEqual(self.pedido.incidente_notas, 'Cliente no encontrado')
+
+    def test_pendiente_to_en_camino_does_not_set_incidente_fecha(self):
+        """Transitions other than cancel should NOT set incidente_fecha."""
+        self.client_test.force_login(self.domiciliario)
+        self.client_test.post(
+            reverse('entregas:cambiar_estado', kwargs={'pk': self.pedido.pk}),
+            {'nuevo_estado': 'en_camino'},
+        )
+        self.pedido.refresh_from_db()
+        self.assertIsNone(self.pedido.incidente_fecha)
+
+
+class ClienteDetalleViewTests(TestCase):
+    """Test that Cliente can access pedido_detalle for their own orders."""
+
+    def setUp(self):
+        self.client_test = Client()
+        self.admin = create_user_with_role('Administrador', username='admin_cd', email='admin_cd@test.com')
+        self.domiciliario = create_user_with_role('Domiciliario', username='domic_cd', email='domic_cd@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cli_cd', email='cli_cd@test.com')
+        self.other_cliente = create_user_with_role('Cliente', username='cli_cd2', email='cli_cd2@test.com')
+        self.pedido = Pedido.objects.create(
+            cliente=self.cliente,
+            domiciliario=self.domiciliario,
+            direccion_entrega='Calle 80 # 15-30',
+            telefono_contacto='3008889999',
+        )
+
+    def test_cliente_can_see_own_pedido_detalle(self):
+        """Cliente can access detalle for their own pedido."""
+        self.client_test.force_login(self.cliente)
+        response = self.client_test.get(reverse('entregas:detalle', kwargs={'pk': self.pedido.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['pedido'], self.pedido)
+
+    def test_cliente_cannot_see_other_pedido_detalle(self):
+        """Cliente gets 403 when trying to access another client's pedido."""
+        other_pedido = Pedido.objects.create(
+            cliente=self.other_cliente,
+            domiciliario=self.domiciliario,
+            direccion_entrega='Calle 90',
+            telefono_contacto='3001110000',
+        )
+        self.client_test.force_login(self.cliente)
+        response = self.client_test.get(reverse('entregas:detalle', kwargs={'pk': other_pedido.pk}))
+        self.assertEqual(response.status_code, 403)
+
+    def test_cliente_detalle_no_estado_form_in_context(self):
+        """Cliente should see pedido details but NO estado_form or action buttons."""
+        self.client_test.force_login(self.cliente)
+        response = self.client_test.get(reverse('entregas:detalle', kwargs={'pk': self.pedido.pk}))
+        self.assertEqual(response.status_code, 200)
+        # estado_form should NOT be in context for Cliente
+        self.assertIsNone(response.context.get('estado_form'))
+
+    def test_domiciliario_detalle_has_estado_form(self):
+        """Domiciliario should still see estado_form for active pedidos."""
+        self.client_test.force_login(self.domiciliario)
+        response = self.client_test.get(reverse('entregas:detalle', kwargs={'pk': self.pedido.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.context.get('estado_form'))
+
+
+class ComprobantePDFTests(TestCase):
+    """Test PDF comprobante generation for entregas."""
+
+    def setUp(self):
+        self.client_test = Client()
+        self.admin = create_user_with_role('Administrador', username='admin_pdf', email='admin_pdf@test.com')
+        self.domiciliario = create_user_with_role('Domiciliario', username='domic_pdf', email='domic_pdf@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cli_pdf', email='cli_pdf@test.com')
+        self.producto = Producto.all_objects.create(
+            nombre='Dog Chow Adulto',
+            categoria='alimentos',
+            precio=Decimal('45000.00'),
+            cantidad_stock=100,
+        )
+        self.pedido = Pedido.objects.create(
+            cliente=self.cliente,
+            domiciliario=self.domiciliario,
+            direccion_entrega='Calle 100 # 50-20',
+            telefono_contacto='3009990000',
+        )
+        PedidoItem.objects.create(pedido=self.pedido, producto=self.producto, cantidad=2)
+
+    def test_comprobante_url_resolves(self):
+        url = reverse('entregas:comprobante_pdf', kwargs={'pk': self.pedido.pk})
+        self.assertEqual(url, f'/entregas/{self.pedido.pk}/comprobante/')
+
+    def test_comprobante_requires_login(self):
+        response = self.client_test.get(reverse('entregas:comprobante_pdf', kwargs={'pk': self.pedido.pk}))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/usuarios/login/', response.url)
+
+    def test_comprobante_entregado_returns_pdf(self):
+        """PDF comprobante should only be available for entregado pedidos."""
+        # Transition to entregado
+        self.pedido.estado = 'en_camino'
+        self.pedido.save()
+        self.client_test.force_login(self.domiciliario)
+        self.client_test.post(
+            reverse('entregas:cambiar_estado', kwargs={'pk': self.pedido.pk}),
+            {'nuevo_estado': 'entregado'},
+        )
+        self.pedido.refresh_from_db()
+
+        # Now request PDF
+        self.client_test.force_login(self.admin)
+        response = self.client_test.get(reverse('entregas:comprobante_pdf', kwargs={'pk': self.pedido.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+
+    def test_comprobante_pendiente_returns_404(self):
+        """Non-entregado pedidos should NOT have PDF comprobante."""
+        self.client_test.force_login(self.admin)
+        response = self.client_test.get(reverse('entregas:comprobante_pdf', kwargs={'pk': self.pedido.pk}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_cliente_can_get_own_comprobante_pdf(self):
+        """Cliente can download PDF for their own entregado pedido."""
+        self.pedido.estado = 'en_camino'
+        self.pedido.save()
+        self.client_test.force_login(self.domiciliario)
+        self.client_test.post(
+            reverse('entregas:cambiar_estado', kwargs={'pk': self.pedido.pk}),
+            {'nuevo_estado': 'entregado'},
+        )
+        self.pedido.refresh_from_db()
+
+        self.client_test.force_login(self.cliente)
+        response = self.client_test.get(reverse('entregas:comprobante_pdf', kwargs={'pk': self.pedido.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+
+    def test_cliente_cannot_get_other_comprobante_pdf(self):
+        """Cliente gets 404 for another client's comprobante."""
+        other_pedido = Pedido.objects.create(
+            cliente=create_user_with_role('Cliente', username='cli_other', email='cli_other@test.com'),
+            domiciliario=self.domiciliario,
+            direccion_entrega='Calle 200',
+            telefono_contacto='3000000000',
+        )
+        other_pedido.estado = 'entregado'
+        other_pedido.fecha_entrega = timezone.now()
+        other_pedido.save()
+
+        self.client_test.force_login(self.cliente)
+        response = self.client_test.get(reverse('entregas:comprobante_pdf', kwargs={'pk': other_pedido.pk}))
+        self.assertEqual(response.status_code, 404)

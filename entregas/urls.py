@@ -11,4 +11,5 @@ urlpatterns = [
     path('<int:pk>/', views.pedido_detalle, name='detalle'),
     path('<int:pk>/cambiar-estado/', views.cambiar_estado, name='cambiar_estado'),
     path('<int:pk>/editar/', views.editar_pedido, name='editar'),
+    path('<int:pk>/comprobante/', views.comprobante_pdf, name='comprobante_pdf'),
 ]
