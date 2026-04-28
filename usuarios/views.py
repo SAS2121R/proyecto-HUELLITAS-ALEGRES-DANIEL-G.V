@@ -405,6 +405,32 @@ def mi_perfil(request):
 
 
 @login_required
+def cambiar_password(request):
+    """Vista para que el usuario cambie su propia contraseña."""
+    from django.contrib.auth.forms import PasswordChangeForm
+    from django.contrib.auth import update_session_auth_hash
+
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Keep the user logged in after password change
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Contraseña actualizada exitosamente.')
+            return redirect('usuarios:mi_perfil')
+    else:
+        form = PasswordChangeForm(request.user)
+
+    # Add Bootstrap form-control class to all fields
+    for field in form.fields.values():
+        field.widget.attrs.update({'class': 'form-control form-control-lg'})
+
+    return render(request, 'usuarios/cambiar_password.html', {
+        'form': form,
+    })
+
+
+@login_required
 @admin_required
 def lista_usuarios(request):
     """Vista para listar todos los usuarios (solo Administrador)."""

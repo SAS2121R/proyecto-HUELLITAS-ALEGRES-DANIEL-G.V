@@ -28,6 +28,8 @@
                     <hr>
                     <p class="mb-0"><i class="bi bi-heart-fill text-danger"></i> <strong>{{ mascotas_count }}</strong> mascota{{ mascotas_count|pluralize }}</p>
                     {% endif %}
+                    <hr>
+                    <a href="{% url 'usuarios:cambiar_password' %}" class="btn btn-outline-warning btn-sm w-100"><i class="bi bi-key"></i> Cambiar Contraseña</a>
                 </div>
             </div>
         </div>

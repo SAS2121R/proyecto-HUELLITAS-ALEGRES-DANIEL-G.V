@@ -1070,3 +1070,53 @@ class PerfilEditTest(TestCase):
         resp = self.client.get(reverse('usuarios:mi_perfil'))
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/usuarios/login/', resp.url)
+
+
+class CambiarPasswordTest(TestCase):
+    """Test password change functionality."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.cliente_rol = Rol.objects.get(nombre='Cliente')
+        self.cliente = User.objects.create_user(
+            username='pw_cli', email='pw_cli@test.com',
+            password='OldPass123!', rol=self.cliente_rol,
+        )
+
+    def test_cambiar_password_page_loads(self):
+        """Password change page loads for authenticated user."""
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('usuarios:cambiar_password'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Cambiar Contraseña')
+
+    def test_cambiar_password_success(self):
+        """POST with correct old password changes it."""
+        self.client.force_login(self.cliente)
+        resp = self.client.post(reverse('usuarios:cambiar_password'), {
+            'old_password': 'OldPass123!',
+            'new_password1': 'NewPass456!',
+            'new_password2': 'NewPass456!',
+        })
+        self.assertEqual(resp.status_code, 302)
+        # Verify password actually changed
+        self.cliente.refresh_from_db()
+        self.assertTrue(self.cliente.check_password('NewPass456!'))
+
+    def test_cambiar_password_wrong_old(self):
+        """POST with wrong old password fails."""
+        self.client.force_login(self.cliente)
+        resp = self.client.post(reverse('usuarios:cambiar_password'), {
+            'old_password': 'WrongPass999!',
+            'new_password1': 'NewPass456!',
+            'new_password2': 'NewPass456!',
+        })
+        self.assertEqual(resp.status_code, 200)  # Returns form with errors
+        self.cliente.refresh_from_db()
+        self.assertTrue(self.cliente.check_password('OldPass123!'))
+
+    def test_cambiar_password_requires_login(self):
+        """Unauthenticated user redirected to login."""
+        resp = self.client.get(reverse('usuarios:cambiar_password'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/usuarios/login/', resp.url)
