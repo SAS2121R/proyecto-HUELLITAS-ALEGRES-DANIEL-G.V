@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Carrito — Huellitas Alegres{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-cart3"></i> Mi Carrito</h1>
+        <a href="{% url 'tienda:catalogo' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> Seguir Comprando
+        </a>
+    </div>
+
+    {% if items %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Precio</th>
+                    <th>Cantidad</th>
+                    <th>Subtotal</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="fw-bold">{{ item.producto.nombre }}</td>
+                    <td><span class="badge bg-secondary">{{ item.producto.get_categoria_display }}</span></td>
+                    <td>${{ item.price|floatformat:0 }}</td>
+                    <td>
+                        <form method="post" action="{% url 'tienda:actualizar_cantidad' item.producto.pk %}" class="d-flex align-items-center gap-2">
+                            {% csrf_token %}
+                            <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.producto.cantidad_stock }}" class="form-control" style="width: 70px;">
+                            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-repeat"></i></button>
+                        </form>
+                    </td>
+                    <td class="fw-bold">${{ item.subtotal|floatformat:0 }}</td>
+                    <td>
+                        <form method="post" action="{% url 'tienda:eliminar_carrito' item.producto.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="table-active">
+                    <td colspan="4" class="text-end fw-bold fs-5">Total:</td>
+                    <td class="fw-bold fs-5">${{ total|floatformat:0 }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between mt-3">
+        <form method="post" action="{% url 'tienda:vaciar_carrito' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="bi bi-trash3"></i> Vaciar Carrito
+            </button>
+        </form>
+        <a href="{% url 'tienda:checkout' %}" class="btn btn-success btn-lg">
+            <i class="bi bi-bag-check"></i> Confirmar Pedido
+        </a>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-cart-x fs-1"></i>
+        <p class="mt-2 mb-0">Tu carrito está vacío.</p>
+        <a href="{% url 'tienda:catalogo' %}" class="btn btn-primary mt-3">
+            <i class="bi bi-shop"></i> Ir a la Tienda
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

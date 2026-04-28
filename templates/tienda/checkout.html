@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Checkout — Huellitas Alegres{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4"><i class="bi bi-bag-check"></i> Confirmar Pedido</h1>
+
+    {% if items %}
+    <!-- Order summary -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-list-check"></i> Resumen del Pedido</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr>
+                                    <td>{{ item.producto.nombre }}</td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>${{ item.price|floatformat:0 }}</td>
+                                    <td>${{ item.subtotal|floatformat:0 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="fw-bold">
+                                    <td colspan="3" class="text-end">Total:</td>
+                                    <td>${{ total|floatformat:0 }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checkout form -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-geo-alt"></i> Datos de Entrega</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="direccion_entrega" class="form-label fw-bold">Dirección de entrega *</label>
+                            <input type="text" name="direccion_entrega" id="direccion_entrega" class="form-control form-control-lg"
+                                   placeholder="Calle 10 # 25-30, Apartamento 3B" required
+                                   value="{{ direccion|default:request.user.first_name|default:'' }}">
+                            {% comment %}Pre-fill with user data if available{% endcomment %}
+                            <div class="form-text">La dirección donde recibirás tu pedido.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="telefono_contacto" class="form-label fw-bold">Teléfono de contacto *</label>
+                            <input type="text" name="telefono_contacto" id="telefono_contacto" class="form-control form-control-lg"
+                                   placeholder="300 123 4567" required
+                                   value="{{ telefono|default:request.user.telefono|default:'' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="notas" class="form-label fw-bold">Instrucciones especiales (opcional)</label>
+                            <textarea name="notas" id="notas" class="form-control" rows="3"
+                                      placeholder="Ej: Dejar en la portería, timbre 3B..."></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                            <a href="{% url 'tienda:carrito' %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-arrow-left"></i> Volver al Carrito
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-bag-check-fill"></i> Confirmar Pedido — ${{ total|floatformat:0 }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-truck fs-1 text-primary"></i>
+                    <h5 class="mt-2">Entrega a Domicilio</h5>
+                    <p class="text-muted small">Tu pedido será asignado a un domiciliario y recibirás actualizaciones del estado.</p>
+                    <hr>
+                    <div class="text-start">
+                        <p><i class="bi bi-clock"></i> <strong>Estado:</strong> Pendiente</p>
+                        <p><i class="bi bi-cash"></i> <strong>Pago:</strong> Contra entrega</p>
+                        <p><i class="bi bi-shield-check"></i> <strong>Garantía:</strong> Productos 100% originales</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-warning text-center">
+        <i class="bi bi-cart-x fs-1"></i>
+        <p class="mt-2 mb-0">Tu carrito está vacío. No puedes confirmar un pedido sin productos.</p>
+        <a href="{% url 'tienda:catalogo' %}" class="btn btn-primary mt-3">
+            <i class="bi bi-shop"></i> Ir a la Tienda
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

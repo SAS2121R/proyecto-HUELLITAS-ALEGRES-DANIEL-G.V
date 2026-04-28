@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'reportes',  # aplicacion para reportes PDF y Excel
     'servicios',  # aplicacion para gestion de servicios veterinarios
     'entregas',  # aplicacion para gestion de pedidos y entregas domiciliarias
+    'tienda',  # aplicacion para catalogo y carrito de compras del Cliente
 ]
 
 MIDDLEWARE = [
