@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Resumen Diario — Huellitas Alegres{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-clipboard-check"></i> Resumen del Día</h1>
+        <a href="{% url 'entregas:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver a Entregas
+        </a>
+    </div>
+
+    <!-- Summary stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card bg-success text-white text-center shadow-sm">
+                <div class="card-body">
+                    <h2 class="mb-0">{{ total_entregas }}</h2>
+                    <small>Entregas Hoy</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card bg-info text-white text-center shadow-sm">
+                <div class="card-body">
+                    <h5 class="mb-0">{{ fecha|date:"d/m/Y" }}</h5>
+                    <small>Fecha</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if pedidos_entregados %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Pedido</th>
+                    <th>Cliente</th>
+                    <th>Dirección</th>
+                    <th>Teléfono</th>
+                    <th>Hora</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pedido in pedidos_entregados %}
+                <tr>
+                    <td><a href="{% url 'entregas:detalle' pedido.pk %}" class="text-decoration-none">#{{ pedido.pk }}</a></td>
+                    <td>{{ pedido.cliente.get_full_name }}</td>
+                    <td>{{ pedido.direccion_entrega }}</td>
+                    <td>{{ pedido.telefono_contacto }}</td>
+                    <td>{{ pedido.fecha_entrega|date:"H:i" }}</td>
+                    <td>${{ pedido.total|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="fw-bold">
+                    <td colspan="5" class="text-end">Total del día:</td>
+                    <td>${{ total_dia|floatformat:0 }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-inbox"></i> No hay entregas registradas hoy.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

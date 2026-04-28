@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}Nuevo Pedido — Huellitas Alegres{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <a href="{% url 'entregas:dashboard' %}" class="btn btn-outline-secondary mb-3">
+        <i class="bi bi-arrow-left"></i> Volver a Entregas
+    </a>
+
+    <h2 class="mb-4"><i class="bi bi-plus-circle"></i> Nuevo Pedido</h2>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- Pedido data -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-person"></i> Datos del Pedido</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="{{ form.cliente.id_for_label }}" class="form-label fw-bold">Cliente</label>
+                        {{ form.cliente }}
+                        {% if form.cliente.errors %}
+                        <div class="text-danger small">{{ form.cliente.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="{{ form.domiciliario.id_for_label }}" class="form-label fw-bold">Domiciliario</label>
+                        {{ form.domiciliario }}
+                        {% if form.domiciliario.errors %}
+                        <div class="text-danger small">{{ form.domiciliario.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-8">
+                        <label for="{{ form.direccion_entrega.id_for_label }}" class="form-label fw-bold">Dirección de Entrega</label>
+                        {{ form.direccion_entrega }}
+                        {% if form.direccion_entrega.errors %}
+                        <div class="text-danger small">{{ form.direccion_entrega.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.telefono_contacto.id_for_label }}" class="form-label fw-bold">Teléfono</label>
+                        {{ form.telefono_contacto }}
+                        {% if form.telefono_contacto.errors %}
+                        <div class="text-danger small">{{ form.telefono_contacto.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-12">
+                        <label for="{{ form.notas.id_for_label }}" class="form-label fw-bold">Instrucciones Especiales</label>
+                        {{ form.notas }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Items formset -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-box"></i> Productos del Pedido</h5>
+                <button type="button" id="add-item" class="btn btn-sm btn-light">
+                    <i class="bi bi-plus"></i> Agregar Producto
+                </button>
+            </div>
+            <div class="card-body">
+                {{ formset.management_form }}
+                <div id="items-container">
+                    {% for item_form in formset %}
+                    <div class="row g-2 mb-2 item-row align-items-end">
+                        <div class="col-md-6">
+                            <label class="form-label small">Producto</label>
+                            {{ item_form.producto }}
+                            {% if item_form.producto.errors %}
+                            <div class="text-danger small">{{ item_form.producto.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Cantidad</label>
+                            {{ item_form.cantidad }}
+                            {% if item_form.cantidad.errors %}
+                            <div class="text-danger small">{{ item_form.cantidad.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            {{ item_form.DELETE }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if formset.non_form_errors %}
+                <div class="alert alert-danger mt-2">{{ formset.non_form_errors }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="{% url 'entregas:dashboard' %}" class="btn btn-outline-secondary btn-lg">Cancelar</a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-check-circle"></i> Crear Pedido
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add item row dynamically
+document.getElementById('add-item').addEventListener('click', function() {
+    const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+    const currentCount = parseInt(totalForms.value);
+    const newRow = document.createElement('div');
+    newRow.className = 'row g-2 mb-2 item-row align-items-end';
+    // Clone last row and update indices (simplified approach)
+    const lastRow = document.querySelector('.item-row:last-child');
+    if (lastRow) {
+        const clone = lastRow.cloneNode(true);
+        clone.querySelectorAll('select, input').forEach(function(el) {
+            const name = el.name.replace(/-\d+-/, '-' + currentCount + '-');
+            const id = el.id.replace(/-\d+-/, '-' + currentCount + '-');
+            el.name = name;
+            el.id = id;
+            el.value = '';
+            el.checked = false;
+        });
+        document.getElementById('items-container').appendChild(clone);
+    }
+    totalForms.value = currentCount + 1;
+});
+</script>
+{% endblock %}

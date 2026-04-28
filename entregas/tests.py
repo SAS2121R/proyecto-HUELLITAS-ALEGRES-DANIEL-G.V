@@ -567,3 +567,141 @@ class CambiarEstadoViewTests(TestCase):
         self.client_test.force_login(self.domiciliario)
         response = self.client_test.get(reverse('entregas:cambiar_estado', kwargs={'pk': self.pedido.pk}))
         self.assertIn(response.status_code, [405, 302])
+
+
+# ========================================
+# PHASE 3: Create Pedido (Admin) + Resumen Diario
+# ========================================
+
+
+class CrearPedidoURLTests(TestCase):
+    """Test crear_pedido URL resolution."""
+
+    def test_crear_pedido_url_resolves(self):
+        url = reverse('entregas:crear')
+        self.assertEqual(url, '/entregas/crear/')
+
+    def test_resumen_url_resolves(self):
+        url = reverse('entregas:resumen')
+        self.assertEqual(url, '/entregas/resumen/')
+
+
+class CrearPedidoPermissionTests(TestCase):
+    """Test that crear_pedido is restricted to Admin."""
+
+    def setUp(self):
+        self.client_test = Client()
+
+    def test_crear_pedido_requires_login(self):
+        response = self.client_test.get(reverse('entregas:crear'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/usuarios/login/', response.url)
+
+    def test_crear_pedido_requires_admin(self):
+        """Domiciliario should get 403 on crear_pedido."""
+        domiciliario = create_user_with_role('Domiciliario', username='domic_crear', email='domic_crear@test.com')
+        self.client_test.force_login(domiciliario)
+        response = self.client_test.get(reverse('entregas:crear'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_crear_pedido_cliente_forbidden(self):
+        """Cliente should get 403 on crear_pedido."""
+        cliente = create_user_with_role('Cliente', username='cli_crear', email='cli_crear@test.com')
+        self.client_test.force_login(cliente)
+        response = self.client_test.get(reverse('entregas:crear'))
+        self.assertEqual(response.status_code, 403)
+
+
+class CrearPedidoViewTests(TestCase):
+    """Test the Admin crear_pedido view."""
+
+    def setUp(self):
+        self.client_test = Client()
+        self.admin = create_user_with_role('Administrador', username='admin_crear', email='admin_crear@test.com')
+        self.domiciliario = create_user_with_role('Domiciliario', username='domic_crear2', email='domic_crear2@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cli_crear2', email='cli_crear2@test.com')
+        self.producto = Producto.all_objects.create(
+            nombre='Antibiótico Canino',
+            categoria='medicamentos',
+            precio=Decimal('32000.00'),
+            cantidad_stock=100,
+        )
+
+    def test_admin_can_access_crear_pedido(self):
+        self.client_test.force_login(self.admin)
+        response = self.client_test.get(reverse('entregas:crear'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_admin_can_create_pedido(self):
+        """Admin can create a pedido with items via POST."""
+        self.client_test.force_login(self.admin)
+        response = self.client_test.post(reverse('entregas:crear'), {
+            'cliente': self.cliente.pk,
+            'domiciliario': self.domiciliario.pk,
+            'direccion_entrega': 'Calle 30 # 15-20',
+            'telefono_contacto': '3105551234',
+            'notas': 'Entregar antes del mediodía',
+            # Management form for formset
+            'items-TOTAL_FORMS': '1',
+            'items-INITIAL_FORMS': '0',
+            'items-0-producto': self.producto.pk,
+            'items-0-cantidad': '2',
+        })
+        self.assertEqual(response.status_code, 302)  # redirect after success
+        self.assertEqual(Pedido.objects.count(), 1)
+        pedido = Pedido.objects.first()
+        self.assertEqual(pedido.items.count(), 1)
+        self.assertEqual(pedido.estado, 'pendiente')
+
+    def test_create_pedido_without_items_still_creates(self):
+        """A pedido with no items should still be created."""
+        self.client_test.force_login(self.admin)
+        response = self.client_test.post(reverse('entregas:crear'), {
+            'cliente': self.cliente.pk,
+            'domiciliario': self.domiciliario.pk,
+            'direccion_entrega': 'Calle 40 # 20-30',
+            'telefono_contacto': '3105555678',
+            'items-TOTAL_FORMS': '0',
+            'items-INITIAL_FORMS': '0',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Pedido.objects.count(), 1)
+        pedido = Pedido.objects.first()
+        self.assertEqual(pedido.items.count(), 0)
+
+
+class ResumenViewTests(TestCase):
+    """Test the daily summary view for Domiciliario."""
+
+    def setUp(self):
+        self.client_test = Client()
+        self.domiciliario = create_user_with_role('Domiciliario', username='domic_res', email='domic_res@test.com')
+        self.admin = create_user_with_role('Administrador', username='admin_res', email='admin_res@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cli_res', email='cli_res@test.com')
+
+    def test_resumen_requires_login(self):
+        response = self.client_test.get(reverse('entregas:resumen'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/usuarios/login/', response.url)
+
+    def test_domiciliario_can_see_resumen(self):
+        self.client_test.force_login(self.domiciliario)
+        response = self.client_test.get(reverse('entregas:resumen'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_resumen_shows_only_entregado_pedidos(self):
+        """Resumen should only show delivered (entregado) pedidos."""
+        from django.utils import timezone
+        pedido_entregado = Pedido.objects.create(cliente=self.cliente, domiciliario=self.domiciliario, direccion_entrega='Calle 1', telefono_contacto='3001', estado='entregado', fecha_entrega=timezone.now())
+        Pedido.objects.create(cliente=self.cliente, domiciliario=self.domiciliario, direccion_entrega='Calle 2', telefono_contacto='3002', estado='pendiente')
+        self.client_test.force_login(self.domiciliario)
+        response = self.client_test.get(reverse('entregas:resumen'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['pedidos_entregados']), 1)
+
+    def test_cliente_cannot_access_resumen(self):
+        """Clientes should get 403."""
+        cliente = create_user_with_role('Cliente', username='cli_res2', email='cli_res2@test.com')
+        self.client_test.force_login(cliente)
+        response = self.client_test.get(reverse('entregas:resumen'))
+        self.assertEqual(response.status_code, 403)

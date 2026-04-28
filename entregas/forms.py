@@ -1,5 +1,62 @@
 from django import forms
-from .models import Pedido, ESTADO_CHOICES
+from django.forms import inlineformset_factory
+from .models import Pedido, PedidoItem, ESTADO_CHOICES
+
+
+class PedidoForm(forms.ModelForm):
+    """Form for Admin to create a new Pedido."""
+
+    class Meta:
+        model = Pedido
+        fields = ['cliente', 'domiciliario', 'direccion_entrega', 'telefono_contacto', 'notas']
+        widgets = {
+            'direccion_entrega': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Calle 10 # 25-30, Apartamento 3B',
+            }),
+            'telefono_contacto': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '300 123 4567',
+            }),
+            'notas': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Instrucciones especiales de entrega...',
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filter cliente and domiciliario by role
+        from usuarios.models import Usuario
+        self.fields['cliente'].queryset = Usuario.objects.filter(rol__nombre='Cliente')
+        self.fields['domiciliario'].queryset = Usuario.objects.filter(rol__nombre='Domiciliario')
+
+
+class PedidoItemForm(forms.ModelForm):
+    """Form for a single pedido item (product + quantity)."""
+
+    class Meta:
+        model = PedidoItem
+        fields = ['producto', 'cantidad']
+        widgets = {
+            'cantidad': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 1,
+                'value': 1,
+            }),
+        }
+
+
+PedidoItemFormSet = inlineformset_factory(
+    Pedido,
+    PedidoItem,
+    form=PedidoItemForm,
+    extra=1,
+    can_delete=True,
+    min_num=0,
+    validate_min=False,
+)
 
 
 class CambiarEstadoForm(forms.Form):

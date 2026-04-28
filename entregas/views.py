@@ -3,10 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.utils import timezone
 
 from usuarios.decorators import role_required
 from .models import Pedido, ESTADO_CHOICES
-from .forms import CambiarEstadoForm, EvidenciaForm
+from .forms import CambiarEstadoForm, EvidenciaForm, PedidoForm, PedidoItemFormSet
 
 
 @login_required(login_url='/usuarios/login/')
@@ -119,7 +120,6 @@ def cambiar_estado(request, pk):
     pedido.estado = nuevo_estado
     if nuevo_estado == 'cancelado':
         pedido.incidente_notas = incidente_notas
-    from django.utils import timezone
     if nuevo_estado == 'entregado':
         pedido.fecha_entrega = timezone.now()
     pedido.save()
@@ -127,3 +127,48 @@ def cambiar_estado(request, pk):
     estado_labels = {'pendiente': 'Pendiente', 'en_camino': 'En Camino', 'entregado': 'Entregado', 'cancelado': 'Cancelado'}
     messages.success(request, f'Pedido #{pedido.pk} actualizado a {estado_labels.get(nuevo_estado, nuevo_estado)}')
     return redirect('entregas:dashboard')
+
+
+@role_required('Administrador')
+def crear_pedido(request):
+    """Admin-only view to create a new Pedido with items."""
+    if request.method == 'POST':
+        form = PedidoForm(request.POST)
+        formset = PedidoItemFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            pedido = form.save()
+            formset.instance = pedido
+            items = formset.save()
+            messages.success(request, f'Pedido #{pedido.pk} creado exitosamente.')
+            return redirect('entregas:detalle', pk=pedido.pk)
+    else:
+        form = PedidoForm()
+        formset = PedidoItemFormSet()
+    return render(request, 'entregas/pedido_form.html', {
+        'form': form,
+        'formset': formset,
+    })
+
+
+@login_required(login_url='/usuarios/login/')
+def resumen(request):
+    """Daily summary of delivered pedidos — Domiciliario sees own, Admin sees all."""
+    if request.user.rol.nombre == 'Cliente':
+        raise PermissionDenied
+
+    today = timezone.now().date()
+    if request.user.rol.nombre == 'Administrador':
+        pedidos = Pedido.objects.filter(estado='entregado', fecha_entrega__date=today)
+    else:  # Domiciliario
+        pedidos = Pedido.objects.filter(estado='entregado', fecha_entrega__date=today, domiciliario=request.user)
+
+    pedidos = pedidos.select_related('cliente', 'domiciliario').prefetch_related('items__producto').order_by('-fecha_entrega')
+    total_entregas = pedidos.count()
+    total_dia = sum(p.total for p in pedidos) if pedidos else 0
+
+    return render(request, 'entregas/resumen.html', {
+        'pedidos_entregados': pedidos,
+        'total_entregas': total_entregas,
+        'total_dia': total_dia,
+        'fecha': today,
+    })
