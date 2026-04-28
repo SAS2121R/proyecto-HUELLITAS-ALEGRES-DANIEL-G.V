@@ -1,9 +1,16 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container py-4">
+  {% if user.rol.nombre == 'Cliente' %}
+  <h1 class="mb-4"><i class="bi bi-calendar-heart"></i> Mis Citas</h1>
+  {% else %}
   <h1 class="mb-4">Citas</h1>
-  <div class="d-flex justify-content-end mb-3">
-    {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+  {% endif %}
+
+  <div class="d-flex justify-content-end mb-3 gap-2">
+    {% if user.rol.nombre == 'Cliente' %}
+    <a href="{% url 'agenda:solicitar_cita' %}" class="btn btn-success"><i class="bi bi-calendar-plus"></i> Solicitar Cita</a>
+    {% elif user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
     <a href="{% url 'agenda:crear_cita' %}" class="btn btn-success">Nueva Cita</a>
     {% endif %}
   </div>
@@ -37,19 +44,21 @@
               {% endif %}
             </td>
 <td>
-               <a href="{% url 'mascotas:editar' cita.mascota.id %}" class="btn btn-sm btn-outline-info" title="Ver Mascota">👁️</a>
-               {% if cita.estado == 'Programada' %}
-                 {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
-                 <a href="{% url 'historial:atender_cita' cita.pk %}" class="btn btn-sm btn-success" title="Atender cita y crear historial">🩺 Atender</a>
-                 {% endif %}
-               <a href="{% url 'agenda:editar_cita' cita.pk %}" class="btn btn-sm btn-warning">Editar</a>
-               {% else %}
-               <span class="text-muted" title="No se puede editar una cita {{ cita.get_estado_display }}">Editar</span>
-               {% endif %}
-               {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
-               <a href="{% url 'agenda:eliminar_cita' cita.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de cancelar esta cita?')">Cancelar</a>
-               {% endif %}
-             </td>
+                <a href="{% url 'mascotas:detalle' cita.mascota.pk %}" class="btn btn-sm btn-outline-info" title="Ver Mascota">👁️</a>
+                {% if cita.estado == 'Programada' %}
+                  {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+                  <a href="{% url 'historial:atender_cita' cita.pk %}" class="btn btn-sm btn-success" title="Atender cita y crear historial">🩺 Atender</a>
+                  <a href="{% url 'agenda:editar_cita' cita.pk %}" class="btn btn-sm btn-warning">Editar</a>
+                  {% endif %}
+                {% if user.rol.nombre == 'Cliente' or user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+                <a href="{% url 'agenda:cancelar_cita' cita.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de cancelar esta cita?')">Cancelar</a>
+                {% endif %}
+                {% else %}
+                {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+                <span class="text-muted" title="No se puede editar una cita {{ cita.get_estado_display }}">Editar</span>
+                {% endif %}
+                {% endif %}
+              </td>
           </tr>
           {% endfor %}
         </tbody>

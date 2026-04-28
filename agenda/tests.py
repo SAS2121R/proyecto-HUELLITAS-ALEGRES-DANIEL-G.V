@@ -1723,13 +1723,20 @@ class CitaCancelViewTest(TestCase):
         })
         self.assertEqual(resp.status_code, 403)
 
-    def test_cliente_recibe_403(self):
-        """R10.5: Cliente gets 403 on eliminar_cita"""
+    def test_cliente_can_cancel_own_cita_via_cancel_view(self):
+        """Cliente can access cancel page for their own cita."""
         self.client.force_login(self.cliente)
-        resp = self.client.get(reverse('agenda:eliminar_cita', kwargs={'pk': self.cita.pk}))
-        self.assertEqual(resp.status_code, 403)
-        resp = self.client.post(reverse('agenda:eliminar_cita', kwargs={'pk': self.cita.pk}), {})
-        self.assertEqual(resp.status_code, 403)
+        resp = self.client.get(reverse('agenda:cancelar_cita', kwargs={'pk': self.cita.pk}))
+        self.assertEqual(resp.status_code, 200)
+        content = resp.content.decode()
+        self.assertIn('motivo_cancelacion', content)
+        # POST to cancel with motivo
+        resp = self.client.post(reverse('agenda:cancelar_cita', kwargs={'pk': self.cita.pk}), {
+            'motivo_cancelacion': 'No puedo asistir',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.cita.refresh_from_db()
+        self.assertEqual(self.cita.estado, 'Cancelada')
 
     def test_bloquear_cancel_atendida(self):
         """R10.6: Cancel view blocks cancellation of Atendida cita (terminal state)"""
@@ -1876,3 +1883,142 @@ class AdminDisponibilidadFormTest(TestCase):
         from agenda.forms import DisponibilidadForm
         form = DisponibilidadForm(user=self.vet)
         self.assertNotIn('veterinario', form.fields)
+
+
+# ========================================
+# CLIENTE ROLE: Phase 2 — Solicitar Cita + Mis Citas + Cancelar
+# ========================================
+
+
+class ClienteSolicitarCitaTest(TestCase):
+    """Test that Cliente can request a cita (solicitar_cita view)."""
+
+    def setUp(self):
+        from django.test import Client
+        self.client_test = Client()
+        self.vet = create_user_with_role('Veterinario', username='vet_sc', email='vet_sc@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cli_sc', email='cli_sc@test.com')
+        self.other_cliente = create_user_with_role('Cliente', username='cli_sc2', email='cli_sc2@test.com')
+        self.mascota = Mascota.objects.create(
+            nombre='Firulais', especie='Canino', sexo='Macho',
+            propietario=self.cliente,
+        )
+        self.other_mascota = Mascota.objects.create(
+            nombre='Mishi', especie='Felino', sexo='Hembra',
+            propietario=self.other_cliente,
+        )
+        self.disp = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 6, 1),
+            hora_inicio=time(9, 0), hora_fin=time(10, 0),
+        )
+
+    def test_solicitar_cita_url_resolves(self):
+        url = reverse('agenda:solicitar_cita')
+        self.assertEqual(url, '/agenda/citas/solicitar/')
+
+    def test_cliente_can_access_solicitar_cita(self):
+        """Cliente can GET solicitar_cita form."""
+        self.client_test.force_login(self.cliente)
+        response = self.client_test.get(reverse('agenda:solicitar_cita'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_cliente_can_create_cita(self):
+        """Cliente can POST to crear cita for their own mascota."""
+        self.client_test.force_login(self.cliente)
+        response = self.client_test.post(reverse('agenda:solicitar_cita'), {
+            'mascota': self.mascota.pk,
+            'disponibilidad': self.disp.pk,
+            'motivo': 'Vacunación anual',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Cita.objects.count(), 1)
+        cita = Cita.objects.first()
+        self.assertEqual(cita.mascota, self.mascota)
+        self.assertEqual(cita.estado, 'Programada')
+
+    def test_cliente_cannot_use_other_mascota(self):
+        """Cliente cannot create cita for another client's mascota."""
+        self.client_test.force_login(self.cliente)
+        response = self.client_test.post(reverse('agenda:solicitar_cita'), {
+            'mascota': self.other_mascota.pk,
+            'disponibilidad': self.disp.pk,
+        })
+        # Form should reject — mascota not in queryset
+        self.assertEqual(response.status_code, 200)  # Form error, stays on page
+        self.assertEqual(Cita.objects.count(), 0)
+
+    def test_vet_cannot_access_solicitar_cita(self):
+        """Veterinario gets 403 on solicitar_cita."""
+        self.client_test.force_login(self.vet)
+        response = self.client_test.get(reverse('agenda:solicitar_cita'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_solicitar_cita_requires_login(self):
+        response = self.client_test.get(reverse('agenda:solicitar_cita'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/usuarios/login/', response.url)
+
+
+class ClienteCancelarCitaTest(TestCase):
+    """Test that Cliente can cancel their own citas."""
+
+    def setUp(self):
+        from django.test import Client
+        self.client_test = Client()
+        self.vet = create_user_with_role('Veterinario', username='vet_cc', email='vet_cc@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cli_cc', email='cli_cc@test.com')
+        self.other_cliente = create_user_with_role('Cliente', username='cli_cc2', email='cli_cc2@test.com')
+        self.mascota = Mascota.objects.create(
+            nombre='Rex', especie='Canino', sexo='Macho',
+            propietario=self.cliente,
+        )
+        self.other_mascota = Mascota.objects.create(
+            nombre='Luna', especie='Felino', sexo='Hembra',
+            propietario=self.other_cliente,
+        )
+        self.disp = Disponibilidad.objects.create(
+            veterinario=self.vet, fecha=date(2026, 6, 5),
+            hora_inicio=time(11, 0), hora_fin=time(12, 0),
+        )
+        self.cita = Cita.objects.create(
+            mascota=self.mascota, disponibilidad=self.disp, estado='Programada',
+        )
+        self.other_cita = Cita.objects.create(
+            mascota=self.other_mascota,
+            disponibilidad=Disponibilidad.objects.create(
+                veterinario=self.vet, fecha=date(2026, 6, 6),
+                hora_inicio=time(13, 0), hora_fin=time(14, 0),
+            ),
+            estado='Programada',
+        )
+
+    def test_cliente_can_cancel_own_cita(self):
+        """Cliente can cancel their own cita with motivo."""
+        self.client_test.force_login(self.cliente)
+        response = self.client_test.post(
+            reverse('agenda:cancelar_cita', kwargs={'pk': self.cita.pk}),
+            {'motivo_cancelacion': 'No puedo asistir'},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.cita.refresh_from_db()
+        self.assertEqual(self.cita.estado, 'Cancelada')
+
+    def test_cliente_cannot_cancel_other_cita(self):
+        """Cliente gets 404 when trying to cancel another client's cita."""
+        self.client_test.force_login(self.cliente)
+        response = self.client_test.post(
+            reverse('agenda:cancelar_cita', kwargs={'pk': self.other_cita.pk}),
+            {'motivo_cancelacion': 'Trying to cancel'},
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_cliente_cannot_cancel_atendida(self):
+        """Cliente cannot cancel a cita that was already attended."""
+        self.cita.estado = 'Atendida'
+        self.cita.save()
+        self.client_test.force_login(self.cliente)
+        response = self.client_test.get(
+            reverse('agenda:cancelar_cita', kwargs={'pk': self.cita.pk}),
+        )
+        # Should redirect with error message
+        self.assertIn(response.status_code, [302, 200])

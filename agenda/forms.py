@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from .models import Cita, Disponibilidad
+from mascotas.models import Mascota
 
 
 class DisponibilidadForm(forms.ModelForm):
@@ -66,7 +67,7 @@ class DisponibilidadForm(forms.ModelForm):
 
 
 class CitaForm(forms.ModelForm):
-    """Formulario para crear/editar citas veterinarias."""
+    """Formulario para crear/editar citas veterinarias (Vet/Admin)."""
 
     class Meta:
         model = Cita
@@ -118,3 +119,40 @@ class CitaForm(forms.ModelForm):
                     else:
                         self.add_error(None, msg)
         return cleaned_data
+
+
+class SolicitarCitaForm(forms.ModelForm):
+    """Formulario para que el Cliente solicite una cita.
+    Filters mascota to request.user's own, disponibilidad to available slots."""
+
+    class Meta:
+        model = Cita
+        fields = ['mascota', 'disponibilidad', 'motivo']
+        widgets = {
+            'motivo': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Describa el motivo de la consulta (vacunación, control, etc.)',
+            }),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filter mascota to user's own
+        if user:
+            self.fields['mascota'].queryset = Mascota.objects.filter(propietario=user).order_by('nombre')
+        # Filter disponibilidad to active & unoccupied slots with future dates
+        from datetime import date as date_cls
+        available_ids = Disponibilidad.objects.filter(
+            activa=True,
+            fecha__gte=date_cls.today(),
+        ).exclude(
+            pk__in=Cita.objects.filter(
+                estado__in=['Programada', 'Atendida']
+            ).values('disponibilidad_id')
+        ).values_list('pk', flat=True)
+        self.fields['disponibilidad'].queryset = Disponibilidad.objects.filter(
+            pk__in=available_ids
+        ).order_by('fecha', 'hora_inicio')
+        self.fields['mascota'].empty_label = '— Seleccione su mascota —'
+        self.fields['disponibilidad'].empty_label = '— Seleccione fecha y hora —'

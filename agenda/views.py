@@ -2,11 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import ProtectedError
 from usuarios.decorators import role_required
 from .models import Disponibilidad, Cita
-from .forms import DisponibilidadForm, CitaForm
+from .forms import DisponibilidadForm, CitaForm, SolicitarCitaForm
 
 
 @login_required(login_url='/usuarios/login/')
@@ -149,6 +150,26 @@ def crear_cita(request):
 
 
 @login_required(login_url='/usuarios/login/')
+def solicitar_cita(request):
+    """Cliente solicita una cita — only their own mascotas, available slots."""
+    if request.user.rol.nombre != 'Cliente':
+        raise PermissionDenied
+
+    if request.method == 'POST':
+        form = SolicitarCitaForm(request.POST, user=request.user)
+        if form.is_valid():
+            cita = form.save(commit=False)
+            cita.estado = 'Programada'
+            cita.save()
+            messages.success(request, f'¡Cita solicitada exitosamente para {cita.mascota.nombre}!')
+            return redirect('agenda:lista_citas')
+    else:
+        form = SolicitarCitaForm(user=request.user)
+
+    return render(request, 'agenda/solicitar_cita.html', {'form': form})
+
+
+@login_required(login_url='/usuarios/login/')
 def editar_cita(request, pk):
     """Editar cita — Vet own only, Admin any, Cliente 403."""
     if request.user.rol.nombre == 'Cliente':
@@ -173,20 +194,28 @@ def editar_cita(request, pk):
 
 @login_required(login_url='/usuarios/login/')
 def eliminar_cita(request, pk):
-    """Cancelar cita — soft cancel (set estado='Cancelada'), NOT hard delete."""
-    if request.user.rol.nombre == 'Cliente':
-        raise PermissionDenied
+    """Cancelar cita — soft cancel (set estado='Cancelada'), NOT hard delete.
+    Vet cancels own, Admin cancels any, Cliente cancels own pet's citas."""
     cita = get_object_or_404(Cita, pk=pk)
-    if request.user.rol.nombre == 'Veterinario' and cita.disponibilidad.veterinario != request.user:
-        raise PermissionDenied
+
+    # Permission check
+    if request.user.rol.nombre == 'Cliente':
+        # Cliente can only cancel their own pet's citas
+        if cita.mascota.propietario != request.user:
+            raise Http404('Cita no encontrada.')
+    elif request.user.rol.nombre == 'Veterinario':
+        if cita.disponibilidad.veterinario != request.user:
+            raise PermissionDenied
+    # Admin can cancel any
+
     # Block cancel of Atendida citas (terminal state)
     if cita.estado == 'Atendida':
         messages.error(request, 'No se puede cancelar una cita que ya fue atendida.')
         return redirect('agenda:lista_citas')
+
     if request.method == 'POST':
         motivo = request.POST.get('motivo_cancelacion', '').strip()
         if not motivo:
-            # Re-render confirmation page with error
             messages.error(request, 'Debe indicar el motivo de cancelación.')
             return render(request, 'agenda/cita_cancel.html', {'cita': cita})
         cita.estado = 'Cancelada'
