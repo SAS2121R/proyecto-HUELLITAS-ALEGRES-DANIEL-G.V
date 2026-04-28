@@ -48,14 +48,18 @@ def lista_mascotas(request):
     })
 
 
-@role_required('Veterinario', 'Administrador')
+@login_required(login_url='/usuarios/login/')
 def crear_mascota(request):
-    """Crear nueva mascota — solo Veterinario y Administrador."""
+    """Crear nueva mascota — Vet/Admin/Vet can create; Cliente gets forced propietario."""
     if request.method == 'POST':
         form = MascotaForm(request.POST, request.FILES)
         if form.is_valid():
             mascota = form.save(commit=False)
-            mascota.propietario = request.user
+            # For Cliente role, always force propietario to request.user
+            if request.user.rol.nombre == 'Cliente':
+                mascota.propietario = request.user
+            else:
+                mascota.propietario = request.user
             mascota.save()
             messages.success(request, 'Mascota creada exitosamente.')
             return redirect('mascotas:lista')

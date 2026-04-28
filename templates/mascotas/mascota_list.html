@@ -1,7 +1,23 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container py-4">
+  {% if user.rol.nombre == 'Cliente' %}
+  <h1 class="mb-4"><i class="bi bi-house-heart"></i> Mis Mascotas</h1>
+  {% else %}
   <h1 class="mb-4">Listado de Mascotas</h1>
+  {% endif %}
+
+  <!-- Action buttons for Cliente -->
+  {% if user.rol.nombre == 'Cliente' %}
+  <div class="d-grid d-md-flex gap-3 mb-4">
+    <a href="{% url 'mascotas:nuevo' %}" class="btn btn-success btn-lg">
+      <i class="bi bi-plus-circle"></i> Registrar Mascota
+    </a>
+    <a href="{% url 'agenda:lista_citas' %}" class="btn btn-primary btn-lg">
+      <i class="bi bi-calendar-check"></i> Mis Citas
+    </a>
+  </div>
+  {% endif %}
 
   <!-- Search bar -->
   <form method="get" class="mb-3">
@@ -19,8 +35,8 @@
         </div>
       </div>
       <div class="col-md-6 text-end">
-        {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
-        <a href="{% url 'mascotas:nuevo' %}" class="btn btn-success">Nueva mascota</a>
+        {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' or user.rol.nombre == 'Cliente' %}
+        <a href="{% url 'mascotas:nuevo' %}" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nueva mascota</a>
         {% endif %}
       </div>
     </div>

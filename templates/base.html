@@ -20,8 +20,8 @@
        <ul class="navbar-nav ms-auto">
 {% if user.is_authenticated %}
             <li class="nav-item"><a href="{% url 'productos:lista' %}" class="nav-link">Productos</a></li>
-            <li class="nav-item"><a href="{% url 'mascotas:lista' %}" class="nav-link">Mascotas</a></li>
-            <li class="nav-item"><a href="{% url 'agenda:lista_citas' %}" class="nav-link">Citas</a></li>
+            <li class="nav-item"><a href="{% url 'mascotas:lista' %}" class="nav-link"><i class="bi bi-emoji-heart-eyes"></i> Mascotas</a></li>
+            <li class="nav-item"><a href="{% url 'agenda:lista_citas' %}" class="nav-link"><i class="bi bi-calendar"></i> Citas</a></li>
             <li class="nav-item"><a href="{% url 'historial:lista' %}" class="nav-link">Historial</a></li>
             <li class="nav-item"><a href="{% url 'servicios:lista' %}" class="nav-link">Servicios</a></li>
             <li class="nav-item"><a href="{% url 'reportes:citas' %}" class="nav-link">Reportes</a></li>

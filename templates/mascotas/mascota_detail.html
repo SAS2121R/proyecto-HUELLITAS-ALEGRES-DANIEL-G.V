@@ -32,9 +32,11 @@
         <tr><th>Edad</th><td>{{ mascota.get_edad }}</td></tr>
         <tr><th>Esterilizado</th><td>{% if mascota.esterilizado %}✅ Sí{% else %}❌ No{% endif %}</td></tr>
         <tr><th>Alergias</th><td>{{ mascota.alergias }}</td></tr>
+        {% if user.rol.nombre != 'Cliente' %}
         <tr><th>Propietario</th><td>{{ mascota.propietario.get_full_name|default:mascota.propietario.username }}</td></tr>
         {% if mascota.propietario.cedula %}
         <tr><th>Cédula</th><td>{{ mascota.propietario.cedula }}</td></tr>
+        {% endif %}
         {% endif %}
       </table>
 

@@ -64,11 +64,18 @@ class MascotaCreateViewTest(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(Mascota.objects.count(), count_before + 1)
 
-    def test_cliente_cannot_create_403(self):
-        """R4.3: Cliente gets 403 Forbidden"""
+    def test_cliente_can_create_mascota(self):
+        """R4.3: Cliente can create mascota (proprietor forced to request.user)"""
         self.client.force_login(self.cliente_user)
-        resp = self.client.get(reverse('mascotas:nuevo'))
-        self.assertEqual(resp.status_code, 403)
+        from mascotas.models import Mascota
+        resp = self.client.post(reverse('mascotas:nuevo'), data={
+            'nombre': 'ClientDog',
+            'especie': 'Canino',
+            'sexo': 'Macho',
+        })
+        self.assertEqual(resp.status_code, 302)
+        mascota = Mascota.objects.get(nombre='ClientDog')
+        self.assertEqual(mascota.propietario, self.cliente_user)
 
     def test_unauthenticated_redirected_to_login(self):
         """R4.4: Unauthenticated user redirected to login"""
@@ -1252,3 +1259,120 @@ class MascotaAdminEnhancementTest(TestCase):
         from mascotas.admin import MascotaAdmin
         self.assertIn('alergias', MascotaAdmin.list_display)
         self.assertIn('esterilizado', MascotaAdmin.list_filter)
+
+
+# ========================================
+# CLIENTE ROLE: Phase 1 — Dashboard + CRUD Mascotas
+# ========================================
+
+
+class ClienteMascotaCRUDTest(TestCase):
+    """Test that Cliente can create, list, edit, and view their own mascotas."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.cliente_rol = Rol.objects.get(nombre='Cliente')
+        self.vet_rol = Rol.objects.get(nombre='Veterinario')
+        self.cliente = User.objects.create_user(
+            username='cli_masc', email='cli_masc@test.com',
+            password='testpass123', rol=self.cliente_rol,
+            first_name='Carlos',
+        )
+        self.other_cliente = User.objects.create_user(
+            username='cli_masc2', email='cli_masc2@test.com',
+            password='testpass123', rol=self.cliente_rol,
+            first_name='Maria',
+        )
+
+    def test_cliente_can_access_crear_mascota(self):
+        """Cliente should be able to GET crear_mascota."""
+        self.client.force_login(self.cliente)
+        response = self.client.get(reverse('mascotas:nuevo'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_cliente_can_create_mascota(self):
+        """Cliente can POST to create a mascota — propietario forced to request.user."""
+        from mascotas.models import Mascota
+        self.client.force_login(self.cliente)
+        response = self.client.post(reverse('mascotas:nuevo'), data={
+            'nombre': 'Firulais',
+            'especie': 'Canino',
+            'raza': 'Bulldog',
+            'sexo': 'Macho',
+        })
+        self.assertEqual(response.status_code, 302)
+        mascota = Mascota.objects.get(nombre='Firulais')
+        self.assertEqual(mascota.propietario, self.cliente)
+
+    def test_cliente_create_mascota_forces_propietario(self):
+        """Even if a malicious Cliente tries to set propietario, it should be forced to request.user."""
+        from mascotas.models import Mascota
+        self.client.force_login(self.cliente)
+        response = self.client.post(reverse('mascotas:nuevo'), data={
+            'nombre': 'Boby',
+            'especie': 'Canino',
+            'sexo': 'Hembra',
+            # Note: propietario is excluded from the form (exclude=['propietario'])
+            # so this can't be forged via the form anyway
+        })
+        self.assertEqual(response.status_code, 302)
+        mascota = Mascota.objects.get(nombre='Boby')
+        self.assertEqual(mascota.propietario, self.cliente)
+
+    def test_cliente_sees_only_own_mascotas(self):
+        """Cliente list shows only their own mascotas."""
+        from mascotas.models import Mascota
+        Mascota.objects.create(nombre='Rex', especie='Canino', sexo='Macho', propietario=self.cliente)
+        Mascota.objects.create(nombre='Luna', especie='Felino', sexo='Hembra', propietario=self.other_cliente)
+        self.client.force_login(self.cliente)
+        response = self.client.get(reverse('mascotas:lista'))
+        self.assertEqual(response.status_code, 200)
+        mascotas = response.context['mascotas']
+        self.assertEqual(mascotas.paginator.count, 1)
+        self.assertEqual(mascotas[0].nombre, 'Rex')
+
+    def test_cliente_can_edit_own_mascota(self):
+        """Cliente can edit their own mascota."""
+        from mascotas.models import Mascota
+        mascota = Mascota.objects.create(
+            nombre='Rex', especie='Canino', sexo='Macho',
+            propietario=self.cliente, raza='Pastor',
+        )
+        self.client.force_login(self.cliente)
+        response = self.client.post(reverse('mascotas:editar', kwargs={'pk': mascota.pk}), data={
+            'nombre': 'Rex Updated',
+            'especie': 'Canino',
+            'sexo': 'Macho',
+            'raza': 'Pastor Alemán',
+        })
+        self.assertEqual(response.status_code, 302)
+        mascota.refresh_from_db()
+        self.assertEqual(mascota.nombre, 'Rex Updated')
+
+    def test_cliente_cannot_edit_other_mascota(self):
+        """Cliente gets 403 when trying to edit another client's mascota."""
+        from mascotas.models import Mascota
+        mascota = Mascota.objects.create(
+            nombre='Luna', especie='Felino', sexo='Hembra',
+            propietario=self.other_cliente,
+        )
+        self.client.force_login(self.cliente)
+        response = self.client.get(reverse('mascotas:editar', kwargs={'pk': mascota.pk}))
+        self.assertEqual(response.status_code, 403)
+
+    def test_cliente_cannot_delete_mascota(self):
+        """Cliente should NOT be able to delete a mascota (only Vet/Admin)."""
+        from mascotas.models import Mascota
+        mascota = Mascota.objects.create(
+            nombre='Rex', especie='Canino', sexo='Macho',
+            propietario=self.cliente,
+        )
+        self.client.force_login(self.cliente)
+        response = self.client.get(reverse('mascotas:eliminar', kwargs={'pk': mascota.pk}))
+        self.assertIn(response.status_code, [403, 302])
+
+    def test_cliente_redirect_after_login(self):
+        """After login, Cliente should be redirected to mascotas:lista."""
+        from usuarios.views import get_redirect_url
+        url = get_redirect_url(self.cliente)
+        self.assertEqual(url, reverse('mascotas:lista'))
