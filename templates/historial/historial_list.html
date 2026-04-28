@@ -2,7 +2,11 @@
 {% block content %}
 <div class="container py-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
+    {% if user.rol.nombre == 'Cliente' %}
+    <h1><i class="bi bi-heart-pulse"></i> Historial de Mis Mascotas</h1>
+    {% else %}
     <h1>📋 Historial Clínico</h1>
+    {% endif %}
     {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
     <a href="{% url 'historial:crear' %}" class="btn btn-success">+ Nuevo Historial</a>
     {% endif %}
