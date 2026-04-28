@@ -705,3 +705,175 @@ class ResumenViewTests(TestCase):
         self.client_test.force_login(cliente)
         response = self.client_test.get(reverse('entregas:resumen'))
         self.assertEqual(response.status_code, 403)
+
+
+# ========================================
+# PHASE 4: Stock Deduction + Mis Pedidos + Admin Edit
+# ========================================
+
+from productos.models import MovimientoInventario
+
+
+class StockDeductionTest(TestCase):
+    """Test that delivering a pedido deducts stock from Producto."""
+
+    def setUp(self):
+        self.domiciliario = create_user_with_role('Domiciliario', username='domic_stock', email='domic_stock@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cli_stock', email='cli_stock@test.com')
+        self.producto = Producto.all_objects.create(
+            nombre='Antipulgas Max',
+            categoria='medicamentos',
+            precio=Decimal('25000.00'),
+            cantidad_stock=50,
+        )
+
+    def test_delivery_deducts_stock(self):
+        """When estado changes to entregado, stock should be deducted."""
+        pedido = Pedido.objects.create(
+            cliente=self.cliente,
+            domiciliario=self.domiciliario,
+            direccion_entrega='Calle 10',
+            telefono_contacto='3001112222',
+        )
+        PedidoItem.objects.create(pedido=pedido, producto=self.producto, cantidad=3)
+        # Before delivery
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.cantidad_stock, 50)
+
+        # Transition: pendiente → en_camino → entregado
+        self.client_test = Client()
+        self.client_test.force_login(self.domiciliario)
+        self.client_test.post(
+            reverse('entregas:cambiar_estado', kwargs={'pk': pedido.pk}),
+            {'nuevo_estado': 'en_camino'},
+        )
+        self.client_test.post(
+            reverse('entregas:cambiar_estado', kwargs={'pk': pedido.pk}),
+            {'nuevo_estado': 'entregado'},
+        )
+        # After delivery, stock should be deducted
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.cantidad_stock, 47)
+
+    def test_delivery_creates_movimiento_inventario(self):
+        """Delivering a pedido should create a MovimientoInventario for each item."""
+        pedido = Pedido.objects.create(
+            cliente=self.cliente,
+            domiciliario=self.domiciliario,
+            direccion_entrega='Calle 10',
+            telefono_contacto='3001112222',
+        )
+        PedidoItem.objects.create(pedido=pedido, producto=self.producto, cantidad=3)
+        self.client_test = Client()
+        self.client_test.force_login(self.domiciliario)
+        # Transition: pendiente → en_camino → entregado
+        self.client_test.post(
+            reverse('entregas:cambiar_estado', kwargs={'pk': pedido.pk}),
+            {'nuevo_estado': 'en_camino'},
+        )
+        self.client_test.post(
+            reverse('entregas:cambiar_estado', kwargs={'pk': pedido.pk}),
+            {'nuevo_estado': 'entregado'},
+        )
+        # Should create a salida movimiento
+        mov = MovimientoInventario.objects.filter(producto=self.producto, tipo_movimiento='salida')
+        self.assertEqual(mov.count(), 1)
+        self.assertEqual(mov.first().cantidad, 3)
+
+    def test_cancelled_pedido_does_not_deduct_stock(self):
+        """Cancelling a pedido should NOT deduct stock."""
+        pedido = Pedido.objects.create(
+            cliente=self.cliente,
+            domiciliario=self.domiciliario,
+            direccion_entrega='Calle 10',
+            telefono_contacto='3001112222',
+        )
+        PedidoItem.objects.create(pedido=pedido, producto=self.producto, cantidad=5)
+        self.client_test = Client()
+        self.client_test.force_login(self.domiciliario)
+        self.client_test.post(
+            reverse('entregas:cambiar_estado', kwargs={'pk': pedido.pk}),
+            {'nuevo_estado': 'cancelado', 'incidente_notas': 'Cliente no encontrado'},
+        )
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.cantidad_stock, 50)
+
+
+class MisPedidosViewTests(TestCase):
+    """Test the mis_pedidos view for Cliente."""
+
+    def setUp(self):
+        self.client_test = Client()
+        self.domiciliario = create_user_with_role('Domiciliario', username='domic_mp', email='domic_mp@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cli_mp', email='cli_mp@test.com')
+        self.other_cliente = create_user_with_role('Cliente', username='cli_mp2', email='cli_mp2@test.com')
+
+    def test_mis_pedidos_url_resolves(self):
+        url = reverse('entregas:mis_pedidos')
+        self.assertEqual(url, '/entregas/mis-pedidos/')
+
+    def test_cliente_can_see_own_pedidos(self):
+        """Cliente sees only their own pedidos."""
+        Pedido.objects.create(cliente=self.cliente, domiciliario=self.domiciliario, direccion_entrega='Calle 1', telefono_contacto='3001')
+        Pedido.objects.create(cliente=self.other_cliente, domiciliario=self.domiciliario, direccion_entrega='Calle 2', telefono_contacto='3002')
+        self.client_test.force_login(self.cliente)
+        response = self.client_test.get(reverse('entregas:mis_pedidos'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['page_obj'].paginator.count, 1)
+
+    def test_domiciliario_cannot_access_mis_pedidos(self):
+        """Domiciliario should get 403 on mis_pedidos."""
+        self.client_test.force_login(self.domiciliario)
+        response = self.client_test.get(reverse('entregas:mis_pedidos'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_mis_pedidos_requires_login(self):
+        response = self.client_test.get(reverse('entregas:mis_pedidos'))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/usuarios/login/', response.url)
+
+
+class EditarPedidoViewTests(TestCase):
+    """Test the editar_pedido view for Admin."""
+
+    def setUp(self):
+        self.client_test = Client()
+        self.admin = create_user_with_role('Administrador', username='admin_edit', email='admin_edit@test.com')
+        self.domiciliario = create_user_with_role('Domiciliario', username='domic_edit', email='domic_edit@test.com')
+        self.domiciliario2 = create_user_with_role('Domiciliario', username='domic_edit2', email='domic_edit2@test.com')
+        self.cliente = create_user_with_role('Cliente', username='cli_edit', email='cli_edit@test.com')
+        self.pedido = Pedido.objects.create(
+            cliente=self.cliente,
+            domiciliario=self.domiciliario,
+            direccion_entrega='Calle 50 # 30-20',
+            telefono_contacto='3009998888',
+        )
+
+    def test_editar_pedido_url_resolves(self):
+        url = reverse('entregas:editar', kwargs={'pk': self.pedido.pk})
+        self.assertEqual(url, f'/entregas/{self.pedido.pk}/editar/')
+
+    def test_admin_can_access_editar_pedido(self):
+        self.client_test.force_login(self.admin)
+        response = self.client_test.get(reverse('entregas:editar', kwargs={'pk': self.pedido.pk}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_domiciliario_cannot_edit_pedido(self):
+        """Domiciliario should get 403 on editar_pedido."""
+        self.client_test.force_login(self.domiciliario)
+        response = self.client_test.get(reverse('entregas:editar', kwargs={'pk': self.pedido.pk}))
+        self.assertEqual(response.status_code, 403)
+
+    def test_admin_can_reassign_domiciliario(self):
+        """Admin can POST to reassign domiciliario."""
+        self.client_test.force_login(self.admin)
+        response = self.client_test.post(reverse('entregas:editar', kwargs={'pk': self.pedido.pk}), {
+            'cliente': self.cliente.pk,
+            'domiciliario': self.domiciliario2.pk,
+            'direccion_entrega': 'Calle 99 # 1-2',
+            'telefono_contacto': '3105559999',
+            'notas': 'Cambio de dirección',
+        })
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.domiciliario, self.domiciliario2)
+        self.assertEqual(self.pedido.direccion_entrega, 'Calle 99 # 1-2')

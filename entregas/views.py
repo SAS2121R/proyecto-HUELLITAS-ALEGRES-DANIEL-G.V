@@ -8,6 +8,7 @@ from django.utils import timezone
 from usuarios.decorators import role_required
 from .models import Pedido, ESTADO_CHOICES
 from .forms import CambiarEstadoForm, EvidenciaForm, PedidoForm, PedidoItemFormSet
+from productos.models import Producto, MovimientoInventario
 
 
 @login_required(login_url='/usuarios/login/')
@@ -122,6 +123,18 @@ def cambiar_estado(request, pk):
         pedido.incidente_notas = incidente_notas
     if nuevo_estado == 'entregado':
         pedido.fecha_entrega = timezone.now()
+        # Deduct stock from each item's product
+        for item in pedido.items.select_related('producto'):
+            producto = item.producto
+            producto.cantidad_stock -= item.cantidad
+            producto.save()
+            MovimientoInventario.objects.create(
+                producto=producto,
+                tipo_movimiento='salida',
+                cantidad=item.cantidad,
+                usuario=request.user,
+                motivo=f'Entrega Pedido #{pedido.pk}',
+            )
     pedido.save()
 
     estado_labels = {'pendiente': 'Pendiente', 'en_camino': 'En Camino', 'entregado': 'Entregado', 'cancelado': 'Cancelado'}
@@ -171,4 +184,43 @@ def resumen(request):
         'total_entregas': total_entregas,
         'total_dia': total_dia,
         'fecha': today,
+    })
+
+
+@login_required(login_url='/usuarios/login/')
+def mis_pedidos(request):
+    """Cliente sees their own pedidos only."""
+    if request.user.rol.nombre != 'Cliente':
+        raise PermissionDenied
+
+    pedidos = Pedido.objects.filter(cliente=request.user).select_related('domiciliario').prefetch_related('items__producto').order_by('-fecha_creacion')
+    paginator = Paginator(pedidos, 10)
+    page = request.GET.get('page', 1)
+    try:
+        page_obj = paginator.page(page)
+    except (PageNotAnInteger, EmptyPage):
+        page_obj = paginator.page(1)
+
+    return render(request, 'entregas/mis_pedidos.html', {
+        'page_obj': page_obj,
+    })
+
+
+@role_required('Administrador')
+def editar_pedido(request, pk):
+    """Admin-only view to edit a pedido (reassign domiciliario, change address)."""
+    pedido = get_object_or_404(Pedido, pk=pk)
+
+    if request.method == 'POST':
+        form = PedidoForm(request.POST, instance=pedido)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Pedido #{pedido.pk} actualizado exitosamente.')
+            return redirect('entregas:detalle', pk=pedido.pk)
+    else:
+        form = PedidoForm(instance=pedido)
+
+    return render(request, 'entregas/editar_pedido.html', {
+        'form': form,
+        'pedido': pedido,
     })

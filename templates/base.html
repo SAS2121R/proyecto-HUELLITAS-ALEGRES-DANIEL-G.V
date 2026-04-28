@@ -25,7 +25,11 @@
             <li class="nav-item"><a href="{% url 'historial:lista' %}" class="nav-link">Historial</a></li>
             <li class="nav-item"><a href="{% url 'servicios:lista' %}" class="nav-link">Servicios</a></li>
             <li class="nav-item"><a href="{% url 'reportes:citas' %}" class="nav-link">Reportes</a></li>
+            {% if user.rol.nombre == 'Cliente' %}
+            <li class="nav-item"><a href="{% url 'entregas:mis_pedidos' %}" class="nav-link"><i class="bi bi-bag-check"></i> Mis Pedidos</a></li>
+            {% else %}
             <li class="nav-item"><a href="{% url 'entregas:dashboard' %}" class="nav-link"><i class="bi bi-truck"></i> Entregas</a></li>
+            {% endif %}
             <li class="nav-item dropdown">
              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                Bienvenido, {{ user.email }}
