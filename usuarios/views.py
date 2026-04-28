@@ -33,7 +33,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.urls import reverse
 from .decorators import admin_required, veterinario_required
-from .forms import RolChangeForm, PerfilForm
+from .forms import RolChangeForm, PerfilForm, PerfilEditForm
 from .models import Rol, Perfil
 import json
 
@@ -369,19 +369,38 @@ def vet_dashboard(request):
 
 @login_required
 def mi_perfil(request):
-    """Vista para que el usuario vea y edite su propio perfil."""
+    """Vista para que el usuario vea y edite su propio perfil.
+    Handles both PerfilForm (foto, bio) and PerfilEditForm (name, phone)."""
     perfil, created = Perfil.objects.get_or_create(usuario=request.user)
+
     if request.method == 'POST':
-        form = PerfilForm(request.POST, request.FILES, instance=perfil)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Perfil actualizado exitosamente.')
-            return redirect('usuarios:mi_perfil')
+        form_type = request.POST.get('form_type', 'perfil')
+        if form_type == 'personal':
+            personal_form = PerfilEditForm(request.POST, instance=request.user)
+            perfil_form = PerfilForm(instance=perfil)
+            if personal_form.is_valid():
+                personal_form.save()
+                messages.success(request, 'Datos personales actualizados exitosamente.')
+                return redirect('usuarios:mi_perfil')
+        else:
+            perfil_form = PerfilForm(request.POST, request.FILES, instance=perfil)
+            personal_form = PerfilEditForm(instance=request.user)
+            if perfil_form.is_valid():
+                perfil_form.save()
+                messages.success(request, 'Perfil actualizado exitosamente.')
+                return redirect('usuarios:mi_perfil')
     else:
-        form = PerfilForm(instance=perfil)
+        perfil_form = PerfilForm(instance=perfil)
+        personal_form = PerfilEditForm(instance=request.user)
+
+    # Get user's mascotas count for display
+    mascotas_count = request.user.mascotas.count()
+
     return render(request, 'usuarios/perfil.html', {
-        'form': form,
+        'form': perfil_form,
+        'personal_form': personal_form,
         'perfil': perfil,
+        'mascotas_count': mascotas_count,
     })
 
 

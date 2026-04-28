@@ -106,3 +106,19 @@ class PerfilForm(forms.ModelForm):
                 f'La foto excede el tamaño máximo permitido de {MAX_PERFIL_FOTO_SIZE // (1024*1024)} MB.'
             )
         return foto
+
+
+class PerfilEditForm(forms.ModelForm):
+    """Formulario para editar datos personales del usuario (nombre, teléfono)."""
+
+    class Meta:
+        model = Usuario
+        fields = ['first_name', 'telefono']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tu nombre'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '300 123 4567'}),
+        }
+        labels = {
+            'first_name': 'Nombre',
+            'telefono': 'Teléfono',
+        }

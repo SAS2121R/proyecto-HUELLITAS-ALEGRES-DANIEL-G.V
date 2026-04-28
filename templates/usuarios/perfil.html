@@ -1,40 +1,99 @@
 {% extends 'base.html' %}
+
+{% block title %}Mi Perfil — Huellitas Alegres{% endblock %}
+
 {% block content %}
 <div class="container py-4">
-  <h1 class="mb-4">Mi Perfil</h1>
-  <div class="row">
-    <div class="col-md-8">
-      <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
-        <div class="mb-3">
-          {{ form.foto.label_tag }}
-          {{ form.foto }}
-          {{ form.foto.errors }}
+    <h1 class="mb-4"><i class="bi bi-person-circle"></i> Mi Perfil</h1>
+
+    <!-- Profile Card -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    {% if perfil.foto %}
+                    <img src="{{ perfil.foto.url }}" alt="Foto de perfil" class="img-thumbnail rounded-circle mb-3" style="max-width: 150px;">
+                    {% else %}
+                    <div class="bg-secondary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px;">
+                        <span class="fs-1">{{ user.email|slice:":1"|upper }}</span>
+                    </div>
+                    {% endif %}
+                    <h5>{{ user.get_full_name|default:user.email }}</h5>
+                    <span class="badge bg-primary">{{ user.rol.nombre }}</span>
+                    <p class="text-muted mt-2">{{ user.email }}</p>
+                    {% if user.telefono %}
+                    <p class="text-muted"><i class="bi bi-telephone"></i> {{ user.telefono }}</p>
+                    {% endif %}
+                    {% if user.rol.nombre == 'Cliente' %}
+                    <hr>
+                    <p class="mb-0"><i class="bi bi-heart-fill text-danger"></i> <strong>{{ mascotas_count }}</strong> mascota{{ mascotas_count|pluralize }}</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        <div class="mb-3">
-          {{ form.bio.label_tag }}
-          {{ form.bio }}
-          {{ form.bio.errors }}
+
+        <div class="col-md-8">
+            <!-- Personal Info Form -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-person"></i> Datos Personales</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="personal">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ personal_form.first_name.id_for_label }}" class="form-label fw-bold">Nombre</label>
+                                {{ personal_form.first_name }}
+                                {% if personal_form.first_name.errors %}
+                                <div class="text-danger small">{{ personal_form.first_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ personal_form.telefono.id_for_label }}" class="form-label fw-bold">Teléfono</label>
+                                {{ personal_form.telefono }}
+                                {% if personal_form.telefono.errors %}
+                                <div class="text-danger small">{{ personal_form.telefono.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Guardar Datos</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Profile Photo/Bio Form -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="bi bi-camera"></i> Foto y Biografía</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="perfil">
+                        <div class="mb-3">
+                            <label for="{{ form.foto.id_for_label }}" class="form-label fw-bold">Foto de perfil</label>
+                            {{ form.foto }}
+                            <div class="form-text">Máximo 5MB. Formatos: JPG, PNG.</div>
+                            {% if form.foto.errors %}
+                            <div class="text-danger small">{{ form.foto.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.bio.id_for_label }}" class="form-label fw-bold">Biografía</label>
+                            {{ form.bio }}
+                            {% if form.bio.errors %}
+                            <div class="text-danger small">{{ form.bio.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-secondary"><i class="bi bi-upload"></i> Actualizar Foto/Bio</button>
+                    </form>
+                </div>
+            </div>
         </div>
-        <button type="submit" class="btn btn-primary">Guardar cambios</button>
-      </form>
     </div>
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-body text-center">
-          <h5 class="card-title">{{ user.email }}</h5>
-          <p class="card-text">{{ user.rol.nombre }}</p>
-          {% if perfil.foto %}
-          <img src="{{ perfil.foto.url }}" alt="Foto de perfil" class="img-thumbnail rounded-circle" style="max-width: 150px;">
-          {% else %}
-          <div class="bg-secondary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 150px; height: 150px;">
-            <span class="fs-1">{{ user.email|slice:":1"|upper }}</span>
-          </div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 {% endblock %}

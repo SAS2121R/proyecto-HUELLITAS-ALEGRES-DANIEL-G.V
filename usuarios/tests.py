@@ -1000,3 +1000,73 @@ class PerfilViewTest(TestCase):
         self.client.force_login(self.cliente)
         resp = self.client.get(reverse('usuarios:lista_usuarios'))
         self.assertEqual(resp.status_code, 403)
+
+
+# ========================================
+# CLIENTE ROLE: Phase 5 — Mi Perfil Edit
+# ========================================
+
+
+class PerfilEditTest(TestCase):
+    """Test that users can edit their personal info (name, phone) in Mi Perfil."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.cliente_rol = Rol.objects.get(nombre='Cliente')
+        self.cliente = User.objects.create_user(
+            username='perfil_edit', email='perfil_edit@test.com',
+            password='testpass123', rol=self.cliente_rol,
+            first_name='Carlos',
+            telefono='3001112222',
+        )
+
+    def test_mi_perfil_shows_both_forms(self):
+        """Mi perfil page now shows both personal and profile forms."""
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('usuarios:mi_perfil'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('personal_form', resp.context)
+        self.assertIn('form', resp.context)
+
+    def test_mi_perfil_shows_mascotas_count(self):
+        """Mi perfil shows mascotas count for Cliente."""
+        from mascotas.models import Mascota
+        Mascota.objects.create(nombre='Rex', especie='Canino', sexo='Macho', propietario=self.cliente)
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('usuarios:mi_perfil'))
+        self.assertEqual(resp.context['mascotas_count'], 1)
+
+    def test_edit_personal_info_updates_name(self):
+        """POST with form_type=personal updates first_name and telefono."""
+        self.client.force_login(self.cliente)
+        resp = self.client.post(reverse('usuarios:mi_perfil'), {
+            'form_type': 'personal',
+            'first_name': 'Carlos Updated',
+            'telefono': '3009990000',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.cliente.refresh_from_db()
+        self.assertEqual(self.cliente.first_name, 'Carlos Updated')
+        self.assertEqual(self.cliente.telefono, '3009990000')
+
+    def test_edit_profile_keeps_bio(self):
+        """POST with form_type=perfil updates bio without changing personal info."""
+        from .models import Perfil
+        Perfil.objects.create(usuario=self.cliente, bio='Original bio')
+        self.client.force_login(self.cliente)
+        resp = self.client.post(reverse('usuarios:mi_perfil'), {
+            'form_type': 'perfil',
+            'bio': 'Updated bio',
+        })
+        self.assertEqual(resp.status_code, 302)
+        perfil = Perfil.objects.get(usuario=self.cliente)
+        self.assertEqual(perfil.bio, 'Updated bio')
+        # first_name should NOT have changed
+        self.cliente.refresh_from_db()
+        self.assertEqual(self.cliente.first_name, 'Carlos')
+
+    def test_mi_perfil_requires_login(self):
+        """Unauthenticated user redirected to login."""
+        resp = self.client.get(reverse('usuarios:mi_perfil'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/usuarios/login/', resp.url)
