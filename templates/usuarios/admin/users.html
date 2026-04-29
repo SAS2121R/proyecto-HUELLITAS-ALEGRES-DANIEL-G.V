@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Usuarios — Huellitas Alegres{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-people"></i> Gestión de Usuarios</h1>
+        <a href="{% url 'usuarios:admin_user_create' %}" class="btn btn-success"><i class="bi bi-person-plus"></i> Nuevo Usuario</a>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="row g-3 mb-3">
+        <div class="col-md-4">
+            <input type="text" name="q" class="form-control" placeholder="Buscar por nombre o email..." value="{{ search|default:'' }}">
+        </div>
+        <div class="col-md-3">
+            <select name="rol" class="form-select">
+                <option value="">Todos los roles</option>
+                {% for rol in roles %}
+                <option value="{{ rol.nombre }}" {% if rol_filter == rol.nombre %}selected{% endif %}>{{ rol.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="status" class="form-select">
+                <option value="">Todo estado</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Activo</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactivo</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Filtrar</button>
+            <a href="{% url 'usuarios:admin_users' %}" class="btn btn-outline-secondary"><i class="bi bi-x-circle"></i> Limpiar</a>
+        </div>
+    </form>
+
+    <!-- Users Table -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th>Teléfono</th>
+                    <th>Estado</th>
+                    <th>Registro</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr class="{% if not u.is_active %}table-secondary{% endif %}">
+                    <td>{{ u.get_full_name|default:u.username }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        <span class="badge bg-{% if u.rol.nombre == 'Administrador' %}dark{% elif u.rol.nombre == 'Veterinario' %}success{% elif u.rol.nombre == 'Domiciliario' %}info{% else %}primary{% endif %}">
+                            {{ u.rol.nombre }}
+                        </span>
+                    </td>
+                    <td>{{ u.telefono|default:"—" }}</td>
+                    <td>
+                        {% if u.is_active %}
+                        <span class="badge bg-success">Activo</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ u.fecha_registro|date:"d/m/Y" }}</td>
+                    <td>
+                        <a href="{% url 'usuarios:admin_user_update' u.pk %}" class="btn btn-sm btn-warning" title="Editar"><i class="bi bi-pencil"></i></a>
+                        <a href="{% url 'usuarios:admin_user_set_password' u.pk %}" class="btn btn-sm btn-outline-secondary" title="Cambiar contraseña"><i class="bi bi-key"></i></a>
+                        <form method="post" action="{% url 'usuarios:admin_user_toggle_active' u.pk %}" style="display:inline;">
+                            {% csrf_token %}
+                            {% if u.is_active %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Desactivar" onclick="return confirm('¿Desactivar a {{ u.email }}?')"><i class="bi bi-person-x"></i></button>
+                            {% else %}
+                            <button type="submit" class="btn btn-sm btn-outline-success" title="Activar" onclick="return confirm('¿Activar a {{ u.email }}?')"><i class="bi bi-person-check"></i></button>
+                            {% endif %}
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted">No se encontraron usuarios.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

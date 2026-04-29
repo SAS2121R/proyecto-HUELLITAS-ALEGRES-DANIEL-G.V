@@ -122,3 +122,108 @@ class PerfilEditForm(forms.ModelForm):
             'first_name': 'Nombre',
             'telefono': 'Teléfono',
         }
+
+
+class CrearUsuarioForm(forms.ModelForm):
+    """Form for Admin to create staff users (Vet, Domiciliario, Admin)."""
+
+    password1 = forms.CharField(
+        label='Contraseña',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        min_length=6,
+    )
+    password2 = forms.CharField(
+        label='Confirmar contraseña',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+    )
+
+    class Meta:
+        model = Usuario
+        fields = ['first_name', 'email', 'telefono', 'rol', 'is_active']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+            'rol': forms.Select(attrs={'class': 'form-select'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'first_name': 'Nombre',
+            'is_active': 'Activo',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only show staff roles (not Cliente)
+        self.fields['rol'].queryset = Rol.objects.exclude(nombre='Cliente')
+        self.fields['rol'].empty_label = None
+
+    def clean_first_name(self):
+        first_name = self.cleaned_data.get('first_name', '')
+        if not first_name or not first_name.strip():
+            raise forms.ValidationError('El nombre es obligatorio.')
+        return first_name.strip()
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get('password1')
+        password2 = self.cleaned_data.get('password2')
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError('Las contraseñas no coinciden.')
+        return password2
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data['password1'])
+        # Generate username from email
+        base_username = self.cleaned_data['email'].split('@')[0]
+        username = base_username
+        counter = 1
+        while Usuario.objects.filter(username=username).exists():
+            username = f'{base_username}{counter}'
+            counter += 1
+        user.username = username
+        if commit:
+            user.save()
+        return user
+
+
+class EditarUsuarioForm(forms.ModelForm):
+    """Form for Admin to edit user data (role, name, phone, is_active, cedula)."""
+
+    class Meta:
+        model = Usuario
+        fields = ['first_name', 'email', 'telefono', 'cedula', 'rol', 'is_active']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+            'cedula': forms.TextInput(attrs={'class': 'form-control'}),
+            'rol': forms.Select(attrs={'class': 'form-select'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'first_name': 'Nombre',
+            'is_active': 'Cuenta activa',
+            'cedula': 'Cédula',
+        }
+
+
+class SetPasswordForm(forms.Form):
+    """Form for Admin to set a temporary password for a user."""
+
+    new_password1 = forms.CharField(
+        label='Nueva contraseña',
+        widget=forms.PasswordInput(attrs={'class': 'form-control form-control-lg'}),
+        min_length=6,
+    )
+    new_password2 = forms.CharField(
+        label='Confirmar contraseña',
+        widget=forms.PasswordInput(attrs={'class': 'form-control form-control-lg'}),
+    )
+
+    def clean_new_password2(self):
+        password1 = self.cleaned_data.get('new_password1')
+        password2 = self.cleaned_data.get('new_password2')
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError('Las contraseñas no coinciden.')
+        return password2

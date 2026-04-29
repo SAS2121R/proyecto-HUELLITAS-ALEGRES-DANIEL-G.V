@@ -187,6 +187,17 @@
 <!-- ADMIN DASHBOARD -->
 <div class="row g-4 mb-4">
     <div class="col-md-3">
+        <a href="{% url 'usuarios:admin_dashboard' %}" class="text-decoration-none">
+            <div class="card shadow-sm card-hover text-center h-100 border-primary">
+                <div class="card-body">
+                    <i class="bi bi-speedometer2 fs-1 text-primary"></i>
+                    <h5 class="mt-2">📊 Dashboard</h5>
+                    <p class="text-muted small">Métricas y resumen.</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
         <a href="{% url 'mascotas:lista' %}" class="text-decoration-none">
             <div class="card shadow-sm card-hover text-center h-100">
                 <div class="card-body">

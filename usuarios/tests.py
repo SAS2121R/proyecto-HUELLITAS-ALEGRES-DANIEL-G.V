@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.db import IntegrityError
 from django.db.models import ProtectedError
 from django.urls import path, reverse
@@ -1120,3 +1120,190 @@ class CambiarPasswordTest(TestCase):
         resp = self.client.get(reverse('usuarios:cambiar_password'))
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/usuarios/login/', resp.url)
+
+
+# ========================================
+# ADMIN ROLE: Dashboard & User Management
+# ========================================
+
+
+class AdminDashboardTest(TestCase):
+    """Test Admin dashboard access and metrics."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.admin_rol = Rol.objects.get(nombre='Administrador')
+        self.cliente_rol = Rol.objects.get(nombre='Cliente')
+        self.admin = User.objects.create_user(
+            username='admin_dash', email='admin_dash@test.com',
+            password='adminpass123', rol=self.admin_rol,
+        )
+        self.cliente = User.objects.create_user(
+            username='cli_dash', email='cli_dash@test.com',
+            password='clipass123', rol=self.cliente_rol,
+        )
+
+    def test_admin_dashboard_access(self):
+        """Admin can access dashboard."""
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse('usuarios:admin_dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Panel de Administración')
+
+    def test_admin_dashboard_shows_metrics(self):
+        """Dashboard renders with key metric sections."""
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse('usuarios:admin_dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Panel de Administración')
+        self.assertContains(resp, 'Usuarios')
+        self.assertContains(resp, 'Mascotas')
+
+    def test_non_admin_dashboard_403(self):
+        """Client gets 403 on admin dashboard."""
+        self.client.force_login(self.cliente)
+        resp = self.client.get(reverse('usuarios:admin_dashboard'))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_unauthenticated_dashboard_redirect(self):
+        """Unauthenticated user redirected."""
+        resp = self.client.get(reverse('usuarios:admin_dashboard'))
+        self.assertEqual(resp.status_code, 302)
+
+
+class AdminUserManagementTest(TestCase):
+    """Test Admin user CRUD: create, edit, toggle active, set password."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.admin_rol = Rol.objects.get(nombre='Administrador')
+        self.cliente_rol = Rol.objects.get(nombre='Cliente')
+        self.vet_rol = Rol.objects.get(nombre='Veterinario')
+
+        self.admin = User.objects.create_user(
+            username='admin_user', email='admin_user@test.com',
+            password='adminpass123', rol=self.admin_rol,
+        )
+        self.target_user = User.objects.create_user(
+            username='vet_target', email='vet_target@test.com',
+            password='vetpass123', rol=self.vet_rol,
+            first_name='Dr. Garcia',
+        )
+        self.c = Client()
+
+    def test_admin_users_list(self):
+        """Admin can see users list."""
+        self.c.force_login(self.admin)
+        resp = self.c.get(reverse('usuarios:admin_users'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'vet_target@test.com')
+
+    def test_admin_users_filter_by_role(self):
+        """Admin can filter users by role."""
+        self.c.force_login(self.admin)
+        resp = self.c.get(reverse('usuarios:admin_users') + '?rol=Veterinario')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'vet_target@test.com')
+
+    def test_admin_user_create(self):
+        """Admin can create a new staff user."""
+        self.c.force_login(self.admin)
+        resp = self.c.post(reverse('usuarios:admin_user_create'), {
+            'first_name': 'New Vet',
+            'email': 'newvet@test.com',
+            'telefono': '3001112222',
+            'rol': self.vet_rol.pk,
+            'is_active': True,
+            'password1': 'TestPass123!',
+            'password2': 'TestPass123!',
+        })
+        self.assertEqual(resp.status_code, 302)
+        from django.contrib.auth import get_user_model as _gum
+        _User = _gum()
+        self.assertTrue(_User.objects.filter(email='newvet@test.com').exists())
+        new_user = _User.objects.get(email='newvet@test.com')
+        self.assertEqual(new_user.rol, self.vet_rol)
+        self.assertTrue(new_user.check_password('TestPass123!'))
+
+    def test_admin_user_create_excludes_cliente_rol(self):
+        """CrearUsuarioForm does not include Cliente role."""
+        self.c.force_login(self.admin)
+        resp = self.c.get(reverse('usuarios:admin_user_create'))
+        self.assertEqual(resp.status_code, 200)
+        # Cliente role should NOT appear in the form's rol queryset
+        form = resp.context['form']
+        rol_names = list(form.fields['rol'].queryset.values_list('nombre', flat=True))
+        self.assertNotIn('Cliente', rol_names)
+
+    def test_admin_user_update(self):
+        """Admin can edit user data (name, role, is_active)."""
+        self.c.force_login(self.admin)
+        resp = self.c.post(reverse('usuarios:admin_user_update', args=[self.target_user.pk]), {
+            'first_name': 'Dr. Garcia Updated',
+            'email': 'vet_target@test.com',
+            'telefono': '3009990000',
+            'cedula': '12345678',
+            'rol': self.admin_rol.pk,
+            'is_active': True,
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.target_user.refresh_from_db()
+        self.assertEqual(self.target_user.first_name, 'Dr. Garcia Updated')
+        self.assertEqual(self.target_user.rol, self.admin_rol)
+
+    def test_admin_toggle_active_deactivate(self):
+        """Admin can deactivate a user."""
+        self.c.force_login(self.admin)
+        self.assertTrue(self.target_user.is_active)
+        resp = self.c.post(reverse('usuarios:admin_user_toggle_active', args=[self.target_user.pk]))
+        self.assertEqual(resp.status_code, 302)
+        self.target_user.refresh_from_db()
+        self.assertFalse(self.target_user.is_active)
+
+    def test_admin_toggle_active_activate(self):
+        """Admin can reactivate a deactivated user."""
+        self.target_user.is_active = False
+        self.target_user.save()
+        self.c.force_login(self.admin)
+        resp = self.c.post(reverse('usuarios:admin_user_toggle_active', args=[self.target_user.pk]))
+        self.assertEqual(resp.status_code, 302)
+        self.target_user.refresh_from_db()
+        self.assertTrue(self.target_user.is_active)
+
+    def test_admin_cannot_deactivate_self(self):
+        """Admin cannot deactivate their own account."""
+        self.c.force_login(self.admin)
+        resp = self.c.post(reverse('usuarios:admin_user_toggle_active', args=[self.admin.pk]))
+        self.admin.refresh_from_db()
+        self.assertTrue(self.admin.is_active)  # Should still be active
+
+    def test_admin_set_password(self):
+        """Admin can set a user's password."""
+        self.c.force_login(self.admin)
+        resp = self.c.post(reverse('usuarios:admin_user_set_password', args=[self.target_user.pk]), {
+            'new_password1': 'BrandNewPass456!',
+            'new_password2': 'BrandNewPass456!',
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.target_user.refresh_from_db()
+        self.assertTrue(self.target_user.check_password('BrandNewPass456!'))
+
+    def test_admin_set_password_mismatch_fails(self):
+        """Admin set password with mismatch fails."""
+        self.c.force_login(self.admin)
+        resp = self.c.post(reverse('usuarios:admin_user_set_password', args=[self.target_user.pk]), {
+            'new_password1': 'BrandNewPass456!',
+            'new_password2': 'DifferentPass789!',
+        })
+        self.assertEqual(resp.status_code, 200)  # Returns form with error
+
+    def test_non_admin_users_list_403(self):
+        """Non-admin gets 403 on user management."""
+        User = get_user_model()
+        vet = User.objects.create_user(
+            username='vet_mgmt', email='vet_mgmt@test.com',
+            password='vetpass123', rol=self.vet_rol,
+        )
+        self.c.force_login(vet)
+        resp = self.c.get(reverse('usuarios:admin_users'))
+        self.assertEqual(resp.status_code, 403)
