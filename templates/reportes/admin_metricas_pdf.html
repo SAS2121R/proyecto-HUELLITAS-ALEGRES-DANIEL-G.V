@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+    body { font-family: Arial, sans-serif; font-size: 11px; margin: 20px; }
+    h1 { font-size: 18px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 5px; }
+    h2 { font-size: 14px; color: #667eea; margin-top: 15px; }
+    .header { text-align: center; margin-bottom: 15px; }
+    .header p { margin: 2px 0; font-size: 10px; color: #666; }
+    .summary { display: flex; justify-content: space-between; margin: 10px 0; }
+    .summary-box { border: 1px solid #ddd; padding: 8px; text-align: center; width: 23%; }
+    .summary-box h3 { font-size: 16px; margin: 3px 0; color: #333; }
+    .summary-box small { color: #666; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px; }
+    th { background-color: #333; color: white; padding: 5px; text-align: left; }
+    td { border: 1px solid #ddd; padding: 4px; }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    .footer { text-align: center; font-size: 9px; color: #999; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 5px; }
+</style>
+</head>
+<body>
+<div class="header">
+    <h1>{{ config.nombre }}</h1>
+    <p>NIT: {{ config.nit }} | {{ config.direccion }}</p>
+    <p>Tel: {{ config.telefono }} | {{ config.email }}</p>
+</div>
+
+<h1>Metricas de Negocio</h1>
+<p>Periodo: {{ start_of_month|date:"F Y" }} — {{ today|date:"d/m/Y" }}</p>
+
+<div class="summary">
+    <div class="summary-box">
+        <h3>{{ total_entregados }}</h3>
+        <small>Pedidos Entregados</small>
+    </div>
+    <div class="summary-box">
+        <h3>${{ ingresos_mes|floatformat:0 }}</h3>
+        <small>Ingresos del Mes</small>
+    </div>
+    <div class="summary-box">
+        <h3>{{ con_incidente }}</h3>
+        <small>Incidentes</small>
+    </div>
+    <div class="summary-box">
+        <h3>{{ tasa_cumplimiento }}%</h3>
+        <small>Tasa de Cumplimiento</small>
+    </div>
+</div>
+
+<h2>Top 5 Productos Mas Vendidos</h2>
+<table>
+    <thead>
+        <tr><th>#</th><th>Producto</th><th>Categoria</th><th>Unidades</th><th>Ingresos</th></tr>
+    </thead>
+    <tbody>
+        {% for prod in top_productos %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ prod.producto__nombre }}</td>
+            <td>{{ prod.producto__categoria }}</td>
+            <td>{{ prod.total_vendido }}</td>
+            <td>${{ prod.ingresos|floatformat:0 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">Sin datos</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Productividad de Staff</h2>
+<table>
+    <thead>
+        <tr><th>Veterinario</th><th>Citas este Mes</th><th>Citas Total</th></tr>
+    </thead>
+    <tbody>
+        {% for vet in vet_productividad %}
+        <tr>
+            <td>{{ vet.get_full_name|default:vet.email }}</td>
+            <td>{{ vet.citas_mes }}</td>
+            <td>{{ vet.citas_total }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3">Sin datos</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="footer">
+    <p>Generado el {{ today|date:"d/m/Y H:i" }} | {{ config.nombre }}</p>
+</div>
+</body>
+</html>

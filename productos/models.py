@@ -55,10 +55,11 @@ class Producto(models.Model):
         verbose_name='Stock mínimo',
         help_text='Umbral de alerta.stock ≤ stock_minimo*1.5 = amarillo, stock = 0 = rojo.',
     )
-    proveedor = models.CharField(
-        max_length=100,
+    proveedor = models.ForeignKey(
+        'proveedores.Proveedor',
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,
-        default='',
         verbose_name='Proveedor',
     )
     esta_activo = models.BooleanField(

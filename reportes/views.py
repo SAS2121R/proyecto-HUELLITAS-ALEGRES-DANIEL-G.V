@@ -46,7 +46,7 @@ def _export_inventario_excel(queryset):
         ws.cell(row=row, column=3, value=float(p.precio))
         ws.cell(row=row, column=4, value=p.cantidad_stock)
         ws.cell(row=row, column=5, value=p.stock_minimo)
-        ws.cell(row=row, column=6, value=p.proveedor or '-')
+        ws.cell(row=row, column=6, value=getattr(p.proveedor, 'nombre', '') or '-')
         ws.cell(row=row, column=7, value=estado)
 
     buf = io.BytesIO()
@@ -143,11 +143,17 @@ def reporte_servicios(request):
 
 @login_required
 def admin_metricas(request):
-    """Admin metrics dashboard: Top Products, Staff Productivity, Compliance Rate.
+    """Admin metrics dashboard: Top Products, Staff Productivity, Compliance Rate."""
+    context = _get_metricas_context(request)
+    return render(request, 'reportes/admin_metricas.html', context)
 
-    Uses Django ORM aggregates (Count, Sum) — no external libraries.
-    Admin-only view.
-    """
+
+# ========================================
+# ADMIN: Exportar Métricas (PDF / Excel)
+# ========================================
+
+def _get_metricas_context(request):
+    """Shared context builder for metricas views."""
     from django.contrib.auth import get_user_model
     from entregas.models import Pedido, PedidoItem
     from usuarios.models import ConfiguracionClinica
@@ -160,7 +166,6 @@ def admin_metricas(request):
     today = timezone.now().date()
     start_of_month = today.replace(day=1)
 
-    # 1. TOP 5 PRODUCTOS MÁS VENDIDOS
     top_productos = PedidoItem.objects.filter(
         pedido__estado='entregado'
     ).values(
@@ -173,8 +178,6 @@ def admin_metricas(request):
         pedidos_count=Count('pedido', distinct=True),
     ).order_by('-total_vendido')[:5]
 
-    # 2. PRODUCTIVIDAD DE STAFF (Citas por Vet este mes)
-    from agenda.models import Disponibilidad
     Veterinario = get_user_model()
     vet_productividad = Veterinario.objects.filter(
         rol__nombre='Veterinario', is_active=True
@@ -187,20 +190,18 @@ def admin_metricas(request):
         citas_total=Count('disponibilidades__citas', distinct=True),
     ).order_by('-citas_mes')
 
-    # 3. TASA DE CUMPLIMIENTO (Pedidos entregados vs con incidentes)
     total_entregados = Pedido.objects.filter(estado='entregado').count()
     con_incidente = Pedido.objects.filter(estado='cancelado').count()
     total_pedidos = Pedido.objects.count()
     tasa_cumplimiento = round((total_entregados / total_pedidos * 100) if total_pedidos > 0 else 0, 1)
 
-    # Monthly revenue
     ingresos_mes = Pedido.objects.filter(
         estado='entregado', fecha_entrega__date__gte=start_of_month
     ).aggregate(total=Sum(F('items__producto__precio') * F('items__cantidad')))['total'] or 0
 
     config = ConfiguracionClinica.get_config()
 
-    context = {
+    return {
         'top_productos': top_productos,
         'vet_productividad': vet_productividad,
         'total_entregados': total_entregados,
@@ -212,4 +213,105 @@ def admin_metricas(request):
         'today': today,
         'config': config,
     }
-    return render(request, 'reportes/admin_metricas.html', context)
+
+
+@login_required
+def admin_metricas_pdf(request):
+    """Export metrics dashboard as PDF."""
+    context = _get_metricas_context(request)
+    return _render_to_pdf('reportes/admin_metricas_pdf.html', context)
+
+
+@login_required
+def admin_metricas_excel(request):
+    """Export metrics dashboard as Excel."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill
+
+    context = _get_metricas_context(request)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Métricas de Negocio'
+
+    # Header styling
+    header_font = Font(bold=True, color='FFFFFF', size=12)
+    header_fill = PatternFill(start_color='333333', end_color='333333', fill_type='solid')
+    section_font = Font(bold=True, size=11, color='667eea')
+
+    row = 1
+    # Title
+    ws.cell(row=row, column=1, value=f'Métricas de Negocio — {context["config"].nombre}')
+    ws.cell(row=row, column=1).font = Font(bold=True, size=14)
+    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=5)
+    row += 1
+    ws.cell(row=row, column=1, value=f'Período: {context["start_of_month"].strftime("%Y-%m")} — {context["today"].strftime("%Y-%m-%d")}')
+    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=5)
+    row += 2
+
+    # Summary cards
+    ws.cell(row=row, column=1, value='Resumen General')
+    ws.cell(row=row, column=1).font = section_font
+    row += 1
+    for label, val in [
+        ('Pedidos Entregados', context['total_entregados']),
+        ('Ingresos del Mes', f'${context["ingresos_mes"]}'),
+        ('Incidentes', context['con_incidente']),
+        ('Tasa de Cumplimiento', f'{context["tasa_cumplimiento"]}%'),
+    ]:
+        ws.cell(row=row, column=1, value=label)
+        ws.cell(row=row, column=2, value=val)
+        row += 1
+    row += 1
+
+    # Top 5 Products
+    ws.cell(row=row, column=1, value='Top 5 Productos Más Vendidos')
+    ws.cell(row=row, column=1).font = section_font
+    row += 1
+    for col, h in enumerate(['#', 'Producto', 'Categoría', 'Unidades', 'Ingresos'], 1):
+        cell = ws.cell(row=row, column=col, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+    row += 1
+    for i, prod in enumerate(context['top_productos'], 1):
+        ws.cell(row=row, column=1, value=i)
+        ws.cell(row=row, column=2, value=prod['producto__nombre'])
+        ws.cell(row=row, column=3, value=prod['producto__categoria'])
+        ws.cell(row=row, column=4, value=prod['total_vendido'])
+        ws.cell(row=row, column=5, value=float(prod['ingresos']))
+        row += 1
+    row += 1
+
+    # Staff Productivity
+    ws.cell(row=row, column=1, value='Productividad de Staff')
+    ws.cell(row=row, column=1).font = section_font
+    row += 1
+    for col, h in ['Veterinario', 'Citas este Mes', 'Citas Total'], range(1, 4):
+        cell = ws.cell(row=row, column=col, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+    # Fix: use zip properly for headers
+    for idx, h in enumerate(['Veterinario', 'Citas este Mes', 'Citas Total'], 1):
+        cell = ws.cell(row=row, column=idx, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+    row += 1
+    for vet in context['vet_productividad']:
+        ws.cell(row=row, column=1, value=vet.get_full_name() or vet.email)
+        ws.cell(row=row, column=2, value=vet.citas_mes)
+        ws.cell(row=row, column=3, value=vet.citas_total)
+        row += 1
+
+    # Auto-fit columns
+    for col_idx in range(1, 6):
+        ws.column_dimensions[chr(64 + col_idx)].width = 20
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    response = HttpResponse(
+        buf.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename="metricas_negocio.xlsx"'
+    return response

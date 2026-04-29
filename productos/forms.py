@@ -11,6 +11,7 @@ class ProductoForm(forms.ModelForm):
                    'categoria', 'stock_minimo', 'proveedor']
         widgets = {
             'descripcion': forms.Textarea(attrs={'rows': 3}),
+            'proveedor': forms.Select(attrs={'class': 'form-select'}),
         }
 
 

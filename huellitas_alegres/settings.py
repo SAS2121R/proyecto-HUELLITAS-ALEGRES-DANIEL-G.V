@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'servicios',  # aplicacion para gestion de servicios veterinarios
     'entregas',  # aplicacion para gestion de pedidos y entregas domiciliarias
     'tienda',  # aplicacion para catalogo y carrito de compras del Cliente
+    'proveedores',  # aplicacion para gestion de proveedores
 ]
 
 MIDDLEWARE = [

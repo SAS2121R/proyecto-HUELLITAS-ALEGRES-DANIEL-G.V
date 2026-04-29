@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Proveedores — Huellitas Alegres{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1><i class="bi bi-truck"></i> Proveedores</h1>
+        <a href="{% url 'proveedores:crear' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Nuevo Proveedor
+        </a>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>NIT</th>
+                        <th>Teléfono</th>
+                        <th>Email</th>
+                        <th>Contacto</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prov in proveedores %}
+                    <tr class="{% if not prov.esta_activo %}opacity-50{% endif %}">
+                        <td><strong>{{ prov.nombre }}</strong></td>
+                        <td>{{ prov.nit|default:"—" }}</td>
+                        <td>{{ prov.telefono|default:"—" }}</td>
+                        <td>{{ prov.email|default:"—" }}</td>
+                        <td>{{ prov.contacto|default:"—" }}</td>
+                        <td>
+                            {% if prov.esta_activo %}
+                            <span class="badge bg-success">Activo</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'proveedores:editar' prov.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="post" action="{% url 'proveedores:toggle' prov.pk %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-{{ prov.esta_activo|yesno:'warning,success' }}">
+                                    <i class="bi bi-{{ prov.esta_activo|yesno:'x-circle,check-circle' }}"></i>
+                                    {{ prov.esta_activo|yesno:'Desactivar,Activar' }}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center text-muted py-4">No hay proveedores registrados.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

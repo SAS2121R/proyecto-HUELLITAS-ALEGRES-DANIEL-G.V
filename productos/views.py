@@ -22,7 +22,7 @@ def lista_productos(request):
     if search:
         qs = qs.filter(
             Q(nombre__icontains=search)
-            | Q(proveedor__icontains=search)
+            | Q(proveedor__nombre__icontains=search)
         )
 
     categoria = request.GET.get('categoria', '').strip()

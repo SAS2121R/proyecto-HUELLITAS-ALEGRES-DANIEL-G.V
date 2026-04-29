@@ -67,10 +67,13 @@
         <li class="nav-item"><a href="{% url 'historial:lista' %}" class="nav-link"><i class="bi bi-clipboard2-pulse"></i> Historial</a></li>
         <li class="nav-item"><a href="{% url 'servicios:lista' %}" class="nav-link"><i class="bi bi-heart-pulse"></i> Servicios</a></li>
 <li class="nav-item"><a href="{% url 'entregas:dashboard' %}" class="nav-link"><i class="bi bi-truck"></i> Entregas</a></li>
-                        <li class="nav-item"><a href="{% url 'entregas:torre_control' %}" class="nav-link"><i class="bi bi-broadcast"></i> Torre de Control</a></li>
-<li class="nav-item"><a href="{% url 'reportes:citas' %}" class="nav-link"><i class="bi bi-bar-chart"></i> Reportes</a></li>
-                        <li class="nav-item"><a href="{% url 'reportes:admin_metricas' %}" class="nav-link"><i class="bi bi-bar-chart-line"></i> Métricas</a></li>
-                        <li class="nav-item"><a href="{% url 'usuarios:lista_usuarios' %}" class="nav-link"><i class="bi bi-people"></i> Usuarios</a></li>
+        <li class="nav-item"><a href="{% url 'entregas:torre_control' %}" class="nav-link"><i class="bi bi-broadcast"></i> Torre de Control</a></li>
+        <li class="nav-item"><a href="{% url 'productos:lista' %}" class="nav-link"><i class="bi bi-box-seam"></i> Inventario</a></li>
+        <li class="nav-item"><a href="{% url 'proveedores:lista' %}" class="nav-link"><i class="bi bi-shop-window"></i> Proveedores</a></li>
+        <li class="nav-item"><a href="{% url 'reportes:citas' %}" class="nav-link"><i class="bi bi-bar-chart"></i> Reportes</a></li>
+        <li class="nav-item"><a href="{% url 'reportes:admin_metricas' %}" class="nav-link"><i class="bi bi-bar-chart-line"></i> Métricas</a></li>
+        <li class="nav-item"><a href="{% url 'usuarios:admin_configuracion' %}" class="nav-link"><i class="bi bi-building"></i> Configuración</a></li>
+        <li class="nav-item"><a href="{% url 'usuarios:lista_usuarios' %}" class="nav-link"><i class="bi bi-people"></i> Usuarios</a></li>
         {% elif user.rol.nombre == 'Domiciliario' %}
         <li class="nav-item"><a href="{% url 'entregas:dashboard' %}" class="nav-link"><i class="bi bi-truck"></i> Entregas</a></li>
         <li class="nav-item"><a href="{% url 'entregas:resumen' %}" class="nav-link"><i class="bi bi-clipboard-check"></i> Resumen</a></li>

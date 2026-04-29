@@ -9,6 +9,7 @@ from .models import Producto, MovimientoInventario, CATEGORIAS, TIPO_MOVIMIENTO_
 from usuarios.models import Rol
 from mascotas.models import Mascota
 from historial.models import HistorialClinico
+from proveedores.models import Proveedor
 
 User = get_user_model()
 
@@ -39,6 +40,13 @@ def create_producto(**kwargs):
         'stock_minimo': 10,
         'categoria': 'otros',
     }
+    # Handle proveedor: accept Proveedor instance, None, or string (creates Proveedor)
+    proveedor_val = kwargs.pop('proveedor', None)
+    if isinstance(proveedor_val, str) and proveedor_val:
+        proveedor_val, _ = Proveedor.objects.get_or_create(nombre=proveedor_val)
+    elif proveedor_val is not None and not isinstance(proveedor_val, Proveedor):
+        proveedor_val = None
+    defaults['proveedor'] = proveedor_val
     defaults.update(kwargs)
     return Producto.all_objects.create(**defaults)
 
@@ -61,7 +69,7 @@ class ProductoModelTest(TestCase):
         )
         self.assertEqual(p.categoria, 'vacunas')
         self.assertEqual(p.stock_minimo, 5)
-        self.assertEqual(p.proveedor, 'LabVet')
+        self.assertEqual(p.proveedor.nombre, 'LabVet')
         self.assertTrue(p.esta_activo)
 
     def test_nombre_unique(self):
@@ -87,9 +95,9 @@ class ProductoModelTest(TestCase):
             p.full_clean()
 
     def test_proveedor_blank(self):
-        """R1.6: proveedor can be blank"""
-        p = create_producto(proveedor='')
-        self.assertEqual(p.proveedor, '')
+        """R1.6: proveedor can be null (no supplier assigned)"""
+        p = create_producto(proveedor=None)
+        self.assertIsNone(p.proveedor)
 
     def test_esta_activo_default_true(self):
         """R1.7: esta_activo defaults to True"""
@@ -396,6 +404,8 @@ class ProductoFormTest(TestCase):
     def test_form_valid_data(self):
         """R6.2: ProductoForm valid data passes"""
         from .forms import ProductoForm
+        from proveedores.models import Proveedor
+        prov = Proveedor.objects.create(nombre='TestProv')
         form = ProductoForm(data={
             'nombre': 'Test Product',
             'descripcion': 'Test desc',
@@ -403,7 +413,7 @@ class ProductoFormTest(TestCase):
             'cantidad_stock': 50,
             'categoria': 'otros',
             'stock_minimo': 10,
-            'proveedor': 'TestProv',
+            'proveedor': str(prov.pk),
         })
         self.assertTrue(form.is_valid(), form.errors)
 
