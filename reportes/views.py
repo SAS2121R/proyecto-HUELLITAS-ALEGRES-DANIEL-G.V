@@ -1,7 +1,8 @@
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse
 from django.template.loader import render_to_string
+from django.db.models import Count, Sum, F, Q
 
 from xhtml2pdf import pisa
 import io
@@ -134,3 +135,81 @@ def reporte_servicios(request):
         'activos': activos,
     }
     return _render_to_pdf('reportes/reporte_servicios.html', context)
+
+
+# ========================================
+# ADMIN: Súper Reportes — Metrics Dashboard
+# ========================================
+
+@login_required
+def admin_metricas(request):
+    """Admin metrics dashboard: Top Products, Staff Productivity, Compliance Rate.
+
+    Uses Django ORM aggregates (Count, Sum) — no external libraries.
+    Admin-only view.
+    """
+    from django.contrib.auth import get_user_model
+    from entregas.models import Pedido, PedidoItem
+    from usuarios.models import ConfiguracionClinica
+    from django.utils import timezone
+
+    if request.user.rol.nombre != 'Administrador':
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+
+    today = timezone.now().date()
+    start_of_month = today.replace(day=1)
+
+    # 1. TOP 5 PRODUCTOS MÁS VENDIDOS
+    top_productos = PedidoItem.objects.filter(
+        pedido__estado='entregado'
+    ).values(
+        'producto__nombre',
+        'producto__categoria',
+        'producto__precio',
+    ).annotate(
+        total_vendido=Sum('cantidad'),
+        ingresos=Sum(F('producto__precio') * F('cantidad')),
+        pedidos_count=Count('pedido', distinct=True),
+    ).order_by('-total_vendido')[:5]
+
+    # 2. PRODUCTIVIDAD DE STAFF (Citas por Vet este mes)
+    from agenda.models import Disponibilidad
+    Veterinario = get_user_model()
+    vet_productividad = Veterinario.objects.filter(
+        rol__nombre='Veterinario', is_active=True
+    ).annotate(
+        citas_mes=Count(
+            'disponibilidades__citas',
+            filter=Q(disponibilidades__fecha__gte=start_of_month),
+            distinct=True,
+        ),
+        citas_total=Count('disponibilidades__citas', distinct=True),
+    ).order_by('-citas_mes')
+
+    # 3. TASA DE CUMPLIMIENTO (Pedidos entregados vs con incidentes)
+    total_entregados = Pedido.objects.filter(estado='entregado').count()
+    con_incidente = Pedido.objects.filter(estado='cancelado').count()
+    total_pedidos = Pedido.objects.count()
+    tasa_cumplimiento = round((total_entregados / total_pedidos * 100) if total_pedidos > 0 else 0, 1)
+
+    # Monthly revenue
+    ingresos_mes = Pedido.objects.filter(
+        estado='entregado', fecha_entrega__date__gte=start_of_month
+    ).aggregate(total=Sum(F('items__producto__precio') * F('items__cantidad')))['total'] or 0
+
+    config = ConfiguracionClinica.get_config()
+
+    context = {
+        'top_productos': top_productos,
+        'vet_productividad': vet_productividad,
+        'total_entregados': total_entregados,
+        'con_incidente': con_incidente,
+        'total_pedidos': total_pedidos,
+        'tasa_cumplimiento': tasa_cumplimiento,
+        'ingresos_mes': ingresos_mes,
+        'start_of_month': start_of_month,
+        'today': today,
+        'config': config,
+    }
+    return render(request, 'reportes/admin_metricas.html', context)

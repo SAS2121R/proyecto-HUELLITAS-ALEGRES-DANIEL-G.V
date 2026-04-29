@@ -96,7 +96,8 @@
                         <li class="list-group-item d-flex justify-content-between"><span><i class="bi bi-calendar-month"></i> Este Mes</span> <strong>{{ citas_mes }}</strong></li>
                     </ul>
                     <a href="{% url 'agenda:lista_citas' %}" class="btn btn-outline-success btn-sm mt-2 w-100"><i class="bi bi-calendar"></i> Ver Citas</a>
-                    <a href="{% url 'reportes:citas' %}" class="btn btn-outline-secondary btn-sm mt-1 w-100"><i class="bi bi-file-earmark-pdf"></i> Reporte Citas</a>
+                    <a href="{% url 'reportes:admin_metricas' %}" class="btn btn-outline-success btn-sm mt-2 w-100"><i class="bi bi-bar-chart-line"></i> Métricas de Negocio</a>
+                    <a href="{% url 'usuarios:admin_configuracion' %}" class="btn btn-outline-secondary btn-sm mt-1 w-100"><i class="bi bi-building"></i> Configuración</a>
                 </div>
             </div>
         </div>

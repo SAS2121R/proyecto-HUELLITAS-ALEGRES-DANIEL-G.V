@@ -1307,3 +1307,73 @@ class AdminUserManagementTest(TestCase):
         self.c.force_login(vet)
         resp = self.c.get(reverse('usuarios:admin_users'))
         self.assertEqual(resp.status_code, 403)
+
+
+# ========================================
+# ADMIN: ConfiguracionClinica
+# ========================================
+
+
+class ConfiguracionClinicaTest(TestCase):
+    """Test ConfiguracionClinica singleton model."""
+
+    def test_get_config_creates_singleton(self):
+        """get_config creates the singleton if it doesn't exist."""
+        from .models import ConfiguracionClinica
+        config = ConfiguracionClinica.get_config()
+        self.assertEqual(config.nombre, 'Huellitas Alegres')
+        self.assertEqual(config.pk, 1)
+
+    def test_get_config_returns_same_instance(self):
+        """get_config always returns the same instance."""
+        from .models import ConfiguracionClinica
+        config1 = ConfiguracionClinica.get_config()
+        config2 = ConfiguracionClinica.get_config()
+        self.assertEqual(config1.pk, config2.pk)
+
+    def test_admin_configuracion_page_loads(self):
+        """Admin can see the configuration page."""
+        User = get_user_model()
+        admin_rol = Rol.objects.get(nombre='Administrador')
+        admin = User.objects.create_user(
+            username='cfg_admin', email='cfg_admin@test.com',
+            password='adminpass123', rol=admin_rol,
+        )
+        self.client.force_login(admin)
+        resp = self.client.get(reverse('usuarios:admin_configuracion'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Configuración')
+
+    def test_admin_configuracion_update(self):
+        """Admin can update clinic configuration."""
+        User = get_user_model()
+        admin_rol = Rol.objects.get(nombre='Administrador')
+        admin = User.objects.create_user(
+            username='cfg_admin2', email='cfg_admin2@test.com',
+            password='adminpass123', rol=admin_rol,
+        )
+        self.client.force_login(admin)
+        resp = self.client.post(reverse('usuarios:admin_configuracion'), {
+            'nombre': 'Mi Clínica Vet',
+            'nit': '900.000.000-1',
+            'direccion': 'Calle 50 # 10-20',
+            'telefono': '601-555-9999',
+            'email': 'contacto@miclinica.com',
+        })
+        self.assertEqual(resp.status_code, 302)
+        from .models import ConfiguracionClinica
+        config = ConfiguracionClinica.get_config()
+        self.assertEqual(config.nombre, 'Mi Clínica Vet')
+        self.assertEqual(config.nit, '900.000.000-1')
+
+    def test_non_admin_configuracion_403(self):
+        """Non-admin gets 403 on configuration page."""
+        User = get_user_model()
+        cliente_rol = Rol.objects.get(nombre='Cliente')
+        cliente = User.objects.create_user(
+            username='cfg_cli', email='cfg_cli@test.com',
+            password='clipass123', rol=cliente_rol,
+        )
+        self.client.force_login(cliente)
+        resp = self.client.get(reverse('usuarios:admin_configuracion'))
+        self.assertEqual(resp.status_code, 403)

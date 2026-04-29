@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Configuración Clínica — Huellitas Alegres{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 600px;">
+    <h1 class="mb-4"><i class="bi bi-building"></i> Configuración de la Clínica</h1>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="bi bi-pencil"></i> Datos de la Clínica</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Estos datos se usan en los comprobantes PDF y reportes del sistema.</p>
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="nombre" class="form-label fw-bold">Nombre de la Clínica</label>
+                    <input type="text" name="nombre" id="nombre" class="form-control form-control-lg"
+                           value="{{ config.nombre }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="nit" class="form-label fw-bold">NIT</label>
+                    <input type="text" name="nit" id="nit" class="form-control"
+                           value="{{ config.nit }}" placeholder="901.234.567-8">
+                </div>
+                <div class="mb-3">
+                    <label for="direccion" class="form-label fw-bold">Dirección</label>
+                    <input type="text" name="direccion" id="direccion" class="form-control"
+                           value="{{ config.direccion }}" placeholder="Calle 10 # 25-30, Bogotá">
+                </div>
+                <div class="mb-3">
+                    <label for="telefono" class="form-label fw-bold">Teléfono</label>
+                    <input type="text" name="telefono" id="telefono" class="form-control"
+                           value="{{ config.telefono }}" placeholder="601-555-0123">
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label fw-bold">Email</label>
+                    <input type="email" name="email" id="email" class="form-control"
+                           value="{{ config.email }}" placeholder="info@huellitasalegres.com">
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-warning"><i class="bi bi-check-circle"></i> Guardar Configuración</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

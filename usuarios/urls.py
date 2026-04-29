@@ -19,6 +19,7 @@ urlpatterns = [
     path('admin/usuarios/<int:pk>/editar/', views.admin_user_update, name='admin_user_update'),
     path('admin/usuarios/<int:pk>/toggle-active/', views.admin_user_toggle_active, name='admin_user_toggle_active'),
     path('admin/usuarios/<int:pk>/set-password/', views.admin_user_set_password, name='admin_user_set_password'),
+    path('admin/configuracion/', views.admin_configuracion, name='admin_configuracion'),
 
     # Vet & General
     path('dashboard/', views.vet_dashboard, name='vet_dashboard'),

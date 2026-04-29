@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}Métricas de Negocio — Huellitas Alegres{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4"><i class="bi bi-bar-chart-line"></i> Métricas de Negocio</h1>
+    <p class="text-muted">Período: {{ start_of_month|date:"F Y" }} — Datos hasta {{ today|date:"d/m/Y" }}</p>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm text-center card-hover">
+                <div class="card-body">
+                    <i class="bi bi-bag-check fs-2 text-success"></i>
+                    <h3 class="mt-1 mb-0">{{ total_entregados }}</h3>
+                    <small class="text-muted">Pedidos Entregados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm text-center card-hover">
+                <div class="card-body">
+                    <i class="bi bi-cash-coin fs-2 text-warning"></i>
+                    <h3 class="mt-1 mb-0">${{ ingresos_mes|floatformat:0 }}</h3>
+                    <small class="text-muted">Ingresos del Mes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm text-center card-hover">
+                <div class="card-body">
+                    <i class="bi bi-exclamation-triangle fs-2 text-danger"></i>
+                    <h3 class="mt-1 mb-0">{{ con_incidente }}</h3>
+                    <small class="text-muted">Incidentes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm text-center card-hover border-{% if tasa_cumplimiento >= 80 %}success{% elif tasa_cumplimiento >= 50 %}warning{% else %}danger{% endif %}">
+                <div class="card-body">
+                    <i class="bi bi-check2-all fs-2 text-{% if tasa_cumplimiento >= 80 %}success{% elif tasa_cumplimiento >= 50 %}warning{% else %}danger{% endif %}"></i>
+                    <h3 class="mt-1 mb-0">{{ tasa_cumplimiento }}%</h3>
+                    <small class="text-muted">Tasa de Cumplimiento</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- TOP 5 PRODUCTOS -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-trophy"></i> Top 5 Productos Más Vendidos</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Producto</th>
+                                    <th>Categoría</th>
+                                    <th>Unidades</th>
+                                    <th>Ingresos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for prod in top_productos %}
+                                <tr>
+                                    <td><strong>{{ forloop.counter }}</strong></td>
+                                    <td>{{ prod.producto__nombre }}</td>
+                                    <td><span class="badge bg-secondary">{{ prod.producto__categoria }}</span></td>
+                                    <td>{{ prod.total_vendido }}</td>
+                                    <td>${{ prod.ingresos|floatformat:0 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="text-center text-muted">Sin datos</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRODUCTIVIDAD STAFF -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Productividad de Staff</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Veterinario</th>
+                                    <th>Citas este Mes</th>
+                                    <th>Citas Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for vet in vet_productividad %}
+                                <tr>
+                                    <td>{{ vet.get_full_name|default:vet.email }}</td>
+                                    <td>
+                                        <span class="badge bg-primary rounded-pill">{{ vet.citas_mes }}</span>
+                                    </td>
+                                    <td>{{ vet.citas_total }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center text-muted">Sin datos</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TASA CUMPLIMIENTO DETALLE -->
+    <div class="row g-4 mt-1">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-speedometer2"></i> Tasa de Cumplimiento</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h2 class="mb-0 text-{% if tasa_cumplimiento >= 80 %}success{% elif tasa_cumplimiento >= 50 %}warning{% else %}danger{% endif %}">{{ tasa_cumplimiento }}%</h2>
+                            <small class="text-muted">de pedidos entregados exitosamente</small>
+                        </div>
+                        <div class="text-end">
+                            <p class="mb-1"><strong>{{ total_entregados }}</strong> entregados</p>
+                            <p class="mb-1"><strong>{{ con_incidente }}</strong> con incidentes</p>
+                            <p class="mb-0"><strong>{{ total_pedidos }}</strong> total</p>
+                        </div>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-success" style="width: {{ tasa_cumplimiento }}%">{{ tasa_cumplimiento }}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-building"></i> Datos de la Clínica</h5>
+                </div>
+                <div class="card-body">
+                    <p><i class="bi bi-shop"></i> <strong>{{ config.nombre }}</strong></p>
+                    <p><i class="bi bi-1-circle"></i> <strong>NIT:</strong> {{ config.nit }}</p>
+                    <p><i class="bi bi-geo-alt"></i> <strong>Dirección:</strong> {{ config.direccion }}</p>
+                    <p><i class="bi bi-telephone"></i> <strong>Tel:</strong> {{ config.telefono }}</p>
+                    <p><i class="bi bi-envelope"></i> <strong>Email:</strong> {{ config.email }}</p>
+                    <a href="{% url 'usuarios:admin_configuracion' %}" class="btn btn-outline-warning btn-sm"><i class="bi bi-pencil"></i> Editar Configuración</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

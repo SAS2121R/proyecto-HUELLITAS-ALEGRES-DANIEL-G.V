@@ -10,6 +10,7 @@ from django.utils import timezone
 from xhtml2pdf import pisa
 import io
 
+from usuarios.models import ConfiguracionClinica
 from usuarios.decorators import role_required
 from .models import Pedido, ESTADO_CHOICES
 from .forms import CambiarEstadoForm, EvidenciaForm, PedidoForm, PedidoItemFormSet, ReasignarDomiciliarioForm
@@ -258,6 +259,7 @@ def comprobante_pdf(request, pk):
     context = {
         'pedido': pedido,
         'items': pedido.items.select_related('producto').all(),
+        'config': ConfiguracionClinica.get_config(),
     }
     html = render_to_string('entregas/comprobante_pdf.html', context)
     buf = io.BytesIO()

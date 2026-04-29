@@ -80,3 +80,50 @@ class Perfil(models.Model):
         super().clean()
         if self.foto and hasattr(self.foto, 'size') and self.foto.size > MAX_PERFIL_FOTO_SIZE:
             raise ValidationError(f'La foto excede el tamaño máximo permitido de {MAX_PERFIL_FOTO_SIZE // (1024*1024)} MB.')
+
+
+class ConfiguracionClinica(models.Model):
+    """Singleton model for clinic configuration.
+
+    Only one instance should exist. Use ConfiguracionClinica.get_config() to get it.
+    Stores clinic info used in PDF comprobantes and reports.
+    """
+
+    nombre = models.CharField(
+        max_length=200,
+        default='Huellitas Alegres',
+        verbose_name='Nombre de la clínica',
+    )
+    nit = models.CharField(
+        max_length=50,
+        default='901.234.567-8',
+        verbose_name='NIT',
+    )
+    direccion = models.CharField(
+        max_length=200,
+        default='Calle 10 # 25-30, Bogotá',
+        verbose_name='Dirección',
+    )
+    telefono = models.CharField(
+        max_length=50,
+        default='601-555-0123',
+        verbose_name='Teléfono',
+    )
+    email = models.EmailField(
+        default='info@huellitasalegres.com',
+        verbose_name='Email',
+    )
+
+    class Meta:
+        db_table = 'usuarios_configuracionclinica'
+        verbose_name = 'Configuración de Clínica'
+        verbose_name_plural = 'Configuración de Clínica'
+
+    def __str__(self):
+        return self.nombre
+
+    @classmethod
+    def get_config(cls):
+        """Get the singleton config instance, creating it if necessary."""
+        config, _ = cls.objects.get_or_create(pk=1)
+        return config

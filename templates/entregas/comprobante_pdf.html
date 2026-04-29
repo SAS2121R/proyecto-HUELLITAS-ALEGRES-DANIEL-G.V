@@ -9,6 +9,9 @@
     &nbsp;&nbsp; <strong>Fecha de entrega:</strong> {{ pedido.fecha_entrega|date:"d/m/Y H:i" }}
     {% endif %}
     &nbsp;&nbsp; <strong>Estado:</strong> {{ pedido.get_estado_display }}</p>
+    {% if config %}
+    <p><strong>Razón Social:</strong> {{ config.nombre }} &nbsp;&nbsp; <strong>NIT:</strong> {{ config.nit }}</p>
+    {% endif %}
 </div>
 
 <p><strong>Cliente:</strong> {{ pedido.cliente.get_full_name|default:pedido.cliente.email }}

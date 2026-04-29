@@ -636,3 +636,26 @@ def admin_user_set_password(request, pk):
         'form': form,
         'target_user': user,
     })
+
+
+@login_required
+@admin_required
+def admin_configuracion(request):
+    """Admin can edit clinic configuration (singleton model)."""
+    from .models import ConfiguracionClinica
+
+    config = ConfiguracionClinica.get_config()
+
+    if request.method == 'POST':
+        config.nombre = request.POST.get('nombre', config.nombre)
+        config.nit = request.POST.get('nit', config.nit)
+        config.direccion = request.POST.get('direccion', config.direccion)
+        config.telefono = request.POST.get('telefono', config.telefono)
+        config.email = request.POST.get('email', config.email)
+        config.save()
+        messages.success(request, 'Configuración de la clínica actualizada exitosamente.')
+        return redirect('usuarios:admin_configuracion')
+
+    return render(request, 'usuarios/admin/configuracion.html', {
+        'config': config,
+    })
