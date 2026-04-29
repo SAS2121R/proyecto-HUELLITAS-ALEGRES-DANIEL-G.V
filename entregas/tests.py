@@ -1059,3 +1059,104 @@ class ComprobantePDFTests(TestCase):
         self.client_test.force_login(self.cliente)
         response = self.client_test.get(reverse('entregas:comprobante_pdf', kwargs={'pk': other_pedido.pk}))
         self.assertEqual(response.status_code, 404)
+
+
+# ========================================
+# ADMIN: Torre de Control
+# ========================================
+
+
+class TorreControlTest(TestCase):
+    """Test Admin Control Tower: view all pedidos, filter, reassign domiciliario."""
+
+    def setUp(self):
+        self.admin = create_user_with_role('Administrador', username='tc_admin', email='tc_admin@test.com')
+        self.domiciliario1 = create_user_with_role('Domiciliario', username='tc_dom1', email='tc_dom1@test.com', first_name='Carlos')
+        self.domiciliario2 = create_user_with_role('Domiciliario', username='tc_dom2', email='tc_dom2@test.com', first_name='Maria')
+        self.cliente = create_user_with_role('Cliente', username='tc_cli', email='tc_cli@test.com')
+
+        self.prod = Producto.objects.create(
+            nombre='TC Product', precio=Decimal('10000'),
+            cantidad_stock=50, categoria='alimentos',
+        )
+        self.pedido1 = Pedido.objects.create(
+            cliente=self.cliente, domiciliario=self.domiciliario1,
+            direccion_entrega='Calle 10', telefono_contacto='3001112222',
+            estado='pendiente',
+        )
+        PedidoItem.objects.create(pedido=self.pedido1, producto=self.prod, cantidad=2)
+
+        self.pedido2 = Pedido.objects.create(
+            cliente=self.cliente, domiciliario=self.domiciliario2,
+            direccion_entrega='Calle 20', telefono_contacto='3003334444',
+            estado='en_camino',
+        )
+        PedidoItem.objects.create(pedido=self.pedido2, producto=self.prod, cantidad=1)
+
+        self.c = Client()
+
+    def test_torre_control_admin_access(self):
+        """Admin can access Torre de Control."""
+        self.c.force_login(self.admin)
+        resp = self.c.get(reverse('entregas:torre_control'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Torre de Control')
+
+    def test_torre_control_shows_all_pedidos(self):
+        """Torre de Control shows all pedidos."""
+        self.c.force_login(self.admin)
+        resp = self.c.get(reverse('entregas:torre_control'))
+        self.assertContains(resp, f'#{self.pedido1.pk}')
+        self.assertContains(resp, f'#{self.pedido2.pk}')
+
+    def test_torre_control_filter_by_estado(self):
+        """Filter pedidos by estado."""
+        self.c.force_login(self.admin)
+        resp = self.c.get(reverse('entregas:torre_control') + '?estado=pendiente')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, f'#{self.pedido1.pk}')
+
+    def test_torre_control_search_by_client(self):
+        """Search pedidos by client email."""
+        self.c.force_login(self.admin)
+        resp = self.c.get(reverse('entregas:torre_control') + f'?q={self.cliente.email}')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, f'#{self.pedido1.pk}')
+
+    def test_torre_control_non_admin_403(self):
+        """Non-admin gets 403 on Torre de Control."""
+        self.c.force_login(self.cliente)
+        resp = self.c.get(reverse('entregas:torre_control'))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_torre_control_reassign_domiciliario(self):
+        """Admin can reassign domiciliario for a pendiente pedido."""
+        self.c.force_login(self.admin)
+        resp = self.c.post(reverse('entregas:torre_control'), {
+            'pedido_pk': self.pedido1.pk,
+            'domiciliario': self.domiciliario2.pk,
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.pedido1.refresh_from_db()
+        self.assertEqual(self.pedido1.domiciliario, self.domiciliario2)
+
+    def test_torre_control_cannot_reassign_entregado(self):
+        """Cannot reassign domiciliario for entregado pedido."""
+        self.pedido1.estado = 'entregado'
+        self.pedido1.fecha_entrega = timezone.now()
+        self.pedido1.save()
+        self.c.force_login(self.admin)
+        resp = self.c.post(reverse('entregas:torre_control'), {
+            'pedido_pk': self.pedido1.pk,
+            'domiciliario': self.domiciliario2.pk,
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.pedido1.refresh_from_db()
+        # Should NOT change — entregado is final
+        self.assertEqual(self.pedido1.domiciliario, self.domiciliario1)
+
+    def test_torre_control_domiciliarios_in_context(self):
+        """Torre de Control context includes available domiciliarios."""
+        self.c.force_login(self.admin)
+        resp = self.c.get(reverse('entregas:torre_control'))
+        self.assertIn('domiciliarios', resp.context)

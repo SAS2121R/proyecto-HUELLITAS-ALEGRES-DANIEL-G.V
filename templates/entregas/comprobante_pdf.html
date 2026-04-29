@@ -1,10 +1,23 @@
 {% extends "reportes/base_reporte.html" %}
 
 {% block content %}
-<h4>Comprobante de Entrega — Pedido #{{ pedido.pk }}</h4>
-<p><strong>Estado:</strong> {{ pedido.get_estado_display }} &nbsp;&nbsp; <strong>Fecha de entrega:</strong> {{ pedido.fecha_entrega|date:"d/m/Y H:i" }}</p>
-<p><strong>Cliente:</strong> {{ pedido.cliente.get_full_name }} &nbsp;&nbsp; <strong>Teléfono:</strong> {{ pedido.telefono_contacto }}</p>
-<p><strong>Domiciliario:</strong> {{ pedido.domiciliario.get_full_name }} &nbsp;&nbsp; <strong>Dirección:</strong> {{ pedido.direccion_entrega }}</p>
+<h4>Comprobante de Venta — Pedido #{{ pedido.pk }}</h4>
+
+<div class="summary-box">
+    <p><strong>Fecha de creación:</strong> {{ pedido.fecha_creacion|date:"d/m/Y H:i" }}
+    {% if pedido.fecha_entrega %}
+    &nbsp;&nbsp; <strong>Fecha de entrega:</strong> {{ pedido.fecha_entrega|date:"d/m/Y H:i" }}
+    {% endif %}
+    &nbsp;&nbsp; <strong>Estado:</strong> {{ pedido.get_estado_display }}</p>
+</div>
+
+<p><strong>Cliente:</strong> {{ pedido.cliente.get_full_name|default:pedido.cliente.email }}
+&nbsp;&nbsp; <strong>Teléfono:</strong> {{ pedido.telefono_contacto }}
+&nbsp;&nbsp; <strong>Email:</strong> {{ pedido.cliente.email }}</p>
+
+<p><strong>Domiciliario:</strong> {{ pedido.domiciliario.get_full_name|default:pedido.domiciliario.email }}
+&nbsp;&nbsp; <strong>Dirección de entrega:</strong> {{ pedido.direccion_entrega }}</p>
+
 {% if pedido.notas %}
 <p><strong>Instrucciones:</strong> {{ pedido.notas }}</p>
 {% endif %}
@@ -22,17 +35,19 @@
         {% for item in items %}
         <tr>
             <td>{{ item.producto.nombre }}</td>
-            <td>{{ item.cantidad }}</td>
-            <td>${{ item.producto.precio|floatformat:0 }}</td>
-            <td>${{ item.subtotal|floatformat:0 }}</td>
+            <td style="text-align:center">{{ item.cantidad }}</td>
+            <td style="text-align:right">${{ item.producto.precio|floatformat:0 }}</td>
+            <td style="text-align:right">${{ item.subtotal|floatformat:0 }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
-<p style="text-align: right; font-weight: bold; font-size: 12pt;">Total: ${{ pedido.total|floatformat:0 }}</p>
+<p style="text-align: right; font-weight: bold; font-size: 12pt; margin-top: 10px;">Total: ${{ pedido.total|floatformat:0 }}</p>
 
 {% if pedido.incidente_notas %}
-<p><strong>Notas de Incidente:</strong> {{ pedido.incidente_notas }}
-{% if pedido.incidente_fecha %} — Registrado: {{ pedido.incidente_fecha|date:"d/m/Y H:i" }}{% endif %}</p>
+<div style="background: #f8d7da; padding: 10px; border-radius: 5px; margin-top: 10px;">
+    <p style="margin:0"><strong>Notas de Incidente:</strong> {{ pedido.incidente_notas }}
+    {% if pedido.incidente_fecha %} — Registrado: {{ pedido.incidente_fecha|date:"d/m/Y H:i" }}{% endif %}</p>
+</div>
 {% endif %}
 {% endblock %}

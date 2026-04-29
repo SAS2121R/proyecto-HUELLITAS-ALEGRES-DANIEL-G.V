@@ -12,7 +12,7 @@ import io
 
 from usuarios.decorators import role_required
 from .models import Pedido, ESTADO_CHOICES
-from .forms import CambiarEstadoForm, EvidenciaForm, PedidoForm, PedidoItemFormSet
+from .forms import CambiarEstadoForm, EvidenciaForm, PedidoForm, PedidoItemFormSet, ReasignarDomiciliarioForm
 from productos.models import Producto, MovimientoInventario
 
 
@@ -268,3 +268,77 @@ def comprobante_pdf(request, pk):
     response = HttpResponse(buf.read(), content_type='application/pdf')
     response['Content-Disposition'] = f'filename="comprobante_pedido_{pedido.pk}.pdf"'
     return response
+
+
+@login_required(login_url='/usuarios/login/')
+@role_required('Administrador')
+def torre_control(request):
+    """Control Tower — Admin-only global view of all pedidos with reassign capability.
+
+    Shows all pedidos with filters by estado and search by client.
+    Allows inline reassignment of domiciliario for pendiente/en_camino pedidos.
+    """
+    from django.db.models import Q as DbQ
+    pedidos = Pedido.objects.select_related('cliente', 'domiciliario').prefetch_related('items__producto').order_by('-fecha_creacion')
+
+    # Filter by estado
+    estado = request.GET.get('estado', '').strip()
+    if estado:
+        pedidos = pedidos.filter(estado=estado)
+
+    # Search by client name or pedido #
+    search = request.GET.get('q', '').strip()
+    if search:
+        pedidos = pedidos.filter(
+            DbQ(cliente__first_name__icontains=search)
+            | DbQ(cliente__email__icontains=search)
+            | DbQ(pk__icontains=search)
+            | DbQ(direccion_entrega__icontains=search)
+        )
+
+    # Summary stats
+    total_pedidos = pedidos.count()
+    pendientes = Pedido.objects.filter(estado='pendiente').count()
+    en_camino = Pedido.objects.filter(estado='en_camino').count()
+    entregados = Pedido.objects.filter(estado='entregado').count()
+    cancelados = Pedido.objects.filter(estado='cancelado').count()
+
+    # Handle reassign POST
+    if request.method == 'POST':
+        pedido_pk = request.POST.get('pedido_pk')
+        new_dom_pk = request.POST.get('domiciliario')
+        if pedido_pk and new_dom_pk:
+            from usuarios.models import Usuario
+            pedido = get_object_or_404(Pedido, pk=pedido_pk)
+            new_dom = get_object_or_404(Usuario, pk=new_dom_pk, rol__nombre='Domiciliario')
+            if pedido.estado in ('pendiente', 'en_camino'):
+                pedido.domiciliario = new_dom
+                pedido.save(update_fields=['domiciliario'])
+                messages.success(request, f'Domiciliario de Pedido #{pedido.pk} reasignado a {new_dom.get_full_name()}.')
+            else:
+                messages.error(request, 'Solo se puede reasignar pedidos pendientes o en camino.')
+        return redirect('entregas:torre_control')
+
+    paginator = Paginator(pedidos, 15)
+    page = request.GET.get('page', 1)
+    try:
+        page_obj = paginator.page(page)
+    except (PageNotAnInteger, EmptyPage):
+        page_obj = paginator.page(1)
+
+    # Get domiciliarios for the reassign dropdown
+    from usuarios.models import Usuario
+    domiciliarios = Usuario.objects.filter(rol__nombre='Domiciliario', is_active=True).order_by('first_name')
+
+    return render(request, 'entregas/torre_control.html', {
+        'page_obj': page_obj,
+        'estado': estado,
+        'search': search,
+        'estados': ESTADO_CHOICES,
+        'total_pedidos': total_pedidos,
+        'pendientes': pendientes,
+        'en_camino': en_camino,
+        'entregados': entregados,
+        'cancelados': cancelados,
+        'domiciliarios': domiciliarios,
+    })

@@ -131,3 +131,20 @@ class EvidenciaForm(forms.ModelForm):
         if firma and hasattr(firma, 'size') and firma.size > 5 * 1024 * 1024:
             raise forms.ValidationError('La imagen de firma no puede exceder 5MB.')
         return firma
+
+
+class ReasignarDomiciliarioForm(forms.Form):
+    """Form for Admin to reassign domiciliario to a pedido."""
+    pedido_pk = forms.IntegerField(widget=forms.HiddenInput())
+    domiciliario = forms.ModelChoiceField(
+        queryset=None,
+        label='Domiciliario',
+        widget=forms.Select(attrs={'class': 'form-select form-select-sm'}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from usuarios.models import Usuario
+        self.fields['domiciliario'].queryset = Usuario.objects.filter(
+            rol__nombre='Domiciliario', is_active=True
+        ).order_by('first_name')

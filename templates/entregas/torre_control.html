@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}Torre de Control — Huellitas Alegres{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4"><i class="bi bi-broadcast"></i> Torre de Control</h1>
+
+    <!-- Stats Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm text-center card-hover">
+                <div class="card-body">
+                    <i class="bi bi-clock fs-2 text-warning"></i>
+                    <h3 class="mt-1 mb-0">{{ pendientes }}</h3>
+                    <small class="text-muted">Pendientes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm text-center card-hover">
+                <div class="card-body">
+                    <i class="bi bi-truck fs-2 text-info"></i>
+                    <h3 class="mt-1 mb-0">{{ en_camino }}</h3>
+                    <small class="text-muted">En Camino</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm text-center card-hover">
+                <div class="card-body">
+                    <i class="bi bi-check-circle fs-2 text-success"></i>
+                    <h3 class="mt-1 mb-0">{{ entregados }}</h3>
+                    <small class="text-muted">Entregados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm text-center card-hover">
+                <div class="card-body">
+                    <i class="bi bi-x-circle fs-2 text-danger"></i>
+                    <h3 class="mt-1 mb-0">{{ cancelados }}</h3>
+                    <small class="text-muted">Cancelados</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="row g-3 mb-3">
+        <div class="col-md-4">
+            <input type="text" name="q" class="form-control" placeholder="Buscar por cliente, #pedido o dirección..." value="{{ search|default:'' }}">
+        </div>
+        <div class="col-md-3">
+            <select name="estado" class="form-select">
+                <option value="">Todos los estados</option>
+                {% for val, label in estados %}
+                <option value="{{ val }}" {% if estado == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i></button>
+        </div>
+        <div class="col-md-3 text-end">
+            <a href="{% url 'entregas:crear' %}" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nuevo Pedido</a>
+        </div>
+    </form>
+
+    <!-- Pedidos Table -->
+    {% if page_obj %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Cliente</th>
+                    <th>Domiciliario</th>
+                    <th>Dirección</th>
+                    <th>Estado</th>
+                    <th>Total</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pedido in page_obj %}
+                <tr class="{% if pedido.estado == 'pendiente' %}table-warning{% elif pedido.estado == 'en_camino' %}table-info{% elif pedido.estado == 'cancelado' %}table-danger{% endif %}">
+                    <td><a href="{% url 'entregas:detalle' pedido.pk %}"><strong>#{{ pedido.pk }}</strong></a></td>
+                    <td>{{ pedido.cliente.get_full_name|default:pedido.cliente.email }}</td>
+                    <td>
+                        {% if pedido.estado in 'pendiente,en_camino' %}
+                        <!-- Inline reassign form -->
+                        <form method="post" action="{% url 'entregas:torre_control' %}" class="d-flex gap-1 align-items-center" style="display:inline-flex;">
+                            {% csrf_token %}
+                            <input type="hidden" name="pedido_pk" value="{{ pedido.pk }}">
+                            <select name="domiciliario" class="form-select form-select-sm" style="width: auto; min-width: 120px;" onchange="this.form.submit()">
+                                {% for dom in domiciliarios %}
+                                <option value="{{ dom.pk }}" {% if pedido.domiciliario.pk == dom.pk %}selected{% endif %}>
+                                    {{ dom.get_full_name|default:dom.email }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                        {% else %}
+                        {{ pedido.domiciliario.get_full_name|default:pedido.domiciliario.email }}
+                        {% endif %}
+                    </td>
+                    <td>{{ pedido.direccion_entrega|truncatewords:4 }}</td>
+                    <td>
+                        <span class="badge bg-{% if pedido.estado == 'pendiente' %}warning text-dark{% elif pedido.estado == 'en_camino' %}info{% elif pedido.estado == 'entregado' %}success{% else %}danger{% endif %}">
+                            {{ pedido.get_estado_display }}
+                        </span>
+                    </td>
+                    <td>${{ pedido.total|floatformat:0 }}</td>
+                    <td>{{ pedido.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <a href="{% url 'entregas:detalle' pedido.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
+                        {% if pedido.estado == 'entregado' %}
+                        <a href="{% url 'entregas:comprobante_pdf' pedido.pk %}" class="btn btn-sm btn-outline-secondary" target="_blank"><i class="bi bi-file-earmark-pdf"></i></a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <nav aria-label="Paginación" class="mt-3">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}">&laquo;</a></li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}{% if search %}&q={{ search }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}">{{ num }}</a></li>
+            {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}">Siguiente &raquo;</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-inbox fs-1"></i>
+        <p class="mt-2 mb-0">No se encontraron pedidos.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
