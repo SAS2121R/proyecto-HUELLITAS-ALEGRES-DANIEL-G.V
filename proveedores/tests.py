@@ -10,23 +10,23 @@ Usuario = get_user_model()
 
 
 class ProveedorModelTest(TestCase):
-    """Test Proveedor model."""
+    """Pruebas del modelo Proveedor."""
 
     def test_proveedor_creation(self):
-        """Can create a Proveedor with required fields."""
+        """Se puede crear un Proveedor con los campos obligatorios."""
         prov = Proveedor.objects.create(nombre='LabVet Colombia')
         self.assertEqual(prov.nombre, 'LabVet Colombia')
         self.assertTrue(prov.esta_activo)
         self.assertEqual(str(prov), 'LabVet Colombia')
 
     def test_proveedor_unique_nombre(self):
-        """Proveedor nombre must be unique."""
+        """El nombre del proveedor debe ser único."""
         Proveedor.objects.create(nombre='LabVet Colombia')
         with self.assertRaises(Exception):
             Proveedor.objects.create(nombre='LabVet Colombia')
 
     def test_proveedor_optional_fields(self):
-        """Optional fields default to empty strings."""
+        """Los campos opcionales tienen valor por defecto vacío."""
         prov = Proveedor.objects.create(nombre='Test Prov')
         self.assertEqual(prov.nit, '')
         self.assertEqual(prov.telefono, '')
@@ -35,7 +35,7 @@ class ProveedorModelTest(TestCase):
         self.assertEqual(prov.contacto, '')
 
     def test_proveedor_with_all_fields(self):
-        """Can create a Proveedor with all fields."""
+        """Se puede crear un Proveedor con todos los campos completos."""
         prov = Proveedor.objects.create(
             nombre='VetSupply',
             nit='901.234.567-9',
@@ -50,7 +50,7 @@ class ProveedorModelTest(TestCase):
 
 
 class ProveedorCRUDTest(TestCase):
-    """Test Proveedor CRUD views — Admin only."""
+    """Pruebas de las vistas CRUD de Proveedor — solo Administrador."""
 
     def setUp(self):
         self.client = Client()
@@ -69,20 +69,20 @@ class ProveedorCRUDTest(TestCase):
         )
 
     def test_lista_proveedores_admin(self):
-        """Admin can see supplier list."""
+        """El Administrador puede ver la lista de proveedores."""
         self.client.force_login(self.admin)
         resp = self.client.get(reverse('proveedores:lista'))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'LabVet')
 
     def test_lista_proveedores_non_admin_403(self):
-        """Non-admin gets 403 on supplier list."""
+        """Un usuario que no es Administrador recibe error 403."""
         self.client.force_login(self.cliente)
         resp = self.client.get(reverse('proveedores:lista'))
         self.assertEqual(resp.status_code, 403)
 
     def test_crear_proveedor(self):
-        """Admin can create a new supplier."""
+        """El Administrador puede crear un nuevo proveedor."""
         self.client.force_login(self.admin)
         resp = self.client.post(reverse('proveedores:crear'), {
             'nombre': 'VetSupply',
@@ -93,7 +93,7 @@ class ProveedorCRUDTest(TestCase):
         self.assertTrue(Proveedor.objects.filter(nombre='VetSupply').exists())
 
     def test_editar_proveedor(self):
-        """Admin can update a supplier."""
+        """El Administrador puede actualizar los datos de un proveedor."""
         self.client.force_login(self.admin)
         resp = self.client.post(reverse('proveedores:editar', kwargs={'pk': self.proveedor.pk}), {
             'nombre': 'LabVet Updated',
@@ -105,7 +105,7 @@ class ProveedorCRUDTest(TestCase):
         self.assertEqual(self.proveedor.nombre, 'LabVet Updated')
 
     def test_toggle_proveedor(self):
-        """Admin can toggle supplier active status."""
+        """El Administrador puede activar o desactivar un proveedor."""
         self.client.force_login(self.admin)
         self.assertTrue(self.proveedor.esta_activo)
         resp = self.client.post(reverse('proveedores:toggle', kwargs={'pk': self.proveedor.pk}))
@@ -114,25 +114,25 @@ class ProveedorCRUDTest(TestCase):
         self.assertFalse(self.proveedor.esta_activo)
 
     def test_crear_proveedor_duplicate_nombre(self):
-        """Cannot create supplier with duplicate nombre."""
+        """No se puede crear un proveedor con un nombre duplicado."""
         self.client.force_login(self.admin)
         resp = self.client.post(reverse('proveedores:crear'), {
-            'nombre': 'LabVet',  # already exists
+            'nombre': 'LabVet',  # ya existe
         })
-        self.assertEqual(resp.status_code, 200)  # Form error, stays on page
+        self.assertEqual(resp.status_code, 200)  # Error de formulario, permanece en la página
         self.assertEqual(Proveedor.objects.filter(nombre='LabVet').count(), 1)
 
 
 class ProveedorFormTest(TestCase):
-    """Test ProveedorForm validation."""
+    """Pruebas de validación del formulario ProveedorForm."""
 
     def test_form_valid(self):
-        """Form accepts valid data."""
+        """El formulario acepta datos válidos."""
         form = ProveedorForm(data={'nombre': 'New Prov', 'esta_activo': True})
         self.assertTrue(form.is_valid())
 
     def test_form_missing_nombre(self):
-        """Form rejects missing nombre."""
+        """El formulario rechaza datos sin el nombre obligatorio."""
         form = ProveedorForm(data={'esta_activo': True})
         self.assertFalse(form.is_valid())
         self.assertIn('nombre', form.errors)

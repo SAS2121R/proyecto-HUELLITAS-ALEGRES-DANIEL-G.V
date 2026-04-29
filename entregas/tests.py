@@ -13,7 +13,7 @@ from .models import Pedido, PedidoItem, ESTADO_CHOICES, MAX_EVIDENCIA_SIZE
 
 
 def create_user_with_role(rol_nombre, **kwargs):
-    """Helper to create a Usuario with the given role."""
+    """Helper para crear un Usuario con el rol dado."""
     rol, _ = Rol.objects.get_or_create(nombre=rol_nombre)
     user = Usuario.objects.create_user(
         username=kwargs.get('username', f'user_{rol_nombre.lower()}'),
@@ -26,23 +26,23 @@ def create_user_with_role(rol_nombre, **kwargs):
 
 
 # ========================================
-# PHASE 1: App Scaffold + Model + Migration
+# FASE 1: Scaffold de la App + Modelo + Migration
 # ========================================
 
 class AppRegistrationTest(TestCase):
-    """REQ-10: App is registered in INSTALLED_APPS"""
+    """REQ-10: La app está registrada en INSTALLED_APPS"""
 
     def test_entregas_in_installed_apps(self):
-        """R10.1: 'entregas' is in INSTALLED_APPS"""
+        """R10.1: 'entregas' está en INSTALLED_APPS"""
         self.assertIn('entregas', settings.INSTALLED_APPS)
 
 
 # ========================================
-# MODEL TESTS — Pedido
+# TESTS DE MODELO — Pedido
 # ========================================
 
 class PedidoModelTest(TestCase):
-    """Tests for the Pedido model."""
+    """Tests para el modelo Pedido."""
 
     def setUp(self):
         self.admin = create_user_with_role('Administrador', username='admin_ped', email='admin_ped@test.com')
@@ -56,7 +56,7 @@ class PedidoModelTest(TestCase):
         )
 
     def test_pedido_creacion_basica(self):
-        """Create a Pedido with all required fields."""
+        """Crear un Pedido con todos los campos requeridos."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -70,7 +70,7 @@ class PedidoModelTest(TestCase):
         self.assertEqual(pedido.telefono_contacto, '3001234567')
 
     def test_pedido_default_estado_is_pendiente(self):
-        """Default estado must be 'pendiente'."""
+        """El estado por defecto debe ser 'pendiente'."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -80,7 +80,7 @@ class PedidoModelTest(TestCase):
         self.assertEqual(pedido.estado, 'pendiente')
 
     def test_pedido_estado_choices(self):
-        """Estado must accept only valid choices."""
+        """El estado debe aceptar solo opciones válidas."""
         for value, label in ESTADO_CHOICES:
             pedido = Pedido(
                 cliente=self.cliente,
@@ -88,14 +88,14 @@ class PedidoModelTest(TestCase):
                 direccion_entrega='Cra 5 # 10-20',
                 telefono_contacto='3155551234',
                 estado=value,
-                # Cancelado requires incidente_notas
+                # Cancelado requiere incidente_notas
                 incidente_notas='Motivo de prueba' if value == 'cancelado' else '',
             )
-            # Full clean should not raise for valid choices
+            # full_clean no debe lanzar para opciones válidas
             pedido.full_clean()  # will validate choices
 
     def test_pedido_estado_invalid_raises(self):
-        """Invalid estado must raise ValidationError."""
+        """Un estado inválido debe lanzar ValidationError."""
         pedido = Pedido(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -107,7 +107,7 @@ class PedidoModelTest(TestCase):
             pedido.full_clean()
 
     def test_pedido_str(self):
-        """Pedido __str__ returns readable format."""
+        """El __str__ de Pedido retorna formato legible."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -117,7 +117,7 @@ class PedidoModelTest(TestCase):
         self.assertIn(str(pedido.id), str(pedido))
 
     def test_pedido_notas_blank(self):
-        """Notas field is optional."""
+        """El campo notas es opcional."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -127,7 +127,7 @@ class PedidoModelTest(TestCase):
         self.assertEqual(pedido.notas, '')
 
     def test_pedido_incidente_fields_blank(self):
-        """Incidente fields default to empty/null."""
+        """Los campos de incidente por defecto son vacío/null."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -138,7 +138,7 @@ class PedidoModelTest(TestCase):
         self.assertIsNone(pedido.incidente_fecha)
 
     def test_pedido_fecha_creacion_auto(self):
-        """fecha_creacion is auto-populated."""
+        """fecha_creacion se auto-popula."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -148,7 +148,7 @@ class PedidoModelTest(TestCase):
         self.assertIsNotNone(pedido.fecha_creacion)
 
     def test_pedido_fecha_entrega_null_until_delivered(self):
-        """fecha_entrega is null until the order is delivered."""
+        """fecha_entrega es null hasta que el pedido es entregado."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -158,7 +158,7 @@ class PedidoModelTest(TestCase):
         self.assertIsNone(pedido.fecha_entrega)
 
     def test_pedido_direccion_required(self):
-        """direccion_entrega is required — cannot be blank."""
+        """direccion_entrega es requerido — no puede estar vacío."""
         pedido = Pedido(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -169,7 +169,7 @@ class PedidoModelTest(TestCase):
             pedido.full_clean()
 
     def test_pedido_telefono_required(self):
-        """telefono_contacto is required — cannot be blank."""
+        """telefono_contacto es requerido — no puede estar vacío."""
         pedido = Pedido(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -181,7 +181,7 @@ class PedidoModelTest(TestCase):
 
 
 class PedidoItemModelTest(TestCase):
-    """Tests for the PedidoItem through model."""
+    """Tests para el modelo a través PedidoItem."""
 
     def setUp(self):
         self.domiciliario = create_user_with_role('Domiciliario', username='domic_item', email='domic_item@test.com')
@@ -200,7 +200,7 @@ class PedidoItemModelTest(TestCase):
         )
 
     def test_pedido_item_creacion(self):
-        """Create a PedidoItem linking Pedido and Producto with quantity."""
+        """Crear un PedidoItem vinculando Pedido y Producto con cantidad."""
         item = PedidoItem.objects.create(
             pedido=self.pedido,
             producto=self.producto,
@@ -211,7 +211,7 @@ class PedidoItemModelTest(TestCase):
         self.assertEqual(item.cantidad, 3)
 
     def test_pedido_item_multiple_products(self):
-        """A Pedido can have multiple PedidoItems."""
+        """Un Pedido puede tener múltiples PedidoItems."""
         producto2 = Producto.all_objects.create(
             nombre='Ración Perro 5kg',
             categoria='alimentos',
@@ -223,7 +223,7 @@ class PedidoItemModelTest(TestCase):
         self.assertEqual(self.pedido.items.count(), 2)
 
     def test_pedido_item_str(self):
-        """PedidoItem __str__ includes product name and quantity."""
+        """El __str__ de PedidoItem incluye nombre del producto y cantidad."""
         item = PedidoItem.objects.create(
             pedido=self.pedido,
             producto=self.producto,
@@ -233,7 +233,7 @@ class PedidoItemModelTest(TestCase):
         self.assertIn('5', str(item))
 
     def test_pedido_item_cantidad_min_1(self):
-        """Quantity must be at least 1."""
+        """La cantidad debe ser al menos 1."""
         item = PedidoItem(
             pedido=self.pedido,
             producto=self.producto,
@@ -243,7 +243,7 @@ class PedidoItemModelTest(TestCase):
             item.full_clean()
 
     def test_pedido_subtotal_property(self):
-        """PedidoItem.subtotal returns precio * cantidad."""
+        """PedidoItem.subtotal retorna precio * cantidad."""
         item = PedidoItem.objects.create(
             pedido=self.pedido,
             producto=self.producto,
@@ -253,7 +253,7 @@ class PedidoItemModelTest(TestCase):
         self.assertEqual(item.subtotal, expected)
 
     def test_pedido_total_property(self):
-        """Pedido.total returns sum of all item subtotals."""
+        """Pedido.total retorna la suma de todos los subtotales de items."""
         producto2 = Producto.all_objects.create(
             nombre='Ración Gato 3kg',
             categoria='alimentos',
@@ -267,32 +267,32 @@ class PedidoItemModelTest(TestCase):
 
 
 class EvidenciaValidationTest(TestCase):
-    """Tests for photo evidence validation (reuse 5MB pattern from historial)."""
+    """Tests para validación de foto de evidencia (reutiliza patrón de 5MB de historial)."""
 
     def setUp(self):
         self.domiciliario = create_user_with_role('Domiciliario', username='domic_ev', email='domic_ev@test.com')
         self.cliente = create_user_with_role('Cliente', username='cli_ev', email='cli_ev@test.com')
 
     def test_max_evidencia_size_is_5mb(self):
-        """MAX_EVIDENCIA_SIZE must be 5MB."""
+        """MAX_EVIDENCIA_SIZE debe ser 5MB."""
         self.assertEqual(MAX_EVIDENCIA_SIZE, 5 * 1024 * 1024)
 
     def test_pedido_foto_evidencia_oversized_raises(self):
-        """ foto_evidencia over 5MB must raise ValidationError."""
+        """foto_evidencia sobre 5MB debe lanzar ValidationError."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
             direccion_entrega='Calle 10 # 20-30',
             telefono_contacto='3001112222',
         )
-        # Create a file larger than 5MB
+        # Crear un archivo mayor a 5MB
         big_file = SimpleUploadedFile('evidence.jpg', b'x' * (MAX_EVIDENCIA_SIZE + 1), content_type='image/jpeg')
         pedido.foto_evidencia = big_file
         with self.assertRaises(ValidationError):
             pedido.full_clean()
 
     def test_pedido_foto_evidencia_valid(self):
-        """Small foto_evidencia should pass validation."""
+        """foto_evidencia pequeña debe pasar validación."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -301,19 +301,19 @@ class EvidenciaValidationTest(TestCase):
         )
         small_file = SimpleUploadedFile('evidence.jpg', b'x' * 100, content_type='image/jpeg')
         pedido.foto_evidencia = small_file
-        # Should NOT raise — just check it doesn't crash
-        # (full_clean skips file size if not saved yet, so we test the validator separately)
+        # NO debe lanzar — solo verificar que no crashee
+        # (full_clean omite tamaño de archivo si aún no se guarda, así que probamos el validador por separado)
 
 
 class EstadoTransitionTest(TestCase):
-    """Tests for Pedido state transitions — mirrors Cita pattern."""
+    """Tests para transiciones de estado de Pedido — refleja el patrón de Cita."""
 
     def setUp(self):
         self.domiciliario = create_user_with_role('Domiciliario', username='domic_trans', email='domic_trans@test.com')
         self.cliente = create_user_with_role('Cliente', username='cli_trans', email='cli_trans@test.com')
 
     def test_pendiente_to_en_camino(self):
-        """Valid transition: pendiente → en_camino."""
+        """Transición válida: pendiente → en_camino."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -324,7 +324,7 @@ class EstadoTransitionTest(TestCase):
         pedido.full_clean()  # should not raise
 
     def test_en_camino_to_entregado(self):
-        """Valid transition: en_camino → entregado."""
+        """Transición válida: en_camino → entregado."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -336,7 +336,7 @@ class EstadoTransitionTest(TestCase):
         pedido.full_clean()  # should not raise
 
     def test_pendiente_to_cancelado(self):
-        """Valid transition: pendiente → cancelado (requires incidente_notas)."""
+        """Transición válida: pendiente → cancelado (requiere incidente_notas)."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -348,7 +348,7 @@ class EstadoTransitionTest(TestCase):
         pedido.full_clean()  # should not raise
 
     def test_entregado_cannot_change_state(self):
-        """Once entregado, state must not change."""
+        """Una vez entregado, el estado no debe cambiar."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -356,13 +356,13 @@ class EstadoTransitionTest(TestCase):
             telefono_contacto='3001112222',
             estado='entregado',
         )
-        # Change estado on the saved instance — clean() checks DB for old state
+        # Cambiar estado en la instancia guardada — clean() verifica en BD el estado antiguo
         pedido.estado = 'en_camino'
         with self.assertRaises(ValidationError):
             pedido.full_clean()
 
     def test_cancelado_cannot_reactivate(self):
-        """Once cancelado, must not be reactivated."""
+        """Una vez cancelado, no debe poder reactivarse."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -376,7 +376,7 @@ class EstadoTransitionTest(TestCase):
             pedido.full_clean()
 
     def test_cancelado_requires_incidente_notas(self):
-        """Setting estado to cancelado requires incidente_notas."""
+        """Cambiar estado a cancelado requiere incidente_notas."""
         pedido = Pedido(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -384,12 +384,12 @@ class EstadoTransitionTest(TestCase):
             telefono_contacto='3001112222',
             estado='cancelado',
         )
-        # Without incidente_notas, should fail
+        # Sin incidente_notas, debe fallar
         with self.assertRaises(ValidationError):
             pedido.full_clean()
 
     def test_cancelado_with_incidente_notas_passes(self):
-        """Cancelado WITH incidente_notas should pass validation."""
+        """Cancelado CON incidente_notas debe pasar validación."""
         pedido = Pedido(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -398,12 +398,12 @@ class EstadoTransitionTest(TestCase):
             estado='cancelado',
             incidente_notas='Cliente no se encontraba en la dirección',
         )
-        # Should not raise — incidente_notas is provided
+        # No debe lanzar — incidente_notas está proporcionado
         pedido.full_clean()
 
 
 # ========================================
-# PHASE 2: URLs, Views, Permissions
+# FASE 2: URLs, Vistas, Permisos
 # ========================================
 
 from django.test import Client
@@ -412,7 +412,7 @@ from django.contrib.contenttypes.models import ContentType
 
 
 class EntregasURLTests(TestCase):
-    """Test that entregas URLs resolve correctly."""
+    """Test que las URLs de entregas resuelven correctamente."""
 
     def test_dashboard_url_resolves(self):
         url = reverse('entregas:dashboard')
@@ -428,7 +428,7 @@ class EntregasURLTests(TestCase):
 
 
 class EntregasPermissionTests(TestCase):
-    """Test that entregas views require login and Domiciliario/Admin role."""
+    """Test que las vistas de entregas requieren login y rol Domiciliario/Admin."""
 
     def setUp(self):
         self.client_test = Client()
@@ -454,7 +454,7 @@ class EntregasPermissionTests(TestCase):
         self.assertIn(response.status_code, [302, 403])
 
     def test_cliente_cannot_access_dashboard(self):
-        """Clientes should get 403 on dashboard."""
+        """Clientes deben obtener 403 en dashboard."""
         cliente = create_user_with_role('Cliente', username='cli_dash', email='cli_dash@test.com')
         self.client_test.force_login(cliente)
         response = self.client_test.get(reverse('entregas:dashboard'))
@@ -462,7 +462,7 @@ class EntregasPermissionTests(TestCase):
 
 
 class DashboardViewTests(TestCase):
-    """Test the dashboard view for Domiciliario role."""
+    """Test la vista dashboard para rol Domiciliario."""
 
     def setUp(self):
         self.client_test = Client()
@@ -471,18 +471,18 @@ class DashboardViewTests(TestCase):
         self.cliente = create_user_with_role('Cliente', username='cli_dash', email='cli_dash@test.com')
 
     def test_domiciliario_sees_own_pedidos_only(self):
-        """Domiciliario should only see pedidos assigned to them."""
+        """Domiciliario debe ver solo los pedidos asignados a él."""
         other_domic = create_user_with_role('Domiciliario', username='domic_other', email='domic_other@test.com')
         Pedido.objects.create(cliente=self.cliente, domiciliario=self.domiciliario, direccion_entrega='Calle 1', telefono_contacto='3001')
         Pedido.objects.create(cliente=self.cliente, domiciliario=other_domic, direccion_entrega='Calle 2', telefono_contacto='3002')
         self.client_test.force_login(self.domiciliario)
         response = self.client_test.get(reverse('entregas:dashboard'))
         self.assertEqual(response.status_code, 200)
-        # Should only see 1 pedido (the one assigned to this domiciliario)
+        # Solo debe ver 1 pedido (el asignado a este domiciliario)
         self.assertEqual(response.context['page_obj'].paginator.count, 1)
 
     def test_admin_sees_all_pedidos(self):
-        """Admin should see all pedidos."""
+        """Admin debe ver todos los pedidos."""
         other_domic = create_user_with_role('Domiciliario', username='domic_other2', email='domic_other2@test.com')
         Pedido.objects.create(cliente=self.cliente, domiciliario=self.domiciliario, direccion_entrega='Calle 1', telefono_contacto='3001')
         Pedido.objects.create(cliente=self.cliente, domiciliario=other_domic, direccion_entrega='Calle 2', telefono_contacto='3002')
@@ -492,7 +492,7 @@ class DashboardViewTests(TestCase):
         self.assertEqual(response.context['page_obj'].paginator.count, 2)
 
     def test_dashboard_filter_by_estado(self):
-        """Dashboard should filter by estado query param."""
+        """Dashboard debe filtrar por parámetro de query estado."""
         Pedido.objects.create(cliente=self.cliente, domiciliario=self.domiciliario, direccion_entrega='Calle 1', telefono_contacto='3001', estado='pendiente')
         Pedido.objects.create(cliente=self.cliente, domiciliario=self.domiciliario, direccion_entrega='Calle 2', telefono_contacto='3002', estado='en_camino')
         self.client_test.force_login(self.domiciliario)
@@ -502,7 +502,7 @@ class DashboardViewTests(TestCase):
 
 
 class PedidoDetailViewTests(TestCase):
-    """Test the pedido detail view."""
+    """Test la vista de detalle del pedido."""
 
     def setUp(self):
         self.client_test = Client()
@@ -528,7 +528,7 @@ class PedidoDetailViewTests(TestCase):
 
 
 class CambiarEstadoViewTests(TestCase):
-    """Test the state transition view."""
+    """Test la vista de transición de estado."""
 
     def setUp(self):
         self.client_test = Client()
@@ -542,7 +542,7 @@ class CambiarEstadoViewTests(TestCase):
         )
 
     def test_pendiente_to_en_camino(self):
-        """POST to cambiar_estado with nuevo_estado=en_camino should update estado."""
+        """POST a cambiar_estado con nuevo_estado=en_camino debe actualizar estado."""
         self.client_test.force_login(self.domiciliario)
         response = self.client_test.post(
             reverse('entregas:cambiar_estado', kwargs={'pk': self.pedido.pk}),
@@ -552,7 +552,7 @@ class CambiarEstadoViewTests(TestCase):
         self.assertEqual(self.pedido.estado, 'en_camino')
 
     def test_en_camino_to_entregado(self):
-        """POST to cambiar_estado with nuevo_estado=entregado should update estado."""
+        """POST a cambiar_estado con nuevo_estado=entregado debe actualizar estado."""
         self.pedido.estado = 'en_camino'
         self.pedido.save()
         self.client_test.force_login(self.domiciliario)
@@ -564,19 +564,19 @@ class CambiarEstadoViewTests(TestCase):
         self.assertEqual(self.pedido.estado, 'entregado')
 
     def test_cambiar_estado_get_not_allowed(self):
-        """GET to cambiar_estado should return 405 or redirect."""
+        """GET a cambiar_estado debe retornar 405 o redirección."""
         self.client_test.force_login(self.domiciliario)
         response = self.client_test.get(reverse('entregas:cambiar_estado', kwargs={'pk': self.pedido.pk}))
         self.assertIn(response.status_code, [405, 302])
 
 
 # ========================================
-# PHASE 3: Create Pedido (Admin) + Resumen Diario
+# FASE 3: Crear Pedido (Admin) + Resumen Diario
 # ========================================
 
 
 class CrearPedidoURLTests(TestCase):
-    """Test crear_pedido URL resolution."""
+    """Test resolución de URL de crear_pedido."""
 
     def test_crear_pedido_url_resolves(self):
         url = reverse('entregas:crear')
@@ -588,7 +588,7 @@ class CrearPedidoURLTests(TestCase):
 
 
 class CrearPedidoPermissionTests(TestCase):
-    """Test that crear_pedido is restricted to Admin."""
+    """Test que crear_pedido está restringido a Admin."""
 
     def setUp(self):
         self.client_test = Client()
@@ -599,14 +599,14 @@ class CrearPedidoPermissionTests(TestCase):
         self.assertIn('/usuarios/login/', response.url)
 
     def test_crear_pedido_requires_admin(self):
-        """Domiciliario should get 403 on crear_pedido."""
+        """Domiciliario debe obtener 403 en crear_pedido."""
         domiciliario = create_user_with_role('Domiciliario', username='domic_crear', email='domic_crear@test.com')
         self.client_test.force_login(domiciliario)
         response = self.client_test.get(reverse('entregas:crear'))
         self.assertEqual(response.status_code, 403)
 
     def test_crear_pedido_cliente_forbidden(self):
-        """Cliente should get 403 on crear_pedido."""
+        """Cliente debe obtener 403 en crear_pedido."""
         cliente = create_user_with_role('Cliente', username='cli_crear', email='cli_crear@test.com')
         self.client_test.force_login(cliente)
         response = self.client_test.get(reverse('entregas:crear'))
@@ -614,7 +614,7 @@ class CrearPedidoPermissionTests(TestCase):
 
 
 class CrearPedidoViewTests(TestCase):
-    """Test the Admin crear_pedido view."""
+    """Test la vista Admin crear_pedido."""
 
     def setUp(self):
         self.client_test = Client()
@@ -634,7 +634,7 @@ class CrearPedidoViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_admin_can_create_pedido(self):
-        """Admin can create a pedido with items via POST."""
+        """Admin puede crear un pedido con items via POST."""
         self.client_test.force_login(self.admin)
         response = self.client_test.post(reverse('entregas:crear'), {
             'cliente': self.cliente.pk,
@@ -642,7 +642,7 @@ class CrearPedidoViewTests(TestCase):
             'direccion_entrega': 'Calle 30 # 15-20',
             'telefono_contacto': '3105551234',
             'notas': 'Entregar antes del mediodía',
-            # Management form for formset
+            # Formulario de gestión para formset
             'items-TOTAL_FORMS': '1',
             'items-INITIAL_FORMS': '0',
             'items-0-producto': self.producto.pk,
@@ -655,7 +655,7 @@ class CrearPedidoViewTests(TestCase):
         self.assertEqual(pedido.estado, 'pendiente')
 
     def test_create_pedido_without_items_still_creates(self):
-        """A pedido with no items should still be created."""
+        """Un pedido sin items debe seguir creándose."""
         self.client_test.force_login(self.admin)
         response = self.client_test.post(reverse('entregas:crear'), {
             'cliente': self.cliente.pk,
@@ -672,7 +672,7 @@ class CrearPedidoViewTests(TestCase):
 
 
 class ResumenViewTests(TestCase):
-    """Test the daily summary view for Domiciliario."""
+    """Test la vista de resumen diario para Domiciliario."""
 
     def setUp(self):
         self.client_test = Client()
@@ -691,7 +691,7 @@ class ResumenViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_resumen_shows_only_entregado_pedidos(self):
-        """Resumen should only show delivered (entregado) pedidos."""
+        """Resumen debe mostrar solo pedidos entregados (entregado)."""
         from django.utils import timezone
         pedido_entregado = Pedido.objects.create(cliente=self.cliente, domiciliario=self.domiciliario, direccion_entrega='Calle 1', telefono_contacto='3001', estado='entregado', fecha_entrega=timezone.now())
         Pedido.objects.create(cliente=self.cliente, domiciliario=self.domiciliario, direccion_entrega='Calle 2', telefono_contacto='3002', estado='pendiente')
@@ -701,7 +701,7 @@ class ResumenViewTests(TestCase):
         self.assertEqual(len(response.context['pedidos_entregados']), 1)
 
     def test_cliente_cannot_access_resumen(self):
-        """Clientes should get 403."""
+        """Clientes deben obtener 403."""
         cliente = create_user_with_role('Cliente', username='cli_res2', email='cli_res2@test.com')
         self.client_test.force_login(cliente)
         response = self.client_test.get(reverse('entregas:resumen'))
@@ -709,14 +709,14 @@ class ResumenViewTests(TestCase):
 
 
 # ========================================
-# PHASE 4: Stock Deduction + Mis Pedidos + Admin Edit
+# FASE 4: Deducción de Stock + Mis Pedidos + Editar Admin
 # ========================================
 
 from productos.models import MovimientoInventario
 
 
 class StockDeductionTest(TestCase):
-    """Test that delivering a pedido deducts stock from Producto."""
+    """Test que entregar un pedido descuenta stock de Producto."""
 
     def setUp(self):
         self.domiciliario = create_user_with_role('Domiciliario', username='domic_stock', email='domic_stock@test.com')
@@ -729,7 +729,7 @@ class StockDeductionTest(TestCase):
         )
 
     def test_delivery_deducts_stock(self):
-        """When estado changes to entregado, stock should be deducted."""
+        """Cuando estado cambia a entregado, el stock debe descontarse."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -737,11 +737,11 @@ class StockDeductionTest(TestCase):
             telefono_contacto='3001112222',
         )
         PedidoItem.objects.create(pedido=pedido, producto=self.producto, cantidad=3)
-        # Before delivery
+        # Antes de la entrega
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.cantidad_stock, 50)
 
-        # Transition: pendiente → en_camino → entregado
+        # Transición: pendiente → en_camino → entregado
         self.client_test = Client()
         self.client_test.force_login(self.domiciliario)
         self.client_test.post(
@@ -752,12 +752,12 @@ class StockDeductionTest(TestCase):
             reverse('entregas:cambiar_estado', kwargs={'pk': pedido.pk}),
             {'nuevo_estado': 'entregado'},
         )
-        # After delivery, stock should be deducted
+        # Después de la entrega, el stock debe estar descontado
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.cantidad_stock, 47)
 
     def test_delivery_creates_movimiento_inventario(self):
-        """Delivering a pedido should create a MovimientoInventario for each item."""
+        """Entregar un pedido debe crear un MovimientoInventario para cada item."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -767,7 +767,7 @@ class StockDeductionTest(TestCase):
         PedidoItem.objects.create(pedido=pedido, producto=self.producto, cantidad=3)
         self.client_test = Client()
         self.client_test.force_login(self.domiciliario)
-        # Transition: pendiente → en_camino → entregado
+        # Transición: pendiente → en_camino → entregado
         self.client_test.post(
             reverse('entregas:cambiar_estado', kwargs={'pk': pedido.pk}),
             {'nuevo_estado': 'en_camino'},
@@ -776,13 +776,13 @@ class StockDeductionTest(TestCase):
             reverse('entregas:cambiar_estado', kwargs={'pk': pedido.pk}),
             {'nuevo_estado': 'entregado'},
         )
-        # Should create a salida movimiento
+        # Debe crear un movimiento de salida
         mov = MovimientoInventario.objects.filter(producto=self.producto, tipo_movimiento='salida')
         self.assertEqual(mov.count(), 1)
         self.assertEqual(mov.first().cantidad, 3)
 
     def test_cancelled_pedido_does_not_deduct_stock(self):
-        """Cancelling a pedido should NOT deduct stock."""
+        """Cancelar un pedido NO debe descontar stock."""
         pedido = Pedido.objects.create(
             cliente=self.cliente,
             domiciliario=self.domiciliario,
@@ -801,7 +801,7 @@ class StockDeductionTest(TestCase):
 
 
 class MisPedidosViewTests(TestCase):
-    """Test the mis_pedidos view for Cliente."""
+    """Test la vista mis_pedidos para Cliente."""
 
     def setUp(self):
         self.client_test = Client()
@@ -814,7 +814,7 @@ class MisPedidosViewTests(TestCase):
         self.assertEqual(url, '/entregas/mis-pedidos/')
 
     def test_cliente_can_see_own_pedidos(self):
-        """Cliente sees only their own pedidos."""
+        """Cliente ve solo sus propios pedidos."""
         Pedido.objects.create(cliente=self.cliente, domiciliario=self.domiciliario, direccion_entrega='Calle 1', telefono_contacto='3001')
         Pedido.objects.create(cliente=self.other_cliente, domiciliario=self.domiciliario, direccion_entrega='Calle 2', telefono_contacto='3002')
         self.client_test.force_login(self.cliente)
@@ -823,7 +823,7 @@ class MisPedidosViewTests(TestCase):
         self.assertEqual(response.context['page_obj'].paginator.count, 1)
 
     def test_domiciliario_cannot_access_mis_pedidos(self):
-        """Domiciliario should get 403 on mis_pedidos."""
+        """Domiciliario debe obtener 403 en mis_pedidos."""
         self.client_test.force_login(self.domiciliario)
         response = self.client_test.get(reverse('entregas:mis_pedidos'))
         self.assertEqual(response.status_code, 403)
@@ -835,7 +835,7 @@ class MisPedidosViewTests(TestCase):
 
 
 class EditarPedidoViewTests(TestCase):
-    """Test the editar_pedido view for Admin."""
+    """Test la vista editar_pedido para Admin."""
 
     def setUp(self):
         self.client_test = Client()
@@ -860,13 +860,13 @@ class EditarPedidoViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_domiciliario_cannot_edit_pedido(self):
-        """Domiciliario should get 403 on editar_pedido."""
+        """Domiciliario debe obtener 403 en editar_pedido."""
         self.client_test.force_login(self.domiciliario)
         response = self.client_test.get(reverse('entregas:editar', kwargs={'pk': self.pedido.pk}))
         self.assertEqual(response.status_code, 403)
 
     def test_admin_can_reassign_domiciliario(self):
-        """Admin can POST to reassign domiciliario."""
+        """Admin puede hacer POST para reasignar domiciliario."""
         self.client_test.force_login(self.admin)
         response = self.client_test.post(reverse('entregas:editar', kwargs={'pk': self.pedido.pk}), {
             'cliente': self.cliente.pk,
@@ -881,12 +881,12 @@ class EditarPedidoViewTests(TestCase):
 
 
 # ========================================
-# PHASE 5: Bug Fix + PDF Comprobante + Cliente Detalle
+# FASE 5: Bug Fix + PDF Comprobante + Detalle Cliente
 # ========================================
 
 
 class IncidenteFechaTest(TestCase):
-    """Test that cancellation sets incidente_fecha automatically."""
+    """Test que la cancelación establece incidente_fecha automáticamente."""
 
     def setUp(self):
         self.client_test = Client()
@@ -900,7 +900,7 @@ class IncidenteFechaTest(TestCase):
         )
 
     def test_cancelacion_sets_incidente_fecha(self):
-        """Cancelling a pedido should set incidente_fecha to now."""
+        """Cancelar un pedido debe establecer incidente_fecha a ahora."""
         self.client_test.force_login(self.domiciliario)
         self.client_test.post(
             reverse('entregas:cambiar_estado', kwargs={'pk': self.pedido.pk}),
@@ -912,7 +912,7 @@ class IncidenteFechaTest(TestCase):
         self.assertEqual(self.pedido.incidente_notas, 'Cliente no encontrado')
 
     def test_pendiente_to_en_camino_does_not_set_incidente_fecha(self):
-        """Transitions other than cancel should NOT set incidente_fecha."""
+        """Transiciones distintas de cancelar NO deben establecer incidente_fecha."""
         self.client_test.force_login(self.domiciliario)
         self.client_test.post(
             reverse('entregas:cambiar_estado', kwargs={'pk': self.pedido.pk}),
@@ -923,7 +923,7 @@ class IncidenteFechaTest(TestCase):
 
 
 class ClienteDetalleViewTests(TestCase):
-    """Test that Cliente can access pedido_detalle for their own orders."""
+    """Test que Cliente puede acceder a pedido_detalle para sus propios pedidos."""
 
     def setUp(self):
         self.client_test = Client()
@@ -939,14 +939,14 @@ class ClienteDetalleViewTests(TestCase):
         )
 
     def test_cliente_can_see_own_pedido_detalle(self):
-        """Cliente can access detalle for their own pedido."""
+        """Cliente puede acceder a detalle para su propio pedido."""
         self.client_test.force_login(self.cliente)
         response = self.client_test.get(reverse('entregas:detalle', kwargs={'pk': self.pedido.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['pedido'], self.pedido)
 
     def test_cliente_cannot_see_other_pedido_detalle(self):
-        """Cliente gets 403 when trying to access another client's pedido."""
+        """Cliente obtiene 403 al intentar acceder al pedido de otro cliente."""
         other_pedido = Pedido.objects.create(
             cliente=self.other_cliente,
             domiciliario=self.domiciliario,
@@ -958,15 +958,15 @@ class ClienteDetalleViewTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_cliente_detalle_no_estado_form_in_context(self):
-        """Cliente should see pedido details but NO estado_form or action buttons."""
+        """Cliente debe ver detalles del pedido pero SIN estado_form ni botones de acción."""
         self.client_test.force_login(self.cliente)
         response = self.client_test.get(reverse('entregas:detalle', kwargs={'pk': self.pedido.pk}))
         self.assertEqual(response.status_code, 200)
-        # estado_form should NOT be in context for Cliente
+        # estado_form NO debe estar en context para Cliente
         self.assertIsNone(response.context.get('estado_form'))
 
     def test_domiciliario_detalle_has_estado_form(self):
-        """Domiciliario should still see estado_form for active pedidos."""
+        """Domiciliario debe seguir viendo estado_form para pedidos activos."""
         self.client_test.force_login(self.domiciliario)
         response = self.client_test.get(reverse('entregas:detalle', kwargs={'pk': self.pedido.pk}))
         self.assertEqual(response.status_code, 200)
@@ -974,7 +974,7 @@ class ClienteDetalleViewTests(TestCase):
 
 
 class ComprobantePDFTests(TestCase):
-    """Test PDF comprobante generation for entregas."""
+    """Test generación de PDF comprobante para entregas."""
 
     def setUp(self):
         self.client_test = Client()
@@ -1005,8 +1005,8 @@ class ComprobantePDFTests(TestCase):
         self.assertIn('/usuarios/login/', response.url)
 
     def test_comprobante_entregado_returns_pdf(self):
-        """PDF comprobante should only be available for entregado pedidos."""
-        # Transition to entregado
+        """El PDF comprobante solo debe estar disponible para pedidos entregados."""
+        # Transición a entregado
         self.pedido.estado = 'en_camino'
         self.pedido.save()
         self.client_test.force_login(self.domiciliario)
@@ -1016,20 +1016,20 @@ class ComprobantePDFTests(TestCase):
         )
         self.pedido.refresh_from_db()
 
-        # Now request PDF
+        # Ahora solicitar PDF
         self.client_test.force_login(self.admin)
         response = self.client_test.get(reverse('entregas:comprobante_pdf', kwargs={'pk': self.pedido.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
 
     def test_comprobante_pendiente_returns_404(self):
-        """Non-entregado pedidos should NOT have PDF comprobante."""
+        """Pedidos no entregados NO deben tener PDF comprobante."""
         self.client_test.force_login(self.admin)
         response = self.client_test.get(reverse('entregas:comprobante_pdf', kwargs={'pk': self.pedido.pk}))
         self.assertEqual(response.status_code, 404)
 
     def test_cliente_can_get_own_comprobante_pdf(self):
-        """Cliente can download PDF for their own entregado pedido."""
+        """Cliente puede descargar PDF para su propio pedido entregado."""
         self.pedido.estado = 'en_camino'
         self.pedido.save()
         self.client_test.force_login(self.domiciliario)
@@ -1045,7 +1045,7 @@ class ComprobantePDFTests(TestCase):
         self.assertEqual(response['Content-Type'], 'application/pdf')
 
     def test_cliente_cannot_get_other_comprobante_pdf(self):
-        """Cliente gets 404 for another client's comprobante."""
+        """Cliente obtiene 404 para el comprobante de otro cliente."""
         other_pedido = Pedido.objects.create(
             cliente=create_user_with_role('Cliente', username='cli_other', email='cli_other@test.com'),
             domiciliario=self.domiciliario,
@@ -1067,7 +1067,7 @@ class ComprobantePDFTests(TestCase):
 
 
 class TorreControlTest(TestCase):
-    """Test Admin Control Tower: view all pedidos, filter, reassign domiciliario."""
+    """Test Torre de Control Admin: ver todos los pedidos, filtrar, reasignar domiciliario."""
 
     def setUp(self):
         self.admin = create_user_with_role('Administrador', username='tc_admin', email='tc_admin@test.com')
@@ -1096,41 +1096,41 @@ class TorreControlTest(TestCase):
         self.c = Client()
 
     def test_torre_control_admin_access(self):
-        """Admin can access Torre de Control."""
+        """Admin puede acceder a Torre de Control."""
         self.c.force_login(self.admin)
         resp = self.c.get(reverse('entregas:torre_control'))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'Torre de Control')
 
     def test_torre_control_shows_all_pedidos(self):
-        """Torre de Control shows all pedidos."""
+        """Torre de Control muestra todos los pedidos."""
         self.c.force_login(self.admin)
         resp = self.c.get(reverse('entregas:torre_control'))
         self.assertContains(resp, f'#{self.pedido1.pk}')
         self.assertContains(resp, f'#{self.pedido2.pk}')
 
     def test_torre_control_filter_by_estado(self):
-        """Filter pedidos by estado."""
+        """Filtrar pedidos por estado."""
         self.c.force_login(self.admin)
         resp = self.c.get(reverse('entregas:torre_control') + '?estado=pendiente')
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, f'#{self.pedido1.pk}')
 
     def test_torre_control_search_by_client(self):
-        """Search pedidos by client email."""
+        """Buscar pedidos por email de cliente."""
         self.c.force_login(self.admin)
         resp = self.c.get(reverse('entregas:torre_control') + f'?q={self.cliente.email}')
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, f'#{self.pedido1.pk}')
 
     def test_torre_control_non_admin_403(self):
-        """Non-admin gets 403 on Torre de Control."""
+        """No-admin obtiene 403 en Torre de Control."""
         self.c.force_login(self.cliente)
         resp = self.c.get(reverse('entregas:torre_control'))
         self.assertEqual(resp.status_code, 403)
 
     def test_torre_control_reassign_domiciliario(self):
-        """Admin can reassign domiciliario for a pendiente pedido."""
+        """Admin puede reasignar domiciliario para un pedido pendiente."""
         self.c.force_login(self.admin)
         resp = self.c.post(reverse('entregas:torre_control'), {
             'pedido_pk': self.pedido1.pk,
@@ -1141,7 +1141,7 @@ class TorreControlTest(TestCase):
         self.assertEqual(self.pedido1.domiciliario, self.domiciliario2)
 
     def test_torre_control_cannot_reassign_entregado(self):
-        """Cannot reassign domiciliario for entregado pedido."""
+        """No se puede reasignar domiciliario para pedido entregado."""
         self.pedido1.estado = 'entregado'
         self.pedido1.fecha_entrega = timezone.now()
         self.pedido1.save()
@@ -1152,11 +1152,11 @@ class TorreControlTest(TestCase):
         })
         self.assertEqual(resp.status_code, 302)
         self.pedido1.refresh_from_db()
-        # Should NOT change — entregado is final
+        # NO debe cambiar — entregado es final
         self.assertEqual(self.pedido1.domiciliario, self.domiciliario1)
 
     def test_torre_control_domiciliarios_in_context(self):
-        """Torre de Control context includes available domiciliarios."""
+        """El context de Torre de Control incluye domiciliarios disponibles."""
         self.c.force_login(self.admin)
         resp = self.c.get(reverse('entregas:torre_control'))
         self.assertIn('domiciliarios', resp.context)

@@ -62,7 +62,7 @@ class Mascota(models.Model):
         years = today.year - birth.year
         months = today.month - birth.month
 
-        # Adjust if the birthday hasn't occurred this month
+        # Ajustar si el cumpleaños no ha ocurrido este mes
         if today.day < birth.day:
             months -= 1
 
@@ -70,11 +70,11 @@ class Mascota(models.Model):
             years -= 1
             months += 12
 
-        # Born today
+        # Nacido hoy
         if years == 0 and months == 0:
             return 'Recién nacido'
 
-        # Build the string with proper singular/plural
+        # Construir la cadena con singular/plural correcto
         parts = []
         if years > 0:
             parts.append(f'{years} año{"s" if years != 1 else ""}')

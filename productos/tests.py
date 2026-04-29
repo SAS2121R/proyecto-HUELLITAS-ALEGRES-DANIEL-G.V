@@ -15,11 +15,11 @@ User = get_user_model()
 
 
 # ========================================
-# Helper
+# Auxiliar
 # ========================================
 
 def create_user_with_role(rol_nombre, **kwargs):
-    """Helper to create a user with the given role."""
+    """Auxiliar para crear un usuario con el rol especificado."""
     rol, _ = Rol.objects.get_or_create(nombre=rol_nombre)
     user = User.objects.create_user(
         username=kwargs.get('username', f'user_{rol_nombre.lower()}'),
@@ -31,7 +31,7 @@ def create_user_with_role(rol_nombre, **kwargs):
 
 
 def create_producto(**kwargs):
-    """Helper to create a product with sensible defaults."""
+    """Auxiliar para crear un producto con valores predeterminados razonables."""
     defaults = {
         'nombre': 'Producto Test',
         'descripcion': 'Descripción de prueba',
@@ -40,7 +40,7 @@ def create_producto(**kwargs):
         'stock_minimo': 10,
         'categoria': 'otros',
     }
-    # Handle proveedor: accept Proveedor instance, None, or string (creates Proveedor)
+    # Manejar proveedor: acepta instancia de Proveedor, None, o string (crea Proveedor)
     proveedor_val = kwargs.pop('proveedor', None)
     if isinstance(proveedor_val, str) and proveedor_val:
         proveedor_val, _ = Proveedor.objects.get_or_create(nombre=proveedor_val)
@@ -52,14 +52,14 @@ def create_producto(**kwargs):
 
 
 # ========================================
-# R1: Producto Model — Extended Fields
+# R1: Modelo Producto — Campos Extendidos
 # ========================================
 
 class ProductoModelTest(TestCase):
-    """Tests for extended Producto model fields and constraints."""
+    """Pruebas para campos y restricciones del modelo Producto extendido."""
 
     def test_creacion_basica(self):
-        """R1.1: Create Producto with all new fields"""
+        """R1.1: Crear Producto con todos los campos nuevos"""
         p = create_producto(
             nombre='Vacuna Rabia',
             categoria='vacunas',
@@ -73,115 +73,115 @@ class ProductoModelTest(TestCase):
         self.assertTrue(p.esta_activo)
 
     def test_nombre_unique(self):
-        """R1.2: Producto nombre must be unique"""
+        """R1.2: El nombre de Producto debe ser único"""
         create_producto(nombre='Producto A')
         with self.assertRaises(Exception):
             create_producto(nombre='Producto A')
 
     def test_categorias_count(self):
-        """R1.3: 7 categories exist in CATEGORIAS"""
+        """R1.3: Existen 7 categorías en CATEGORIAS"""
         self.assertEqual(len(CATEGORIAS), 7)
 
     def test_stock_minimo_default(self):
-        """R1.4: stock_minimo defaults to 10"""
+        """R1.4: stock_minimo tiene valor predeterminado de 10"""
         p = create_producto()
         self.assertEqual(p.stock_minimo, 10)
 
     def test_stock_minimo_negative_rejected(self):
-        """R1.5: stock_minimo cannot be negative"""
+        """R1.5: stock_minimo no puede ser negativo"""
         p = create_producto()
         p.stock_minimo = -1
         with self.assertRaises(ValidationError):
             p.full_clean()
 
     def test_proveedor_blank(self):
-        """R1.6: proveedor can be null (no supplier assigned)"""
+        """R1.6: proveedor puede ser nulo (sin proveedor asignado)"""
         p = create_producto(proveedor=None)
         self.assertIsNone(p.proveedor)
 
     def test_esta_activo_default_true(self):
-        """R1.7: esta_activo defaults to True"""
+        """R1.7: esta_activo tiene valor predeterminado de True"""
         p = create_producto()
         self.assertTrue(p.esta_activo)
 
     def test_cantidad_stock_allows_negative(self):
-        """R1.8: cantidad_stock CAN be negative (medical priority)"""
+        """R1.8: cantidad_stock PUEDE ser negativo (prioridad médica)"""
         p = create_producto(cantidad_stock=-5)
-        p.full_clean()  # Should NOT raise
+        p.full_clean()  # NO debe lanzar
         self.assertEqual(p.cantidad_stock, -5)
 
     def test_fecha_creacion_is_datetime(self):
-        """R1.9: fecha_creacion is DateTimeField (upgraded from DateField)"""
+        """R1.9: fecha_creacion es DateTimeField (actualizado desde DateField)"""
         p = create_producto()
         self.assertIsNotNone(p.fecha_creacion)
         self.assertTrue(hasattr(p.fecha_creacion, 'hour'))
 
     def test_str_returns_nombre(self):
-        """R1.10: __str__ returns product nombre"""
+        """R1.10: __str__ retorna el nombre del producto"""
         p = create_producto(nombre='Vacuna Triple')
         self.assertEqual(str(p), 'Vacuna Triple')
 
 
 # ========================================
-# R2: Producto estado_stock — Semáforo
+# R2: estado_stock de Producto — Semáforo
 # ========================================
 
 class ProductoEstadoStockTest(TestCase):
-    """Tests for estado_stock property returning semáforo color."""
+    """Pruebas para propiedad estado_stock retornando color de semáforo."""
 
     def test_verde(self):
-        """R2.1: Stock > stock_minimo * 1.5 returns verde"""
+        """R2.1: Stock > stock_minimo * 1.5 retorna verde"""
         p = create_producto(cantidad_stock=50, stock_minimo=10)
         self.assertEqual(p.estado_stock, 'verde')
 
     def test_amarillo(self):
-        """R2.2: 0 < stock <= stock_minimo * 1.5 returns amarillo"""
+        """R2.2: 0 < stock <= stock_minimo * 1.5 retorna amarillo"""
         p = create_producto(cantidad_stock=8, stock_minimo=10)
         self.assertEqual(p.estado_stock, 'amarillo')
 
     def test_amarillo_at_threshold(self):
-        """R2.3: stock == stock_minimo * 1.5 exactly returns amarillo"""
+        """R2.3: stock == stock_minimo * 1.5 exactamente retorna amarillo"""
         p = create_producto(cantidad_stock=15, stock_minimo=10)
         self.assertEqual(p.estado_stock, 'amarillo')
 
     def test_rojo_zero(self):
-        """R2.4: Stock == 0 returns rojo"""
+        """R2.4: Stock == 0 retorna rojo"""
         p = create_producto(cantidad_stock=0, stock_minimo=10)
         self.assertEqual(p.estado_stock, 'rojo')
 
     def test_rojo_negative(self):
-        """R2.5: Stock < 0 returns rojo"""
+        """R2.5: Stock < 0 retorna rojo"""
         p = create_producto(cantidad_stock=-3, stock_minimo=10)
         self.assertEqual(p.estado_stock, 'rojo')
 
     def test_rojo_one_with_min_one(self):
-        """R2.6: Stock=1, stock_minimo=1 returns amarillo (1 > 0 and 1 <= 1.5)"""
+        """R2.6: Stock=1, stock_minimo=1 retorna amarillo (1 > 0 y 1 <= 1.5)"""
         p = create_producto(cantidad_stock=1, stock_minimo=1)
         self.assertEqual(p.estado_stock, 'amarillo')
 
 
 # ========================================
-# R3: ProductoManager — Soft Delete
+# R3: ProductoManager — Eliminación Suave
 # ========================================
 
 class ProductoManagerTest(TestCase):
-    """Tests for ProductoManager filtering esta_activo=True by default."""
+    """Pruebas para ProductoManager filtrando esta_activo=True por defecto."""
 
     def test_default_queryset_filters_active(self):
-        """R3.1: Producto.objects filters esta_activo=True"""
+        """R3.1: Producto.objects filtra esta_activo=True"""
         create_producto(nombre='Activo', esta_activo=True)
         create_producto(nombre='Inactivo', esta_activo=False)
         self.assertEqual(Producto.objects.count(), 1)
         self.assertEqual(Producto.objects.first().nombre, 'Activo')
 
     def test_all_objects_includes_inactive(self):
-        """R3.2: Producto.all_objects includes inactive products"""
+        """R3.2: Producto.all_objects incluye productos inactivos"""
         create_producto(nombre='Activo', esta_activo=True)
         create_producto(nombre='Inactivo', esta_activo=False)
         self.assertEqual(Producto.all_objects.count(), 2)
 
     def test_soft_delete_does_not_remove(self):
-        """R3.3: Setting esta_activo=False hides from default queryset but keeps row"""
+        """R3.3: Establecer esta_activo=False oculta del queryset por defecto pero mantiene la fila"""
         p = create_producto(nombre='ToDelete')
         p.esta_activo = False
         p.save()
@@ -190,18 +190,18 @@ class ProductoManagerTest(TestCase):
 
 
 # ========================================
-# R4: MovimientoInventario Model
+# R4: Modelo MovimientoInventario
 # ========================================
 
 class MovimientoInventarioModelTest(TestCase):
-    """Tests for MovimientoInventario model and constraints."""
+    """Pruebas para modelo y restricciones de MovimientoInventario."""
 
     def setUp(self):
         self.producto = create_producto(nombre='Vacuna Rabia', categoria='vacunas')
         self.vet = create_user_with_role('Veterinario', username='vet_mov', email='vet_mov@test.com')
 
     def test_create_entrada(self):
-        """R4.1: Create entrada movement"""
+        """R4.1: Crear movimiento de entrada"""
         mov = MovimientoInventario.objects.create(
             producto=self.producto,
             tipo_movimiento='entrada',
@@ -214,7 +214,7 @@ class MovimientoInventarioModelTest(TestCase):
         self.assertIsNotNone(mov.fecha)
 
     def test_create_salida(self):
-        """R4.2: Create salida movement"""
+        """R4.2: Crear movimiento de salida"""
         mov = MovimientoInventario.objects.create(
             producto=self.producto,
             tipo_movimiento='salida',
@@ -225,7 +225,7 @@ class MovimientoInventarioModelTest(TestCase):
         self.assertEqual(mov.tipo_movimiento, 'salida')
 
     def test_create_ajuste(self):
-        """R4.3: Create ajuste movement"""
+        """R4.3: Crear movimiento de ajuste"""
         mov = MovimientoInventario.objects.create(
             producto=self.producto,
             tipo_movimiento='ajuste',
@@ -236,7 +236,7 @@ class MovimientoInventarioModelTest(TestCase):
         self.assertEqual(mov.tipo_movimiento, 'ajuste')
 
     def test_producto_protect(self):
-        """R4.4: Cannot delete Producto with MovimientoInventario records"""
+        """R4.4: No se puede eliminar Producto con registros de MovimientoInventario"""
         MovimientoInventario.objects.create(
             producto=self.producto,
             tipo_movimiento='entrada',
@@ -247,7 +247,7 @@ class MovimientoInventarioModelTest(TestCase):
             self.producto.delete()
 
     def test_movimiento_ordering(self):
-        """R4.5: Movimientos ordered by fecha descending (newest first)"""
+        """R4.5: Movimientos ordenados por fecha descendente (más reciente primero)"""
         mov1 = MovimientoInventario.objects.create(
             producto=self.producto, tipo_movimiento='entrada', cantidad=10, usuario=self.vet,
         )
@@ -255,12 +255,12 @@ class MovimientoInventarioModelTest(TestCase):
             producto=self.producto, tipo_movimiento='salida', cantidad=1, usuario=self.vet,
         )
         movs = list(MovimientoInventario.objects.all())
-        # Both may have same timestamp; verify ordering Meta is set correctly
+        # Ambos pueden tener la misma marca de tiempo; verificar que Meta ordering está configurado correctamente
         self.assertEqual(MovimientoInventario._meta.ordering, ['-fecha'])
         self.assertEqual(len(movs), 2)
 
     def test_cantidad_min_validator(self):
-        """R4.6: cantidad must be >= 1"""
+        """R4.6: cantidad debe ser >= 1"""
         mov = MovimientoInventario(
             producto=self.producto,
             tipo_movimiento='entrada',
@@ -271,7 +271,7 @@ class MovimientoInventarioModelTest(TestCase):
             mov.full_clean()
 
     def test_historial_clinico_nullable(self):
-        """R4.7: historial_clinico can be null (manual movements)"""
+        """R4.7: historial_clinico puede ser nulo (movimientos manuales)"""
         mov = MovimientoInventario.objects.create(
             producto=self.producto,
             tipo_movimiento='entrada',
@@ -281,7 +281,7 @@ class MovimientoInventarioModelTest(TestCase):
         self.assertIsNone(mov.historial_clinico)
 
     def test_motivo_blank(self):
-        """R4.8: motivo can be blank"""
+        """R4.8: motivo puede estar en blanco"""
         mov = MovimientoInventario.objects.create(
             producto=self.producto,
             tipo_movimiento='entrada',
@@ -292,7 +292,7 @@ class MovimientoInventarioModelTest(TestCase):
         self.assertEqual(mov.motivo, '')
 
     def test_tipo_movimiento_choices(self):
-        """R4.9: TIPO_MOVIMIENTO_CHOICES has entrada, salida, ajuste"""
+        """R4.9: TIPO_MOVIMIENTO_CHOICES tiene entrada, salida, ajuste"""
         tipos = [t[0] for t in TIPO_MOVIMIENTO_CHOICES]
         self.assertIn('entrada', tipos)
         self.assertIn('salida', tipos)
@@ -300,11 +300,11 @@ class MovimientoInventarioModelTest(TestCase):
 
 
 # ========================================
-# R5: Signal — Auto stock deduction on HistorialClinico
+# R5: Señal — Deducción Automática de Stock en HistorialClinico
 # ========================================
 
 class HistorialSignalTest(TestCase):
-    """Tests for post_save signal on HistorialClinico auto-deducting stock."""
+    """Pruebas para señal post_save en HistorialClinico que deduce stock automáticamente."""
 
     def setUp(self):
         self.vet = create_user_with_role('Veterinario', username='vet_signal', email='vet_signal@test.com')
@@ -316,7 +316,7 @@ class HistorialSignalTest(TestCase):
         self.producto = create_producto(nombre='Vacuna Rabia', categoria='vacunas', cantidad_stock=10)
 
     def _create_historial(self, producto_aplicado=None):
-        """Helper to create a HistorialClinico instance."""
+        """Auxiliar para crear una instancia de HistorialClinico."""
         return HistorialClinico.objects.create(
             mascota=self.mascota,
             veterinario=self.vet,
@@ -327,14 +327,14 @@ class HistorialSignalTest(TestCase):
         )
 
     def test_signal_deducts_stock_on_historial_create(self):
-        """R5.1: Creating HistorialClinico with producto_aplicado deducts 1 from stock"""
+        """R5.1: Crear HistorialClinico con producto_aplicado deduce 1 del stock"""
         initial_stock = self.producto.cantidad_stock
         self._create_historial(producto_aplicado=self.producto)
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.cantidad_stock, initial_stock - 1)
 
     def test_signal_creates_movimiento_salida(self):
-        """R5.2: Creating HistorialClinico with producto_aplicado creates MovimientoInventario(tipo='salida')"""
+        """R5.2: Crear HistorialClinico con producto_aplicado crea MovimientoInventario(tipo='salida')"""
         self._create_historial(producto_aplicado=self.producto)
         mov = MovimientoInventario.objects.filter(producto=self.producto, tipo_movimiento='salida').first()
         self.assertIsNotNone(mov)
@@ -342,7 +342,7 @@ class HistorialSignalTest(TestCase):
         self.assertEqual(mov.usuario, self.vet)
 
     def test_signal_no_deduct_for_servicios(self):
-        """R5.3: Categoria 'servicios' does NOT deduct stock"""
+        """R5.3: Categoría 'servicios' NO deduce stock"""
         servicio = create_producto(nombre='Consulta General', categoria='servicios', cantidad_stock=5)
         initial_stock = servicio.cantidad_stock
         self._create_historial(producto_aplicado=servicio)
@@ -350,36 +350,36 @@ class HistorialSignalTest(TestCase):
         self.assertEqual(servicio.cantidad_stock, initial_stock)
 
     def test_signal_no_deduct_without_producto(self):
-        """R5.4: HistorialClinico without producto_aplicado does NOT deduct stock"""
+        """R5.4: HistorialClinico sin producto_aplicado NO deduce stock"""
         initial_stock = self.producto.cantidad_stock
         self._create_historial(producto_aplicado=None)
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.cantidad_stock, initial_stock)
 
     def test_signal_allows_negative_stock(self):
-        """R5.5: Stock can go negative — never block clinical record creation"""
+        """R5.5: El stock puede ser negativo — nunca bloquear la creación del registro clínico"""
         producto_low = create_producto(nombre='Antipulgas', categoria='medicamentos', cantidad_stock=0)
         h = self._create_historial(producto_aplicado=producto_low)
         producto_low.refresh_from_db()
         self.assertEqual(producto_low.cantidad_stock, -1)
-        # No exception raised — medical priority
+        # Sin excepción lanzada — prioridad médica
 
     def test_signal_does_not_fire_on_update(self):
-        """R5.6: Signal should only fire on create, not on update"""
+        """R5.6: La señal solo debe ejecutarse en creación, no en actualización"""
         initial_stock = self.producto.cantidad_stock
         h = self._create_historial(producto_aplicado=self.producto)
         self.producto.refresh_from_db()
         stock_after_create = self.producto.cantidad_stock
         self.assertEqual(stock_after_create, initial_stock - 1)
 
-        # Update the historial — stock should NOT change again
+        # Actualizar el historial — el stock NO debe cambiar de nuevo
         h.diagnostico = 'Vacuna exitosa'
         h.save()
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.cantidad_stock, stock_after_create)
 
     def test_signal_movimiento_linked_to_historial(self):
-        """R5.7: MovimientoInventario is linked to the HistorialClinico record"""
+        """R5.7: MovimientoInventario está vinculado al registro HistorialClinico"""
         h = self._create_historial(producto_aplicado=self.producto)
         mov = MovimientoInventario.objects.filter(producto=self.producto).first()
         self.assertIsNotNone(mov)
@@ -387,14 +387,14 @@ class HistorialSignalTest(TestCase):
 
 
 # ========================================
-# R6: ProductoForm
+# R6: Pruebas de ProductoForm
 # ========================================
 
 class ProductoFormTest(TestCase):
-    """Tests for ProductoForm with extended fields."""
+    """Pruebas para ProductoForm con campos extendidos."""
 
     def test_form_includes_new_fields(self):
-        """R6.1: ProductoForm includes categoria, stock_minimo, proveedor fields"""
+        """R6.1: ProductoForm incluye campos categoria, stock_minimo, proveedor"""
         from .forms import ProductoForm
         form = ProductoForm()
         self.assertIn('categoria', form.fields)
@@ -402,7 +402,7 @@ class ProductoFormTest(TestCase):
         self.assertIn('proveedor', form.fields)
 
     def test_form_valid_data(self):
-        """R6.2: ProductoForm valid data passes"""
+        """R6.2: Datos válidos en ProductoForm pasan"""
         from .forms import ProductoForm
         from proveedores.models import Proveedor
         prov = Proveedor.objects.create(nombre='TestProv')
@@ -418,7 +418,7 @@ class ProductoFormTest(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
 
     def test_form_rejects_negative_stock_minimo(self):
-        """R6.3: ProductoForm rejects negative stock_minimo"""
+        """R6.3: ProductoForm rechaza stock_minimo negativo"""
         from .forms import ProductoForm
         form = ProductoForm(data={
             'nombre': 'Test Product',
@@ -433,28 +433,28 @@ class ProductoFormTest(TestCase):
         self.assertIn('stock_minimo', form.errors)
 
     def test_form_excludes_esta_activo(self):
-        """R6.4: ProductoForm does NOT include esta_activo field"""
+        """R6.4: ProductoForm NO incluye campo esta_activo"""
         from .forms import ProductoForm
         form = ProductoForm()
         self.assertNotIn('esta_activo', form.fields)
 
 
 # ========================================
-# R7: MovimientoInventarioForm
+# R7: Pruebas de MovimientoInventarioForm
 # ========================================
 
 class MovimientoInventarioFormTest(TestCase):
-    """Tests for MovimientoInventarioForm."""
+    """Pruebas para MovimientoInventarioForm."""
 
     def test_form_excludes_usuario_and_historial(self):
-        """R7.1: Form excludes usuario and historial_clinico fields"""
+        """R7.1: Formulario excluye campos usuario y historial_clinico"""
         from .forms import MovimientoInventarioForm
         form = MovimientoInventarioForm()
         self.assertNotIn('usuario', form.fields)
         self.assertNotIn('historial_clinico', form.fields)
 
     def test_form_valid_data(self):
-        """R7.2: Form valid with product, tipo, cantidad, motivo"""
+        """R7.2: Formulario válido con producto, tipo, cantidad, motivo"""
         from .forms import MovimientoInventarioForm
         p = create_producto(nombre='FormTest Product')
         form = MovimientoInventarioForm(data={
@@ -466,7 +466,7 @@ class MovimientoInventarioFormTest(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
 
     def test_form_rejects_cantidad_zero(self):
-        """R7.3: Form rejects cantidad < 1"""
+        """R7.3: Formulario rechaza cantidad < 1"""
         from .forms import MovimientoInventarioForm
         p = create_producto(nombre='FormTest Product2')
         form = MovimientoInventarioForm(data={
@@ -479,11 +479,11 @@ class MovimientoInventarioFormTest(TestCase):
 
 
 # ========================================
-# R8: Producto View Tests
+# R8: Pruebas de Vistas de Producto
 # ========================================
 
 class ProductoViewTest(TestCase):
-    """Tests for Producto views — listing, search, filter, soft delete."""
+    """Pruebas para vistas de Producto — listado, búsqueda, filtro, eliminación suave."""
 
     def setUp(self):
         self.vet = create_user_with_role('Veterinario', username='vet_pv', email='vet_pv@test.com')
@@ -494,7 +494,7 @@ class ProductoViewTest(TestCase):
         self.p3 = create_producto(nombre='Consulta General', categoria='servicios', cantidad_stock=100)
 
     def test_lista_shows_active_products(self):
-        """R8.1: lista_productos shows active products only"""
+        """R8.1: lista_productos muestra solo productos activos"""
         self.p2.esta_activo = False
         self.p2.save()
         self.client.force_login(self.admin)
@@ -504,7 +504,7 @@ class ProductoViewTest(TestCase):
         self.assertNotContains(resp, 'Antipulgas')
 
     def test_lista_search_by_name(self):
-        """R8.2: lista_productos search filters by name"""
+        """R8.2: Búsqueda en lista_productos filtra por nombre"""
         self.client.force_login(self.admin)
         resp = self.client.get(reverse('productos:lista'), {'q': 'Vacuna'})
         self.assertEqual(resp.status_code, 200)
@@ -512,7 +512,7 @@ class ProductoViewTest(TestCase):
         self.assertNotContains(resp, 'Antipulgas')
 
     def test_lista_category_filter(self):
-        """R8.3: lista_productos category filter"""
+        """R8.3: Filtro por categoría en lista_productos"""
         self.client.force_login(self.admin)
         resp = self.client.get(reverse('productos:lista'), {'categoria': 'vacunas'})
         self.assertEqual(resp.status_code, 200)
@@ -520,35 +520,35 @@ class ProductoViewTest(TestCase):
         self.assertNotContains(resp, 'Antipulgas')
 
     def test_soft_delete(self):
-        """R8.4: delete_product soft-deletes (sets esta_activo=False)"""
+        """R8.4: delete_product elimina suavemente (establece esta_activo=False)"""
         self.client.force_login(self.vet)
         resp = self.client.post(reverse('productos:eliminar', kwargs={'pk': self.p1.pk}))
         self.assertEqual(resp.status_code, 302)
-        # Use all_objects because default manager filters out inactive
+        # Usar all_objects porque el gestor por defecto filtra inactivos
         self.p1 = Producto.all_objects.get(pk=self.p1.pk)
         self.assertFalse(self.p1.esta_activo)
-        # Hard count unchanged
+        # Conteo duro sin cambios
         self.assertEqual(Producto.all_objects.filter(pk=self.p1.pk).count(), 1)
 
     def test_create_requires_vet_or_admin(self):
-        """R8.5: create_product requires Vet/Admin role"""
+        """R8.5: create_product requiere rol Vet/Admin"""
         self.client.force_login(self.cliente)
         resp = self.client.get(reverse('productos:nuevo'))
         self.assertEqual(resp.status_code, 403)
 
     def test_edit_requires_vet_or_admin(self):
-        """R8.6: edit_product requires Vet/Admin role"""
+        """R8.6: edit_product requiere rol Vet/Admin"""
         self.client.force_login(self.cliente)
         resp = self.client.get(reverse('productos:editar', kwargs={'pk': self.p1.pk}))
         self.assertEqual(resp.status_code, 403)
 
 
 # ========================================
-# R9: Kardex View
+# R9: Prueba de Vista Kardex
 # ========================================
 
 class KardexViewTest(TestCase):
-    """Tests for Kardex (product movement history) view."""
+    """Pruebas para vista Kardex (historial de movimientos de producto)."""
 
     def setUp(self):
         self.vet = create_user_with_role('Veterinario', username='vet_kx', email='vet_kx@test.com')
@@ -556,7 +556,7 @@ class KardexViewTest(TestCase):
         self.producto = create_producto(nombre='Vacuna Rabia', categoria='vacunas', cantidad_stock=10)
 
     def test_kardex_shows_movimientos(self):
-        """R9.1: kardex shows MovimientoInventario for a product"""
+        """R9.1: kardex muestra MovimientoInventario de un producto"""
         MovimientoInventario.objects.create(
             producto=self.producto, tipo_movimiento='entrada', cantidad=10,
             usuario=self.vet, motivo='Initial stock',
@@ -567,18 +567,18 @@ class KardexViewTest(TestCase):
         self.assertContains(resp, 'Entrada')
 
     def test_kardex_requires_login(self):
-        """R9.2: kardex requires login"""
+        """R9.2: kardex requiere inicio de sesión"""
         resp = self.client.get(reverse('productos:kardex', kwargs={'pk': self.producto.pk}))
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/usuarios/login/', resp.url)
 
 
 # ========================================
-# R10: Alertas Stock View
+# R10: Prueba de Vista Alertas de Stock
 # ========================================
 
 class AlertasViewTest(TestCase):
-    """Tests for alertas_stock view — shows low-stock products."""
+    """Pruebas para vista alertas_stock — muestra productos con bajo stock."""
 
     def setUp(self):
         self.vet = create_user_with_role('Veterinario', username='vet_al', email='vet_al@test.com')
@@ -588,7 +588,7 @@ class AlertasViewTest(TestCase):
         self.p_rojo = create_producto(nombre='Stock Critico', cantidad_stock=0, stock_minimo=10)
 
     def test_alertas_shows_non_verde_products(self):
-        """R10.1: alertas shows products with estado_stock != 'verde'"""
+        """R10.1: alertas muestra productos con estado_stock != 'verde'"""
         self.client.force_login(self.admin)
         resp = self.client.get(reverse('productos:alertas'))
         self.assertEqual(resp.status_code, 200)
@@ -597,7 +597,7 @@ class AlertasViewTest(TestCase):
         self.assertNotContains(resp, 'Stock OK')
 
     def test_alertas_requires_login(self):
-        """R10.2: alertas requires login"""
+        """R10.2: alertas requiere inicio de sesión"""
         resp = self.client.get(reverse('productos:alertas'))
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/usuarios/login/', resp.url)

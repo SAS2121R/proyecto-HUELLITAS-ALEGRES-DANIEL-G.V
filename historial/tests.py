@@ -16,7 +16,7 @@ User = get_user_model()
 
 
 def create_user_with_role(rol_nombre, **kwargs):
-    """Helper to create a Usuario with the given role."""
+    """Helper para crear un Usuario con el rol especificado."""
     rol, _ = Rol.objects.get_or_create(nombre=rol_nombre)
     user = User.objects.create_user(
         username=kwargs.get('username', f'user_{rol_nombre.lower()}'),
@@ -29,7 +29,7 @@ def create_user_with_role(rol_nombre, **kwargs):
 
 
 # ========================================
-# PHASE 1: Model Tests (REQ-01 through REQ-07)
+# FASE 1: Tests de Modelo (REQ-01 hasta REQ-07)
 # ========================================
 
 class HistorialClinicoModelTest(TestCase):
@@ -44,7 +44,7 @@ class HistorialClinicoModelTest(TestCase):
         )
 
     def test_creacion_basica(self):
-        """R1.1: Create HistorialClinico with all required fields, fecha_consulta auto-populated"""
+        """R1.1: Crear HistorialClinico con todos los campos requeridos, fecha_consulta auto-populada"""
         from historial.models import HistorialClinico
         hc = HistorialClinico.objects.create(
             mascota=self.mascota,
@@ -62,7 +62,7 @@ class HistorialClinicoModelTest(TestCase):
         self.assertIsNotNone(hc.fecha_consulta)
 
     def test_cita_nullable(self):
-        """R1.2: HistorialClinico without cita is valid"""
+        """R1.2: HistorialClinico sin cita es válido"""
         from historial.models import HistorialClinico
         hc = HistorialClinico(
             mascota=self.mascota,
@@ -71,12 +71,12 @@ class HistorialClinicoModelTest(TestCase):
             motivo_consulta='Revisión',
             diagnostico='OK',
         )
-        hc.full_clean()  # Should NOT raise
+        hc.full_clean()  # NO debe lanzar excepción
         hc.save()
         self.assertIsNone(hc.cita)
 
     def test_str_format(self):
-        """R1.3: __str__ returns 'mascota - tipo_consulta (dd/mm/yyyy)'"""
+        """R1.3: __str__ devuelve 'mascota - tipo_consulta (dd/mm/yyyy)'"""
         from historial.models import HistorialClinico
         hc = HistorialClinico.objects.create(
             mascota=self.mascota,
@@ -90,7 +90,7 @@ class HistorialClinicoModelTest(TestCase):
         self.assertEqual(str(hc), expected)
 
     def test_ordering_newest_first(self):
-        """R1.4: Results ordered by -fecha_consulta (newest first)"""
+        """R1.4: Resultados ordenados por -fecha_consulta (más reciente primero)"""
         from historial.models import HistorialClinico
         import time
         hc1 = HistorialClinico.objects.create(
@@ -100,7 +100,7 @@ class HistorialClinicoModelTest(TestCase):
             motivo_consulta='Primero',
             diagnostico='OK',
         )
-        time.sleep(0.05)  # Ensure different timestamps
+        time.sleep(0.05)  # Asegurar diferentes marcas de tiempo
         hc2 = HistorialClinico.objects.create(
             mascota=self.mascota,
             veterinario=self.vet,
@@ -125,7 +125,7 @@ class HistorialClinicoValidationTest(TestCase):
         )
 
     def _make_hc(self, **kwargs):
-        """Helper to create HistorialClinico instance without saving."""
+        """Helper para crear instancia HistorialClinico sin guardar."""
         from historial.models import HistorialClinico
         defaults = {
             'mascota': self.mascota,
@@ -138,68 +138,68 @@ class HistorialClinicoValidationTest(TestCase):
         return HistorialClinico(**defaults)
 
     def test_peso_min_validator(self):
-        """R2.1: peso=0.00 raises ValidationError"""
+        """R2.1: peso=0.00 lanza ValidationError"""
         hc = self._make_hc(peso=0.00)
         with self.assertRaises(ValidationError):
             hc.full_clean()
 
     def test_peso_max_validator(self):
-        """R2.2: peso=1000.00 raises ValidationError"""
+        """R2.2: peso=1000.00 lanza ValidationError"""
         hc = self._make_hc(peso=1000.00)
         with self.assertRaises(ValidationError):
             hc.full_clean()
 
     def test_temperatura_min_validator(self):
-        """R2.3: temperatura=33.9 raises ValidationError"""
+        """R2.3: temperatura=33.9 lanza ValidationError"""
         hc = self._make_hc(temperatura=33.9)
         with self.assertRaises(ValidationError):
             hc.full_clean()
 
     def test_temperatura_max_validator(self):
-        """R2.4: temperatura=43.1 raises ValidationError"""
+        """R2.4: temperatura=43.1 lanza ValidationError"""
         hc = self._make_hc(temperatura=43.1)
         with self.assertRaises(ValidationError):
             hc.full_clean()
 
     def test_fc_min_validator(self):
-        """R2.5: frecuencia_cardiaca=39 raises ValidationError"""
+        """R2.5: frecuencia_cardiaca=39 lanza ValidationError"""
         hc = self._make_hc(frecuencia_cardiaca=39)
         with self.assertRaises(ValidationError):
             hc.full_clean()
 
     def test_fc_max_validator(self):
-        """R2.6: frecuencia_cardiaca=301 raises ValidationError"""
+        """R2.6: frecuencia_cardiaca=301 lanza ValidationError"""
         hc = self._make_hc(frecuencia_cardiaca=301)
         with self.assertRaises(ValidationError):
             hc.full_clean()
 
     def test_fr_min_validator(self):
-        """R2.7: frecuencia_respiratoria=4 raises ValidationError"""
+        """R2.7: frecuencia_respiratoria=4 lanza ValidationError"""
         hc = self._make_hc(frecuencia_respiratoria=4)
         with self.assertRaises(ValidationError):
             hc.full_clean()
 
     def test_fr_max_validator(self):
-        """R2.8: frecuencia_respiratoria=61 raises ValidationError"""
+        """R2.8: frecuencia_respiratoria=61 lanza ValidationError"""
         hc = self._make_hc(frecuencia_respiratoria=61)
         with self.assertRaises(ValidationError):
             hc.full_clean()
 
     def test_tipo_consulta_invalid(self):
-        """R2.9: Invalid tipo_consulta raises ValidationError"""
+        """R2.9: tipo_consulta inválido lanza ValidationError"""
         hc = self._make_hc(tipo_consulta='invalido')
         with self.assertRaises(Exception):  # ValueError for invalid choice
             hc.full_clean()
 
     def test_valid_values_pass(self):
-        """R2.10: Valid peso, temperatura, fc, fr pass validation"""
+        """R2.10: Valores válidos de peso, temperatura, fc, fr pasan validación"""
         hc = self._make_hc(
             peso=5.50,
             temperatura=38.5,
             frecuencia_cardiaca=120,
             frecuencia_respiratoria=30,
         )
-        hc.full_clean()  # Should NOT raise
+        hc.full_clean()  # NO debe lanzar excepción
 
 
 class HistorialClinicoFKTest(TestCase):
@@ -214,7 +214,7 @@ class HistorialClinicoFKTest(TestCase):
         )
 
     def test_mascota_protection(self):
-        """R3.1: Deleting mascota with historial raises ProtectedError"""
+        """R3.1: Eliminar mascota con historial lanza ProtectedError"""
         from historial.models import HistorialClinico
         HistorialClinico.objects.create(
             mascota=self.mascota,
@@ -227,7 +227,7 @@ class HistorialClinicoFKTest(TestCase):
             self.mascota.delete()
 
     def test_veterinario_protection(self):
-        """R3.2: Deleting vet with historial raises ProtectedError"""
+        """R3.2: Eliminar veterinario con historial lanza ProtectedError"""
         from historial.models import HistorialClinico
         HistorialClinico.objects.create(
             mascota=self.mascota,
@@ -240,7 +240,7 @@ class HistorialClinicoFKTest(TestCase):
             self.vet.delete()
 
     def test_mascota_related_name(self):
-        """R3.3: mascota.historiales.all() returns related historiales"""
+        """R3.3: mascota.historiales.all() devuelve historiales relacionados"""
         from historial.models import HistorialClinico
         HistorialClinico.objects.create(
             mascota=self.mascota,
@@ -260,7 +260,7 @@ class HistorialClinicoFKTest(TestCase):
         self.assertEqual(historiales.count(), 2)
 
     def test_historial_without_cita(self):
-        """R3.4: HistorialClinico without cita field is valid"""
+        """R3.4: HistorialClinico sin campo cita es válido"""
         from historial.models import HistorialClinico
         hc = HistorialClinico.objects.create(
             mascota=self.mascota,
@@ -284,7 +284,7 @@ class CitaMotivoTest(TestCase):
         )
 
     def test_cita_motivo_field_exists(self):
-        """R4.1: Cita has motivo attribute"""
+        """R4.1: Cita tiene atributo motivo"""
         from agenda.models import Cita, Disponibilidad
         disp = Disponibilidad.objects.create(
             veterinario=self.vet, fecha=date(2026, 5, 1),
@@ -294,7 +294,7 @@ class CitaMotivoTest(TestCase):
         self.assertTrue(hasattr(cita, 'motivo'))
 
     def test_cita_motivo_default_empty(self):
-        """R4.2: New Cita has motivo=''"""
+        """R4.2: Nueva Cita tiene motivo=''"""
         from agenda.models import Cita, Disponibilidad
         disp = Disponibilidad.objects.create(
             veterinario=self.vet, fecha=date(2026, 5, 1),
@@ -308,7 +308,7 @@ class HistorialAppRegistrationTest(TestCase):
     """REQ-05: App is registered in INSTALLED_APPS"""
 
     def test_historial_in_installed_apps(self):
-        """R5.1: 'historial' is in INSTALLED_APPS"""
+        """R5.1: 'historial' está en INSTALLED_APPS"""
         self.assertIn('historial', settings.INSTALLED_APPS)
 
 
@@ -316,7 +316,7 @@ class HistorialURLTest(TestCase):
     """REQ-06: URL configuration — all patterns resolve under historial: namespace"""
 
     def test_url_patterns_resolve(self):
-        """R6.1: All URL names reverse correctly"""
+        """R6.1: Todos los nombres de URL revierten correctamente"""
         from django.urls import reverse
         url_lista = reverse('historial:lista')
         self.assertEqual(url_lista, '/historial/')
@@ -341,14 +341,14 @@ class HistorialAdminTest(TestCase):
     """REQ-07: Admin registration"""
 
     def test_historial_admin_registered(self):
-        """R7.1: HistorialClinico model is in admin.site._registry"""
+        """R7.1: Modelo HistorialClinico está en admin.site._registry"""
         from django.contrib import admin
         from historial.models import HistorialClinico
         self.assertIn(HistorialClinico, admin.site._registry)
 
 
 # ========================================
-# PHASE 2: Form Layer Tests
+# FASE 2: Tests de Capa de Formulario
 # ========================================
 
 class HistorialClinicoFormTest(TestCase):
@@ -363,7 +363,7 @@ class HistorialClinicoFormTest(TestCase):
         )
 
     def test_form_required_fields(self):
-        """F2.1: Form requires motivo_consulta and diagnostico"""
+        """F2.1: Formulario requiere motivo_consulta y diagnostico"""
         from historial.forms import HistorialClinicoForm
         form = HistorialClinicoForm(data={
             'mascota': self.mascota.pk,
@@ -375,7 +375,7 @@ class HistorialClinicoFormTest(TestCase):
         self.assertIn('diagnostico', form.errors)
 
     def test_form_valid_with_all_fields(self):
-        """F2.2: Form is valid with all required fields"""
+        """F2.2: Formulario es válido con todos los campos requeridos"""
         from historial.forms import HistorialClinicoForm
         form = HistorialClinicoForm(data={
             'mascota': self.mascota.pk,
@@ -391,7 +391,7 @@ class HistorialClinicoFormTest(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
 
     def test_form_peso_range_validation(self):
-        """F2.3: Form rejects peso out of range"""
+        """F2.3: Formulario rechaza peso fuera de rango"""
         from historial.forms import HistorialClinicoForm
         form = HistorialClinicoForm(data={
             'mascota': self.mascota.pk,
@@ -405,7 +405,7 @@ class HistorialClinicoFormTest(TestCase):
         self.assertIn('peso', form.errors)
 
     def test_form_negative_peso_rejected(self):
-        """F2.4: Form rejects negative peso"""
+        """F2.4: Formulario rechaza peso negativo"""
         from historial.forms import HistorialClinicoForm
         form = HistorialClinicoForm(data={
             'mascota': self.mascota.pk,
@@ -419,7 +419,7 @@ class HistorialClinicoFormTest(TestCase):
         self.assertIn('peso', form.errors)
 
     def test_form_valid_vital_signs_accepted(self):
-        """F2.5: Form accepts valid vital signs"""
+        """F2.5: Formulario acepta signos vitales válidos"""
         from historial.forms import HistorialClinicoForm
         form = HistorialClinicoForm(data={
             'mascota': self.mascota.pk,
@@ -435,7 +435,7 @@ class HistorialClinicoFormTest(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
 
     def test_form_past_proxima_vacunacion_rejected(self):
-        """F2.6: Form rejects proxima_vacunacion in the past"""
+        """F2.6: Formulario rechaza proxima_vacunacion en el pasado"""
         from historial.forms import HistorialClinicoForm
         yesterday = (date.today() - timedelta(days=1)).isoformat()
         form = HistorialClinicoForm(data={
@@ -450,7 +450,7 @@ class HistorialClinicoFormTest(TestCase):
         self.assertIn('proxima_vacunacion', form.errors)
 
     def test_form_future_proxima_vacunacion_accepted(self):
-        """F2.7: Form accepts proxima_vacunacion in the future"""
+        """F2.7: Formulario acepta proxima_vacunacion en el futuro"""
         from historial.forms import HistorialClinicoForm
         future = (date.today() + timedelta(days=30)).isoformat()
         form = HistorialClinicoForm(data={
@@ -486,63 +486,63 @@ class AtenderCitaFormTest(TestCase):
         )
 
     def test_form_prefills_motivo_from_cita(self):
-        """F3.1: AtenderCitaForm pre-fills motivo_consulta from cita.motivo"""
+        """F3.1: AtenderCitaForm pre-llena motivo_consulta desde cita.motivo"""
         from historial.forms import AtenderCitaForm
         cita = self._create_cita(motivo='Vacunación anual contra rabia')
         form = AtenderCitaForm(cita=cita)
         self.assertEqual(form.fields['motivo_consulta'].initial, 'Vacunación anual contra rabia')
 
     def test_form_infers_vacunacion(self):
-        """F3.2: Motivo containing 'vacun' infers tipo_consulta='vacunacion'"""
+        """F3.2: Motivo conteniendo 'vacun' infiere tipo_consulta='vacunacion'"""
         from historial.forms import AtenderCitaForm
         cita = self._create_cita(motivo='Vacunar perro')
         form = AtenderCitaForm(cita=cita)
         self.assertEqual(form.fields['tipo_consulta'].initial, 'vacunacion')
 
     def test_form_infers_cirugia(self):
-        """F3.3: Motivo containing 'cirug' infers tipo_consulta='cirugia'"""
+        """F3.3: Motivo conteniendo 'cirug' infiere tipo_consulta='cirugia'"""
         from historial.forms import AtenderCitaForm
         cita = self._create_cita(motivo='Cirugía de esterilización')
         form = AtenderCitaForm(cita=cita)
         self.assertEqual(form.fields['tipo_consulta'].initial, 'cirugia')
 
     def test_form_infers_urgencia(self):
-        """F3.4: Motivo containing 'urgencia' infers tipo_consulta='urgencia'"""
+        """F3.4: Motivo conteniendo 'urgencia' infiere tipo_consulta='urgencia'"""
         from historial.forms import AtenderCitaForm
         cita = self._create_cita(motivo='Urgencia - vómitos')
         form = AtenderCitaForm(cita=cita)
         self.assertEqual(form.fields['tipo_consulta'].initial, 'urgencia')
 
     def test_form_infers_control(self):
-        """F3.5: Motivo containing 'control' infers tipo_consulta='control'"""
+        """F3.5: Motivo conteniendo 'control' infiere tipo_consulta='control'"""
         from historial.forms import AtenderCitaForm
         cita = self._create_cita(motivo='Control mensual')
         form = AtenderCitaForm(cita=cita)
         self.assertEqual(form.fields['tipo_consulta'].initial, 'control')
 
     def test_form_infers_laboratorio(self):
-        """F3.6: Motivo containing 'laboratorio' infers tipo_consulta='laboratorio'"""
+        """F3.6: Motivo conteniendo 'laboratorio' infiere tipo_consulta='laboratorio'"""
         from historial.forms import AtenderCitaForm
         cita = self._create_cita(motivo='Exámenes de laboratorio')
         form = AtenderCitaForm(cita=cita)
         self.assertEqual(form.fields['tipo_consulta'].initial, 'laboratorio')
 
     def test_form_defaults_consulta(self):
-        """F3.7: Unknown motivo defaults to tipo_consulta='consulta'"""
+        """F3.7: Motivo desconocido por defecto tipo_consulta='consulta'"""
         from historial.forms import AtenderCitaForm
         cita = self._create_cita(motivo='Revisión general')
         form = AtenderCitaForm(cita=cita)
         self.assertEqual(form.fields['tipo_consulta'].initial, 'consulta')
 
     def test_form_excludes_mascota(self):
-        """F3.8: AtenderCitaForm does NOT include mascota field"""
+        """F3.8: AtenderCitaForm NO incluye campo mascota"""
         from historial.forms import AtenderCitaForm
         cita = self._create_cita(motivo='Test')
         form = AtenderCitaForm(cita=cita)
         self.assertNotIn('mascota', form.fields)
 
     def test_form_case_insensitive_inference(self):
-        """F3.9: _infer_tipo_consulta is case-insensitive (CIRUGÍA, cirugia both match)"""
+        """F3.9: _infer_tipo_consulta es insensible a mayúsculas (CIRUGÍA, cirugia ambos coinciden)"""
         from historial.forms import AtenderCitaForm
         cita_upper = self._create_cita(motivo='CIRUGÍA DE ESTERILIZACIÓN')
         form_upper = AtenderCitaForm(cita=cita_upper)
@@ -554,7 +554,7 @@ class AtenderCitaFormTest(TestCase):
 
 
 # ========================================
-# PHASE 3: View Tests
+# FASE 3: Tests de Vista
 # ========================================
 
 class ListaHistorialesViewTest(TestCase):
@@ -582,7 +582,7 @@ class ListaHistorialesViewTest(TestCase):
         )
 
     def test_vet_sees_own_historiales(self):
-        """Vet sees only historiales where they are the vet"""
+        """El Veterinario solo ve los historiales donde él es el veterinario"""
         self.client.force_login(self.vet)
         resp = self.client.get(reverse('historial:lista'))
         self.assertEqual(resp.status_code, 200)
@@ -590,7 +590,7 @@ class ListaHistorialesViewTest(TestCase):
         self.assertContains(resp, 'Vacunación')
 
     def test_admin_sees_all_historiales(self):
-        """Admin sees all historiales"""
+        """Admin ve todos los historiales"""
         self.client.force_login(self.admin)
         resp = self.client.get(reverse('historial:lista'))
         self.assertEqual(resp.status_code, 200)
@@ -598,7 +598,7 @@ class ListaHistorialesViewTest(TestCase):
         self.assertContains(resp, 'Mishi')
 
     def test_cliente_sees_own_pets_historiales(self):
-        """Cliente sees only historiales of own pets"""
+        """Cliente ve solo historiales de sus propias mascotas"""
         self.client.force_login(self.cliente)
         resp = self.client.get(reverse('historial:lista'))
         self.assertEqual(resp.status_code, 200)
@@ -606,7 +606,7 @@ class ListaHistorialesViewTest(TestCase):
         self.assertNotContains(resp, 'Mishi')
 
     def test_search_by_mascota_nombre(self):
-        """Search filters by mascota nombre"""
+        """Búsqueda filtra por nombre de mascota"""
         self.client.force_login(self.admin)
         resp = self.client.get(reverse('historial:lista'), {'q': 'Fido'})
         self.assertEqual(resp.status_code, 200)
@@ -614,7 +614,7 @@ class ListaHistorialesViewTest(TestCase):
         self.assertNotContains(resp, 'Vacunación')
 
     def test_search_by_diagnostico(self):
-        """Search filters by diagnostico"""
+        """Búsqueda filtra por diagnóstico"""
         self.client.force_login(self.admin)
         resp = self.client.get(reverse('historial:lista'), {'q': 'Sano'})
         self.assertEqual(resp.status_code, 200)
@@ -622,7 +622,7 @@ class ListaHistorialesViewTest(TestCase):
         self.assertNotContains(resp, 'Mishi')
 
     def test_anonymous_redirected_to_login(self):
-        """Anonymous user redirected to login"""
+        """Usuario anónimo redirigido a login"""
         resp = self.client.get(reverse('historial:lista'))
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/usuarios/login/', resp.url)
@@ -639,7 +639,7 @@ class CrearHistorialViewTest(TestCase):
         )
 
     def test_vet_creates_historial(self):
-        """Vet creates historial directly"""
+        """Veterinario crea historial directamente"""
         self.client.force_login(self.vet)
         resp = self.client.post(reverse('historial:crear'), {
             'mascota': self.mascota.pk,
@@ -653,7 +653,7 @@ class CrearHistorialViewTest(TestCase):
         self.assertEqual(hc.veterinario, self.vet)
 
     def test_cliente_cannot_create_403(self):
-        """Cliente gets 403 when trying to create historial"""
+        """Cliente recibe 403 al intentar crear historial"""
         self.client.force_login(self.cliente)
         resp = self.client.get(reverse('historial:crear'))
         self.assertEqual(resp.status_code, 403)
@@ -684,37 +684,37 @@ class DetalleHistorialViewTest(TestCase):
         )
 
     def test_vet_views_own_historial(self):
-        """Vet can view own historial"""
+        """Veterinario puede ver su propio historial"""
         self.client.force_login(self.vet)
         resp = self.client.get(reverse('historial:detalle', kwargs={'pk': self.hc_own.pk}))
         self.assertEqual(resp.status_code, 200)
 
     def test_admin_views_any_historial(self):
-        """Admin can view any historial"""
+        """Admin puede ver cualquier historial"""
         self.client.force_login(self.admin)
         resp = self.client.get(reverse('historial:detalle', kwargs={'pk': self.hc_other.pk}))
         self.assertEqual(resp.status_code, 200)
 
     def test_cliente_views_own_pet_historial(self):
-        """Cliente can view historial of own pet"""
+        """Cliente puede ver historial de su propia mascota"""
         self.client.force_login(self.cliente)
         resp = self.client.get(reverse('historial:detalle', kwargs={'pk': self.hc_own.pk}))
         self.assertEqual(resp.status_code, 200)
 
     def test_cliente_cannot_view_other_pet_historial(self):
-        """Cliente gets 403 for other pet's historial"""
+        """Cliente recibe 403 para historial de otra mascota"""
         self.client.force_login(self.cliente)
         resp = self.client.get(reverse('historial:detalle', kwargs={'pk': self.hc_other.pk}))
         self.assertEqual(resp.status_code, 403)
 
     def test_nonexistent_historial_404(self):
-        """Nonexistent historial returns 404"""
+        """Historial inexistente devuelve 404"""
         self.client.force_login(self.vet)
         resp = self.client.get(reverse('historial:detalle', kwargs={'pk': 99999}))
         self.assertEqual(resp.status_code, 404)
 
     def test_anonymous_redirected_to_login(self):
-        """Anonymous user redirected to login"""
+        """Usuario anónimo redirigido a login"""
         resp = self.client.get(reverse('historial:detalle', kwargs={'pk': self.hc_own.pk}))
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/usuarios/login/', resp.url)
@@ -738,7 +738,7 @@ class EditarHistorialViewTest(TestCase):
         )
 
     def test_vet_edits_own_historial(self):
-        """Vet can edit own historial"""
+        """Veterinario puede editar su propio historial"""
         self.client.force_login(self.vet1)
         resp = self.client.post(reverse('historial:editar', kwargs={'pk': self.hc.pk}), {
             'mascota': self.mascota.pk,
@@ -751,19 +751,19 @@ class EditarHistorialViewTest(TestCase):
         self.assertEqual(self.hc.motivo_consulta, 'Updated motivo')
 
     def test_vet_cannot_edit_other_vet_historial(self):
-        """Vet gets 403 for other vet's historial"""
+        """Veterinario recibe 403 para historial de otro veterinario"""
         self.client.force_login(self.vet2)
         resp = self.client.get(reverse('historial:editar', kwargs={'pk': self.hc.pk}))
         self.assertEqual(resp.status_code, 403)
 
     def test_cliente_cannot_edit_historial(self):
-        """Cliente always gets 403 for edit"""
+        """Cliente siempre recibe 403 para editar"""
         self.client.force_login(self.cliente)
         resp = self.client.get(reverse('historial:editar', kwargs={'pk': self.hc.pk}))
         self.assertEqual(resp.status_code, 403)
 
     def test_admin_edits_any_historial(self):
-        """Admin can edit any historial"""
+        """Admin puede editar cualquier historial"""
         self.client.force_login(self.admin)
         resp = self.client.post(reverse('historial:editar', kwargs={'pk': self.hc.pk}), {
             'mascota': self.mascota.pk,
@@ -796,19 +796,19 @@ class HistorialPorMascotaViewTest(TestCase):
         )
 
     def test_cliente_views_own_pet_history(self):
-        """Cliente views own pet's full history"""
+        """Cliente ve el historial completo de su propia mascota"""
         self.client.force_login(self.cliente)
         resp = self.client.get(reverse('historial:por_mascota', kwargs={'mascota_pk': self.mascota_own.pk}))
         self.assertEqual(resp.status_code, 200)
 
     def test_cliente_cannot_view_other_pet_history(self):
-        """Cliente gets 403 for other pet's history"""
+        """Cliente recibe 403 para historial de otra mascota"""
         self.client.force_login(self.cliente)
         resp = self.client.get(reverse('historial:por_mascota', kwargs={'mascota_pk': self.mascota_other.pk}))
         self.assertEqual(resp.status_code, 403)
 
     def test_vet_views_any_pet_history(self):
-        """Vet can view any pet's history"""
+        """Veterinario puede ver el historial de cualquier mascota"""
         self.client.force_login(self.vet)
         resp = self.client.get(reverse('historial:por_mascota', kwargs={'mascota_pk': self.mascota_own.pk}))
         self.assertEqual(resp.status_code, 200)
@@ -836,7 +836,7 @@ class AtenderCitaViewTest(TestCase):
         )
 
     def test_vet_attends_cita_successfully(self):
-        """Vet attends scheduled cita — creates HistorialClinico + Cita becomes Atendida"""
+        """Veterinario atiende cita programada — crea HistorialClinico + Cita pasa a Atendida"""
         from historial.models import HistorialClinico
         cita = self._create_programada(motivo='Vacunación anual')
         self.client.force_login(self.vet)
@@ -853,7 +853,7 @@ class AtenderCitaViewTest(TestCase):
         self.assertEqual(hc.mascota, self.mascota)
 
     def test_cannot_attend_already_atendida(self):
-        """Cannot attend a cita that is already Atendida"""
+        """No se puede atender una cita que ya está Atendida"""
         cita = self._create_programada(motivo='Test')
         cita.estado = 'Atendida'
         cita.save()
@@ -862,7 +862,7 @@ class AtenderCitaViewTest(TestCase):
         self.assertEqual(resp.status_code, 302)
 
     def test_cannot_attend_cancelled_cita(self):
-        """Cannot attend a cancelled cita"""
+        """No se puede atender una cita cancelada"""
         cita = self._create_programada(motivo='Test')
         cita.estado = 'Cancelada'
         cita.motivo_cancelacion = 'No asistió'
@@ -872,20 +872,20 @@ class AtenderCitaViewTest(TestCase):
         self.assertEqual(resp.status_code, 302)
 
     def test_cliente_cannot_attend_cita(self):
-        """Cliente gets 403 when trying to attend a cita"""
+        """Cliente recibe 403 al intentar atender una cita"""
         cita = self._create_programada(motivo='Test')
         self.client.force_login(self.cliente)
         resp = self.client.get(reverse('historial:atender_cita', kwargs={'cita_pk': cita.pk}))
         self.assertEqual(resp.status_code, 403)
 
     def test_nonexistent_cita_404(self):
-        """Nonexistent cita returns 404"""
+        """Cita inexistente devuelve 404"""
         self.client.force_login(self.vet)
         resp = self.client.get(reverse('historial:atender_cita', kwargs={'cita_pk': 99999}))
         self.assertEqual(resp.status_code, 404)
 
     def test_attend_cita_pre_fills_form(self):
-        """GET atender_cita shows form with pre-filled data from cita"""
+        """GET atender_cita muestra formulario con datos pre-llenados desde cita"""
         cita = self._create_programada(motivo='Vacunación contra rabia')
         self.client.force_login(self.vet)
         resp = self.client.get(reverse('historial:atender_cita', kwargs={'cita_pk': cita.pk}))
@@ -894,7 +894,7 @@ class AtenderCitaViewTest(TestCase):
 
 
 # ========================================
-# PHASE 6: Adjunto Model & Upload Tests
+# FASE 6: Tests de Modelo Adjunto y Subida
 # ========================================
 
 import io
@@ -902,12 +902,12 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 
 def _create_test_file(content=b'test file content', name='test.pdf', content_type='application/pdf'):
-    """Helper to create a SimpleUploadedFile for testing."""
+    """Helper para crear un SimpleUploadedFile para pruebas."""
     return SimpleUploadedFile(name, content, content_type=content_type)
 
 
 class AdjuntoModelTest(TestCase):
-    """Tests for Adjunto model — fields, constraints, file size validation."""
+    """Tests para modelo Adjunto — campos, restricciones, validación de tamaño de archivo."""
 
     def setUp(self):
         self.vet = create_user_with_role('Veterinario', username='vet_adj', email='vet_adj@test.com')
@@ -921,7 +921,7 @@ class AdjuntoModelTest(TestCase):
         )
 
     def test_adjunto_creation(self):
-        """A6.1: Adjunto can be created with file and linked to HistorialClinico"""
+        """A6.1: Adjunto puede ser creado con archivo y vinculado a HistorialClinico"""
         from historial.models import Adjunto
         adj = Adjunto.objects.create(
             historial_clinico=self.hc,
@@ -936,7 +936,7 @@ class AdjuntoModelTest(TestCase):
         self.assertIsNotNone(adj.fecha_subida)
 
     def test_adjunto_tipos_choices(self):
-        """A6.2: TIPO_ADJUNTO_CHOICES contains expected types"""
+        """A6.2: TIPO_ADJUNTO_CHOICES contiene los tipos esperados"""
         from historial.models import TIPO_ADJUNTO_CHOICES
         tipos = [t[0] for t in TIPO_ADJUNTO_CHOICES]
         self.assertIn('radiografia', tipos)
@@ -945,7 +945,7 @@ class AdjuntoModelTest(TestCase):
         self.assertIn('otro', tipos)
 
     def test_adjunto_fk_protect(self):
-        """A6.3: Cannot delete HistorialClinico with Adjunto records"""
+        """A6.3: No se puede eliminar HistorialClinico con registros Adjunto"""
         from historial.models import Adjunto
         Adjunto.objects.create(
             historial_clinico=self.hc,
@@ -957,7 +957,7 @@ class AdjuntoModelTest(TestCase):
             self.hc.delete()
 
     def test_adjunto_file_size_limit(self):
-        """A6.4: Adjunto file exceeding 5MB is rejected"""
+        """A6.4: Archivo Adjunto que excede 5MB es rechazado"""
         from historial.models import Adjunto, MAX_ADJUNTO_SIZE
         self.assertEqual(MAX_ADJUNTO_SIZE, 5 * 1024 * 1024)
         big_file = SimpleUploadedFile('big.pdf', b'x' * (5 * 1024 * 1024 + 1), content_type='application/pdf')
@@ -971,7 +971,7 @@ class AdjuntoModelTest(TestCase):
             adj.clean()
 
     def test_adjunto_file_size_within_limit(self):
-        """A6.5: Adjunto file under 5MB passes validation"""
+        """A6.5: Archivo Adjunto menor a 5MB pasa validación"""
         from historial.models import Adjunto
         small_file = SimpleUploadedFile('small.pdf', b'x' * 1024, content_type='application/pdf')
         adj = Adjunto(
@@ -980,11 +980,11 @@ class AdjuntoModelTest(TestCase):
             tipo='otro',
             subido_por=self.vet,
         )
-        # Should NOT raise
+        # NO debe lanzar excepción
         adj.clean()
 
     def test_adjunto_multiple_per_historial(self):
-        """A6.6: Multiple Adjuntos can be linked to same HistorialClinico (1:N)"""
+        """A6.6: Múltiples Adjuntos pueden ser vinculados al mismo HistorialClinico (1:N)"""
         from historial.models import Adjunto
         Adjunto.objects.create(
             historial_clinico=self.hc,
@@ -1001,7 +1001,7 @@ class AdjuntoModelTest(TestCase):
         self.assertEqual(self.hc.adjuntos.count(), 2)
 
     def test_adjunto_descripcion_blank(self):
-        """A6.7: descripcion can be blank"""
+        """A6.7: descripcion puede estar en blanco"""
         from historial.models import Adjunto
         adj = Adjunto.objects.create(
             historial_clinico=self.hc,
@@ -1013,7 +1013,7 @@ class AdjuntoModelTest(TestCase):
         self.assertEqual(adj.descripcion, '')
 
     def test_adjunto_str_format(self):
-        """A6.8: Adjunto __str__ returns readable format"""
+        """A6.8: Adjunto __str__ devuelve formato legible"""
         from historial.models import Adjunto
         adj = Adjunto.objects.create(
             historial_clinico=self.hc,
@@ -1025,7 +1025,7 @@ class AdjuntoModelTest(TestCase):
 
 
 class AdjuntoViewTest(TestCase):
-    """Tests for Adjunto upload/delete views — permissions, file validation."""
+    """Tests para vistas de subida/eliminación de Adjunto — permisos, validación de archivo."""
 
     def setUp(self):
         self.vet = create_user_with_role('Veterinario', username='vet_av', email='vet_av@test.com')
@@ -1045,13 +1045,13 @@ class AdjuntoViewTest(TestCase):
         return reverse('historial:subir_adjunto', kwargs={'pk': self.hc.pk})
 
     def test_vet_can_see_upload_form(self):
-        """A7.1: Vet sees upload form on historial detail"""
+        """A7.1: Veterinario ve formulario de subida en detalle historial"""
         self.client.force_login(self.vet)
         resp = self.client.get(reverse('historial:detalle', kwargs={'pk': self.hc.pk}))
         self.assertEqual(resp.status_code, 200)
 
     def test_vet_can_upload_adjunto(self):
-        """A7.2: Vet can upload an attachment to own historial"""
+        """A7.2: Veterinario puede subir un adjunto a su propio historial"""
         from historial.models import Adjunto
         self.client.force_login(self.vet)
         upload_file = _create_test_file(name='radiografia.png', content_type='image/png')
@@ -1064,7 +1064,7 @@ class AdjuntoViewTest(TestCase):
         self.assertEqual(Adjunto.objects.count(), 1)
 
     def test_cliente_cannot_upload_adjunto(self):
-        """A7.3: Cliente gets 403 when trying to upload"""
+        """A7.3: Cliente recibe 403 al intentar subir"""
         self.client.force_login(self.cliente)
         upload_file = _create_test_file()
         resp = self.client.post(self._upload_url(), {
@@ -1075,7 +1075,7 @@ class AdjuntoViewTest(TestCase):
         self.assertEqual(resp.status_code, 403)
 
     def test_other_vet_cannot_upload_adjunto(self):
-        """A7.4: Other vet gets 403 for historial they didn't create"""
+        """A7.4: Otro veterinario recibe 403 para historial que no creó"""
         self.client.force_login(self.other_vet)
         upload_file = _create_test_file()
         resp = self.client.post(self._upload_url(), {
@@ -1086,7 +1086,7 @@ class AdjuntoViewTest(TestCase):
         self.assertEqual(resp.status_code, 403)
 
     def test_admin_can_upload_adjunto(self):
-        """A7.5: Admin can upload attachment to any historial"""
+        """A7.5: Admin puede subir adjunto a cualquier historial"""
         from historial.models import Adjunto
         self.client.force_login(self.admin)
         upload_file = _create_test_file(name='lab.pdf', content_type='application/pdf')
@@ -1099,7 +1099,7 @@ class AdjuntoViewTest(TestCase):
         self.assertEqual(Adjunto.objects.count(), 1)
 
     def test_upload_file_too_large_rejected(self):
-        """A7.6: Upload exceeding 5MB is rejected by the form"""
+        """A7.6: Subida que excede 5MB es rechazada por el formulario"""
         from historial.models import MAX_ADJUNTO_SIZE
         self.client.force_login(self.vet)
         big_content = b'x' * (MAX_ADJUNTO_SIZE + 1)
@@ -1113,7 +1113,7 @@ class AdjuntoViewTest(TestCase):
         self.assertFalse(resp.context['form'].is_valid())
 
     def test_vet_can_delete_own_adjunto(self):
-        """A7.7: Vet can delete their own attachment"""
+        """A7.7: Veterinario puede eliminar su propio adjunto"""
         from historial.models import Adjunto
         adj = Adjunto.objects.create(
             historial_clinico=self.hc,
@@ -1127,7 +1127,7 @@ class AdjuntoViewTest(TestCase):
         self.assertEqual(Adjunto.objects.count(), 0)
 
     def test_other_vet_cannot_delete_adjunto(self):
-        """A7.8: Other vet gets 403 trying to delete attachment"""
+        """A7.8: Otro veterinario recibe 403 intentando eliminar adjunto"""
         from historial.models import Adjunto
         adj = Adjunto.objects.create(
             historial_clinico=self.hc,
@@ -1140,7 +1140,7 @@ class AdjuntoViewTest(TestCase):
         self.assertEqual(resp.status_code, 403)
 
     def test_admin_can_delete_any_adjunto(self):
-        """A7.9: Admin can delete any attachment"""
+        """A7.9: Admin puede eliminar cualquier adjunto"""
         from historial.models import Adjunto
         adj = Adjunto.objects.create(
             historial_clinico=self.hc,

@@ -12,9 +12,9 @@ from .forms import ProductoForm, MovimientoInventarioForm
 
 @login_required(login_url='/usuarios/login/')
 def lista_productos(request):
-    """List active products with search and category filter.
+    """Lista productos activos con búsqueda y filtro por categoría.
 
-    Uses Producto.objects (default manager) which filters esta_activo=True.
+    Usa Producto.objects (gestor por defecto) que filtra esta_activo=True.
     """
     qs = Producto.objects.select_related().order_by('nombre')
 
@@ -36,7 +36,7 @@ def lista_productos(request):
     except (PageNotAnInteger, EmptyPage):
         page_obj = paginator.page(1)
 
-    # Products with stock alerts for the sidebar
+    # Productos con alertas de stock para la barra lateral
     alert_products = [p for p in Producto.objects.all() if p.estado_stock != 'verde']
 
     return render(request, 'productos/product_list.html', {
@@ -50,7 +50,7 @@ def lista_productos(request):
 
 @role_required('Veterinario', 'Administrador')
 def create_product(request):
-    """Create a new product. Requires Vet or Admin role."""
+    """Crear nuevo producto. Requiere rol Vet o Admin."""
     form = ProductoForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         form.save()
@@ -61,7 +61,7 @@ def create_product(request):
 
 @role_required('Veterinario', 'Administrador')
 def edit_product(request, pk):
-    """Edit an existing product. Requires Vet or Admin role."""
+    """Editar producto existente. Requiere rol Vet o Admin."""
     prod = get_object_or_404(Producto.all_objects, pk=pk)
     form = ProductoForm(request.POST or None, instance=prod)
     if request.method == 'POST' and form.is_valid():
@@ -73,7 +73,7 @@ def edit_product(request, pk):
 
 @role_required('Veterinario', 'Administrador')
 def delete_product(request, pk):
-    """Soft-delete a product (sets esta_activo=False). Requires Vet or Admin role."""
+    """Eliminar suavemente un producto (establece esta_activo=False). Requiere rol Vet o Admin."""
     prod = get_object_or_404(Producto.all_objects, pk=pk)
     if request.method == 'POST':
         prod.esta_activo = False
@@ -85,14 +85,14 @@ def delete_product(request, pk):
 
 @role_required('Veterinario', 'Administrador')
 def entrada_inventario(request):
-    """Manual stock entry (entrada). Creates MovimientoInventario and updates stock."""
+    """Entrada manual de stock. Crea MovimientoInventario y actualiza el stock."""
     form = MovimientoInventarioForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         mov = form.save(commit=False)
         mov.usuario = request.user
-        mov.tipo_movimiento = 'entrada'  # Force entrada for this view
+        mov.tipo_movimiento = 'entrada'  # Forzar entrada para esta vista
         mov.save()
-        # Update stock
+        # Actualizar stock
         producto = mov.producto
         producto.cantidad_stock += mov.cantidad
         producto.save(update_fields=['cantidad_stock'])
@@ -106,7 +106,7 @@ def entrada_inventario(request):
 
 @login_required(login_url='/usuarios/login/')
 def kardex_producto(request, pk):
-    """Kardex — movement history for a specific product."""
+    """Kardex — historial de movimientos de un producto específico."""
     producto = get_object_or_404(Producto.all_objects, pk=pk)
     movimientos = MovimientoInventario.objects.filter(
         producto=producto
@@ -127,7 +127,7 @@ def kardex_producto(request, pk):
 
 @login_required(login_url='/usuarios/login/')
 def alertas_stock(request):
-    """Show products with stock alerts (estado_stock != 'verde')."""
+    """Mostrar productos con alertas de stock (estado_stock != 'verde')."""
     alert_products = [p for p in Producto.objects.all() if p.estado_stock != 'verde']
     return render(request, 'productos/alertas.html', {
         'alert_products': alert_products,

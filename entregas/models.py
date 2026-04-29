@@ -12,17 +12,17 @@ ESTADO_CHOICES = [
     ('cancelado', 'Cancelado'),
 ]
 
-# Maximum file size for evidence photos: 5 MB — reuses the same pattern as Adjunto
+# Tamaño máximo para fotos de evidencia: 5 MB — reutiliza el mismo patrón que Adjunto
 MAX_EVIDENCIA_SIZE = 5 * 1024 * 1024  # 5242880 bytes
 
 
 def evidencia_upload_path(instance, filename):
-    """Upload path: media/evidencias/<pedido_pk>/<filename>"""
+    """Ruta de subida: media/evidencias/<pedido_pk>/<filename>"""
     return f'evidencias/{instance.pk}/{filename}'
 
 
 def firma_upload_path(instance, filename):
-    """Upload path: media/firmas/<pedido_pk>/<filename>"""
+    """Ruta de subida: media/firmas/<pedido_pk>/<filename>"""
     return f'firmas/{instance.pk}/{filename}'
 
 
@@ -101,7 +101,7 @@ class Pedido(models.Model):
         verbose_name='Firma del cliente',
         help_text='Imagen de la firma del cliente. Máximo 5MB.',
     )
-    # Timestamps
+    # Marcas de tiempo
     fecha_creacion = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Fecha de creación',
@@ -123,37 +123,37 @@ class Pedido(models.Model):
 
     @property
     def total(self):
-        """Sum of all PedidoItem subtotals."""
+        """Suma de todos los subtotales de PedidoItem."""
         return sum((item.subtotal for item in self.items.all()), Decimal('0.00'))
 
     def clean(self):
-        """Validate state transitions and business rules."""
+        """Valida transiciones de estado y reglas de negocio."""
         errors = {}
 
-        # State transition validation (mirrors Cita pattern)
+        # Validación de transición de estado (refleja el patrón de Cita)
         if self.pk:
             try:
                 old = Pedido.objects.get(pk=self.pk)
-                # Entregado is final — cannot change
+                # Entregado es final — no se puede cambiar
                 if old.estado == 'entregado' and self.estado != 'entregado':
                     errors['estado'] = 'No se puede cambiar el estado de un pedido entregado.'
-                # Cancelado is final — cannot reactivate
+                # Cancelado es final — no se puede reactivar
                 if old.estado == 'cancelado' and self.estado != 'cancelado':
                     errors['estado'] = 'No se puede reactivar un pedido cancelado.'
             except Pedido.DoesNotExist:
                 pass
 
-        # Cancelado requires incidente_notas
+        # Cancelado requiere incidente_notas
         if self.estado == 'cancelado' and not self.incidente_notas:
             errors['incidente_notas'] = 'Debe indicar el motivo de la cancelación/incidente.'
 
-        # foto_evidencia size validation (reuses Adjunto pattern)
+        # Validación de tamaño de foto_evidencia (reutiliza patrón de Adjunto)
         if self.foto_evidencia and hasattr(self.foto_evidencia, 'size') and self.foto_evidencia.size > MAX_EVIDENCIA_SIZE:
             errors['foto_evidencia'] = (
                 f'La foto excede el tamaño máximo permitido de {MAX_EVIDENCIA_SIZE // (1024*1024)} MB.'
             )
 
-        # firma_imagen size validation (same pattern)
+        # Validación de tamaño de firma_imagen (mismo patrón)
         if self.firma_imagen and hasattr(self.firma_imagen, 'size') and self.firma_imagen.size > MAX_EVIDENCIA_SIZE:
             errors['firma_imagen'] = (
                 f'La firma excede el tamaño máximo permitido de {MAX_EVIDENCIA_SIZE // (1024*1024)} MB.'
@@ -164,7 +164,7 @@ class Pedido(models.Model):
 
 
 class PedidoItem(models.Model):
-    """Detalle de producto en un pedido — through model between Pedido and Producto."""
+    """Detalle de producto en un pedido — modelo pivot entre Pedido y Producto."""
 
     pedido = models.ForeignKey(
         Pedido,

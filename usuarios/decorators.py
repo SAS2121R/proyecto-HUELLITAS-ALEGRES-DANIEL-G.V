@@ -4,10 +4,10 @@ from django.shortcuts import redirect
 
 
 def role_required(*roles):
-    """Decorator factory that restricts view access based on user roles.
+    """Decorador que restringe el acceso a vistas basado en roles de usuario.
     
-    Checks is_authenticated first — redirects unauthenticated users to login.
-    Raises PermissionDenied (403) if the user's role is not in the allowed list.
+    Verifica is_authenticated primero — redirige usuarios no autenticados a login.
+    Lanza PermissionDenied (403) si el rol del usuario no está en la lista de permitidos.
     """
     def decorator(view_func):
         @wraps(view_func)
@@ -21,6 +21,6 @@ def role_required(*roles):
     return decorator
 
 
-# Convenience aliases
+# Alias convenientes
 veterinario_required = role_required('Veterinario')
 admin_required = role_required('Administrador')

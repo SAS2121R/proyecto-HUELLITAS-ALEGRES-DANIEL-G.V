@@ -3,7 +3,7 @@ from .models import Proveedor
 
 
 class ProveedorForm(forms.ModelForm):
-    """Form for creating and updating Proveedor instances."""
+    """Formulario para crear y actualizar instancias de Proveedor."""
 
     class Meta:
         model = Proveedor

@@ -15,7 +15,7 @@ from mascotas.models import Mascota
 
 
 def _render_to_pdf(template_path, context):
-    """Render a Django template to a PDF HttpResponse."""
+    """Renderiza una plantilla Django como respuesta HTTP en formato PDF."""
     html = render_to_string(template_path, context)
     buf = io.BytesIO()
     pisa_status = pisa.CreatePDF(html, dest=buf)
@@ -26,7 +26,7 @@ def _render_to_pdf(template_path, context):
 
 
 def _export_inventario_excel(queryset):
-    """Export Producto queryset to an Excel HttpResponse."""
+    """Exporta un queryset de Producto como respuesta HTTP en formato Excel."""
     from openpyxl import Workbook
     from openpyxl.styles import Font, Alignment
 
@@ -143,7 +143,7 @@ def reporte_servicios(request):
 
 @login_required
 def admin_metricas(request):
-    """Admin metrics dashboard: Top Products, Staff Productivity, Compliance Rate."""
+    """Panel de métricas del Administrador: Top 5 Productos, Productividad de Staff, Tasa de Cumplimiento."""
     context = _get_metricas_context(request)
     return render(request, 'reportes/admin_metricas.html', context)
 
@@ -153,7 +153,7 @@ def admin_metricas(request):
 # ========================================
 
 def _get_metricas_context(request):
-    """Shared context builder for metricas views."""
+    """Constructor de contexto compartido para las vistas de métricas."""
     from django.contrib.auth import get_user_model
     from entregas.models import Pedido, PedidoItem
     from usuarios.models import ConfiguracionClinica
@@ -217,14 +217,14 @@ def _get_metricas_context(request):
 
 @login_required
 def admin_metricas_pdf(request):
-    """Export metrics dashboard as PDF."""
+    """Exporta el panel de métricas como PDF."""
     context = _get_metricas_context(request)
     return _render_to_pdf('reportes/admin_metricas_pdf.html', context)
 
 
 @login_required
 def admin_metricas_excel(request):
-    """Export metrics dashboard as Excel."""
+    """Exporta el panel de métricas como archivo Excel."""
     from openpyxl import Workbook
     from openpyxl.styles import Font, Alignment, PatternFill
 
@@ -234,13 +234,13 @@ def admin_metricas_excel(request):
     ws = wb.active
     ws.title = 'Métricas de Negocio'
 
-    # Header styling
+    # Estilo de encabezados
     header_font = Font(bold=True, color='FFFFFF', size=12)
     header_fill = PatternFill(start_color='333333', end_color='333333', fill_type='solid')
     section_font = Font(bold=True, size=11, color='667eea')
 
     row = 1
-    # Title
+    # Título
     ws.cell(row=row, column=1, value=f'Métricas de Negocio — {context["config"].nombre}')
     ws.cell(row=row, column=1).font = Font(bold=True, size=14)
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=5)
@@ -249,7 +249,7 @@ def admin_metricas_excel(request):
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=5)
     row += 2
 
-    # Summary cards
+    # Tarjetas de resumen
     ws.cell(row=row, column=1, value='Resumen General')
     ws.cell(row=row, column=1).font = section_font
     row += 1
@@ -264,7 +264,7 @@ def admin_metricas_excel(request):
         row += 1
     row += 1
 
-    # Top 5 Products
+    # Top 5 Productos más vendidos
     ws.cell(row=row, column=1, value='Top 5 Productos Más Vendidos')
     ws.cell(row=row, column=1).font = section_font
     row += 1
@@ -282,7 +282,7 @@ def admin_metricas_excel(request):
         row += 1
     row += 1
 
-    # Staff Productivity
+    # Productividad de Staff
     ws.cell(row=row, column=1, value='Productividad de Staff')
     ws.cell(row=row, column=1).font = section_font
     row += 1
@@ -290,7 +290,7 @@ def admin_metricas_excel(request):
         cell = ws.cell(row=row, column=col, value=h)
         cell.font = header_font
         cell.fill = header_fill
-    # Fix: use zip properly for headers
+    # Corrección: usar zip correctamente para los encabezados
     for idx, h in enumerate(['Veterinario', 'Citas este Mes', 'Citas Total'], 1):
         cell = ws.cell(row=row, column=idx, value=h)
         cell.font = header_font
@@ -302,7 +302,7 @@ def admin_metricas_excel(request):
         ws.cell(row=row, column=3, value=vet.citas_total)
         row += 1
 
-    # Auto-fit columns
+    # Ajustar ancho de columnas automáticamente
     for col_idx in range(1, 6):
         ws.column_dimensions[chr(64 + col_idx)].width = 20
 

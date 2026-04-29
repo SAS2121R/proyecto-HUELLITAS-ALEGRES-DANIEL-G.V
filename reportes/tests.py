@@ -16,7 +16,7 @@ Usuario = get_user_model()
 
 
 def create_user_with_role(rol_nombre, **kwargs):
-    """Helper to create a Usuario with the given role."""
+    """Función auxiliar para crear un Usuario con el rol dado."""
     rol, _ = Rol.objects.get_or_create(nombre=rol_nombre)
     user = Usuario.objects.create_user(
         username=kwargs.get('username', f'user_{rol_nombre.lower()}'),
@@ -29,14 +29,14 @@ def create_user_with_role(rol_nombre, **kwargs):
 
 
 def add_permission(user, permission_codename, model_class):
-    """Helper to add a specific permission to a user."""
+    """Función auxiliar para agregar un permiso específico a un usuario."""
     ct = ContentType.objects.get_for_model(model_class)
     perm = Permission.objects.get(content_type=ct, codename=permission_codename)
     user.user_permissions.add(perm)
 
 
 class ReporteURLTests(TestCase):
-    """Test that all report URLs resolve correctly."""
+    """Pruebas de que todas las URLs de reportes se resuelven correctamente."""
 
     def setUp(self):
         self.client = Client()
@@ -59,7 +59,7 @@ class ReporteURLTests(TestCase):
 
 
 class ReportePermissionTests(TestCase):
-    """Test that all report views require login and permissions."""
+    """Pruebas de que todas las vistas de reportes requieren inicio de sesión y permisos."""
 
     def setUp(self):
         self.client = Client()
@@ -86,7 +86,7 @@ class ReportePermissionTests(TestCase):
 
 
 class CitasPDFTests(TestCase):
-    """Test cita report generation."""
+    """Pruebas de generación de reporte de citas."""
 
     def setUp(self):
         self.client = Client()
@@ -110,7 +110,7 @@ class CitasPDFTests(TestCase):
 
 
 class HistorialPDFTests(TestCase):
-    """Test historial report generation."""
+    """Pruebas de generación de reporte de historial clínico."""
 
     def setUp(self):
         self.client = Client()
@@ -124,7 +124,7 @@ class HistorialPDFTests(TestCase):
 
 
 class InventarioPDFTests(TestCase):
-    """Test inventario report generation."""
+    """Pruebas de generación de reporte de inventario."""
 
     def setUp(self):
         self.client = Client()
@@ -149,7 +149,7 @@ class InventarioPDFTests(TestCase):
 
 
 class ServiciosPDFTests(TestCase):
-    """Test servicios report generation."""
+    """Pruebas de generación de reporte de servicios."""
 
     def setUp(self):
         self.client = Client()
@@ -173,7 +173,7 @@ def test_servicios_pdf_filter_by_categoria(self):
 
 
 class AdminMetricasTest(TestCase):
-    """Test Admin metrics dashboard: Top Products, Staff Productivity, Compliance."""
+    """Pruebas del panel de métricas del Administrador: Top Productos, Productividad de Staff, Tasa de Cumplimiento."""
 
     def setUp(self):
         from decimal import Decimal
@@ -203,11 +203,11 @@ class AdminMetricasTest(TestCase):
             password='dompass123', rol=self.dom_rol, first_name='Carlos',
         )
 
-        # Create products
+        # Crear productos de prueba
         self.prod1 = Producto.objects.create(nombre='Dog Chow', precio=Decimal('45000'), cantidad_stock=50, categoria='alimentos')
         self.prod2 = Producto.objects.create(nombre='Cat Vibes', precio=Decimal('30000'), cantidad_stock=30, categoria='alimentos')
 
-        # Create an entregado pedido (top products data)
+        # Crear un pedido entregado (datos para top productos)
         self.pedido = Pedido.objects.create(
             cliente=self.cliente, domiciliario=self.dom,
             direccion_entrega='Calle 10', telefono_contacto='3001112222',
@@ -219,40 +219,40 @@ class AdminMetricasTest(TestCase):
         self.c = Client()
 
     def test_admin_metricas_access(self):
-        """Admin can access metrics page."""
+        """El Administrador puede acceder a la página de métricas."""
         self.c.force_login(self.admin)
         resp = self.c.get(reverse('reportes:admin_metricas'))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'Métricas de Negocio')
 
     def test_admin_metricas_shows_top_products(self):
-        """Metrics page shows top products section."""
+        """La página de métricas muestra la sección de Top Productos."""
         self.c.force_login(self.admin)
         resp = self.c.get(reverse('reportes:admin_metricas'))
         self.assertContains(resp, 'Top 5 Productos')
         self.assertIn('top_productos', resp.context)
 
     def test_admin_metricas_shows_staff_productivity(self):
-        """Metrics page shows staff productivity section."""
+        """La página de métricas muestra la sección de Productividad de Staff."""
         self.c.force_login(self.admin)
         resp = self.c.get(reverse('reportes:admin_metricas'))
         self.assertContains(resp, 'Productividad de Staff')
         self.assertIn('vet_productividad', resp.context)
 
     def test_admin_metricas_shows_compliance_rate(self):
-        """Metrics page shows compliance rate."""
+        """La página de métricas muestra la tasa de cumplimiento."""
         self.c.force_login(self.admin)
         resp = self.c.get(reverse('reportes:admin_metricas'))
         self.assertIn('tasa_cumplimiento', resp.context)
 
     def test_admin_metricas_non_admin_403(self):
-        """Non-admin gets 403 on metrics page."""
+        """Un usuario que no es Administrador recibe error 403 en la página de métricas."""
         self.c.force_login(self.cliente)
         resp = self.c.get(reverse('reportes:admin_metricas'))
         self.assertEqual(resp.status_code, 403)
 
     def test_admin_metricas_config_in_context(self):
-        """Metrics page includes clinic config."""
+        """La página de métricas incluye los datos de configuración de la clínica."""
         self.c.force_login(self.admin)
         resp = self.c.get(reverse('reportes:admin_metricas'))
         self.assertIn('config', resp.context)

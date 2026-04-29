@@ -125,7 +125,7 @@ class PerfilEditForm(forms.ModelForm):
 
 
 class CrearUsuarioForm(forms.ModelForm):
-    """Form for Admin to create staff users (Vet, Domiciliario, Admin)."""
+    """Formulario para que el Admin cree usuarios de personal (Veterinario, Domiciliario, Admin)."""
 
     password1 = forms.CharField(
         label='Contraseña',
@@ -154,7 +154,7 @@ class CrearUsuarioForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Only show staff roles (not Cliente)
+        # Mostrar solo roles de personal (no Cliente)
         self.fields['rol'].queryset = Rol.objects.exclude(nombre='Cliente')
         self.fields['rol'].empty_label = None
 
@@ -174,7 +174,7 @@ class CrearUsuarioForm(forms.ModelForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password1'])
-        # Generate username from email
+        # Generar username a partir del email
         base_username = self.cleaned_data['email'].split('@')[0]
         username = base_username
         counter = 1
@@ -188,7 +188,7 @@ class CrearUsuarioForm(forms.ModelForm):
 
 
 class EditarUsuarioForm(forms.ModelForm):
-    """Form for Admin to edit user data (role, name, phone, is_active, cedula)."""
+    """Formulario para que el Admin edite datos de usuario (rol, nombre, teléfono, is_active, cédula)."""
 
     class Meta:
         model = Usuario
@@ -209,7 +209,7 @@ class EditarUsuarioForm(forms.ModelForm):
 
 
 class SetPasswordForm(forms.Form):
-    """Form for Admin to set a temporary password for a user."""
+    """Formulario para que el Admin establezca una contraseña temporal para un usuario."""
 
     new_password1 = forms.CharField(
         label='Nueva contraseña',

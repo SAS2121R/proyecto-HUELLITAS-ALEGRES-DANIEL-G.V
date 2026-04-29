@@ -11,7 +11,7 @@ from usuarios.models import Rol
 
 
 # ========================================
-# PHASE 4: Create View Tests (REQ-04)
+# FASE 4: Tests de Vista de Creación (REQ-04)
 # ========================================
 
 class MascotaCreateViewTest(TestCase):
@@ -36,7 +36,7 @@ class MascotaCreateViewTest(TestCase):
         )
 
     def test_veterinario_creates_mascota(self):
-        """R4.1: Veterinario creates mascota successfully"""
+        """R4.1: Veterinario crea mascota exitosamente"""
         self.client.force_login(self.vet_user)
         from mascotas.models import Mascota
         count_before = Mascota.objects.count()
@@ -52,7 +52,7 @@ class MascotaCreateViewTest(TestCase):
         self.assertEqual(mascota.propietario, self.vet_user)
 
     def test_administrador_creates_mascota(self):
-        """R4.2: Administrador creates mascota successfully"""
+        """R4.2: Administrador crea mascota exitosamente"""
         self.client.force_login(self.admin_user)
         from mascotas.models import Mascota
         count_before = Mascota.objects.count()
@@ -65,7 +65,7 @@ class MascotaCreateViewTest(TestCase):
         self.assertEqual(Mascota.objects.count(), count_before + 1)
 
     def test_cliente_can_create_mascota(self):
-        """R4.3: Cliente can create mascota (proprietor forced to request.user)"""
+        """R4.3: Cliente puede crear mascota (propietario forzado a request.user)"""
         self.client.force_login(self.cliente_user)
         from mascotas.models import Mascota
         resp = self.client.post(reverse('mascotas:nuevo'), data={
@@ -78,16 +78,16 @@ class MascotaCreateViewTest(TestCase):
         self.assertEqual(mascota.propietario, self.cliente_user)
 
     def test_unauthenticated_redirected_to_login(self):
-        """R4.4: Unauthenticated user redirected to login"""
+        """R4.4: Usuario no autenticado redirigido a login"""
         resp = self.client.get(reverse('mascotas:nuevo'))
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/usuarios/login/', resp.url)
 
     def test_form_errors_render(self):
-        """R4.5: Form errors render with messages"""
+        """R4.5: Errores de formulario renderizan con mensajes"""
         self.client.force_login(self.vet_user)
         resp = self.client.post(reverse('mascotas:nuevo'), data={
-            'nombre': '',  # Missing required field
+            'nombre': '',  # Campo requerido faltante
             'especie': 'Canino',
             'sexo': 'Macho',
         })
@@ -97,7 +97,7 @@ class MascotaCreateViewTest(TestCase):
 
 
 # ========================================
-# PHASE 3: List View Tests (REQ-03)
+# FASE 3: Tests de Vista de Lista (REQ-03)
 # ========================================
 
 class MascotaListViewTest(TestCase):
@@ -129,7 +129,7 @@ class MascotaListViewTest(TestCase):
         Mascota.objects.create(nombre='Mishi', especie='Felino', sexo='Hembra', propietario=self.other_user)
 
     def test_veterinario_sees_all_mascotas(self):
-        """R3.1: Veterinario sees all mascotas"""
+        """R3.1: Veterinario ve todas las mascotas"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'))
         self.assertEqual(resp.status_code, 200)
@@ -138,7 +138,7 @@ class MascotaListViewTest(TestCase):
         self.assertIn('Mishi', content)
 
     def test_administrador_sees_all_mascotas(self):
-        """R3.2: Administrador sees all mascotas"""
+        """R3.2: Administrador ve todas las mascotas"""
         self.client.force_login(self.admin_user)
         resp = self.client.get(reverse('mascotas:lista'))
         self.assertEqual(resp.status_code, 200)
@@ -147,7 +147,7 @@ class MascotaListViewTest(TestCase):
         self.assertIn('Mishi', content)
 
     def test_cliente_sees_only_own_mascotas(self):
-        """R3.3: Cliente sees only own mascotas"""
+        """R3.3: Cliente ve solo sus propias mascotas"""
         self.client.force_login(self.cliente_user)
         resp = self.client.get(reverse('mascotas:lista'))
         self.assertEqual(resp.status_code, 200)
@@ -156,21 +156,21 @@ class MascotaListViewTest(TestCase):
         self.assertNotIn('Mishi', content)
 
     def test_unauthenticated_redirected_to_login(self):
-        """R3.4: Unauthenticated user redirected to login"""
+        """R3.4: Usuario no autenticado redirigido a login"""
         resp = self.client.get(reverse('mascotas:lista'))
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/usuarios/login/', resp.url)
 
 
 # ========================================
-# PHASE 2: Form Layer Tests (REQ-02)
+# FASE 2: Tests de Capa de Formulario (REQ-02)
 # ========================================
 
 class MascotaFormTest(TestCase):
     """REQ-02: MascotaForm — 6 scenarios"""
 
     def test_valid_form_creates_mascota(self):
-        """R2.1: Valid form is valid and saves"""
+        """R2.1: Formulario válido es válido y guarda"""
         from mascotas.forms import MascotaForm
         form = MascotaForm(data={
             'nombre': 'Fido',
@@ -181,7 +181,7 @@ class MascotaFormTest(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
 
     def test_invalid_especie_rejected(self):
-        """R2.2: Invalid especie is rejected"""
+        """R2.2: Especie inválida es rechazada"""
         from mascotas.forms import MascotaForm
         form = MascotaForm(data={
             'nombre': 'Test',
@@ -192,7 +192,7 @@ class MascotaFormTest(TestCase):
         self.assertIn('especie', form.errors)
 
     def test_invalid_sexo_rejected(self):
-        """R2.3: Invalid sexo is rejected"""
+        """R2.3: Sexo inválido es rechazado"""
         from mascotas.forms import MascotaForm
         form = MascotaForm(data={
             'nombre': 'Test',
@@ -203,7 +203,7 @@ class MascotaFormTest(TestCase):
         self.assertIn('sexo', form.errors)
 
     def test_blank_raza_accepted(self):
-        """R2.4: Blank raza is accepted"""
+        """R2.4: Raza en blanco es aceptada"""
         from mascotas.forms import MascotaForm
         form = MascotaForm(data={
             'nombre': 'Test',
@@ -214,7 +214,7 @@ class MascotaFormTest(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
 
     def test_blank_fecha_nacimiento_accepted(self):
-        """R2.5: Blank fecha_nacimiento is accepted"""
+        """R2.5: Fecha_nacimiento en blanco es aceptada"""
         from mascotas.forms import MascotaForm
         form = MascotaForm(data={
             'nombre': 'Test',
@@ -225,7 +225,7 @@ class MascotaFormTest(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
 
     def test_future_fecha_nacimiento_rejected(self):
-        """R2.6: Future fecha_nacimiento is rejected"""
+        """R2.6: Fecha_nacimiento futura es rechazada"""
         from mascotas.forms import MascotaForm
         form = MascotaForm(data={
             'nombre': 'Test',
@@ -238,7 +238,7 @@ class MascotaFormTest(TestCase):
 
 
 # ========================================
-# PHASE 1: Model + App Registration + URL Tests (REQ-01, REQ-08, REQ-09)
+# FASE 1: Tests de Modelo + Registro de App + URLs (REQ-01, REQ-08, REQ-09)
 # ========================================
 
 class MascotaModelTest(TestCase):
@@ -253,7 +253,7 @@ class MascotaModelTest(TestCase):
         )
 
     def test_mascota_creation_all_fields(self):
-        """R1.1: Mascota creation with all fields populated"""
+        """R1.1: Creación de Mascota con todos los campos poblados"""
         from mascotas.models import Mascota
         m = Mascota.objects.create(
             nombre='Fido',
@@ -271,7 +271,7 @@ class MascotaModelTest(TestCase):
         self.assertEqual(m.propietario, self.owner)
 
     def test_mascota_creation_optional_fields_blank(self):
-        """R1.2: Mascota creation with raza and fecha_nacimiento omitted"""
+        """R1.2: Creación de Mascota con raza y fecha_nacimiento omitidos"""
         from mascotas.models import Mascota
         m = Mascota.objects.create(
             nombre='Mishi',
@@ -283,7 +283,7 @@ class MascotaModelTest(TestCase):
         self.assertIsNone(m.fecha_nacimiento)
 
     def test_mascota_str_returns_nombre_especie(self):
-        """R1.3: __str__ returns 'nombre (especie)'"""
+        """R1.3: __str__ devuelve 'nombre (especie)'"""
         from mascotas.models import Mascota
         m = Mascota.objects.create(
             nombre='Rex',
@@ -294,7 +294,7 @@ class MascotaModelTest(TestCase):
         self.assertEqual(str(m), 'Rex (Canino)')
 
     def test_propietario_related_name_works(self):
-        """R1.4: usuario.mascotas.all() returns mascotas for that user"""
+        """R1.4: usuario.mascotas.all() devuelve mascotas para ese usuario"""
         from mascotas.models import Mascota
         Mascota.objects.create(nombre='Fido', especie='Canino', sexo='Macho', propietario=self.owner)
         Mascota.objects.create(nombre='Mishi', especie='Felino', sexo='Hembra', propietario=self.owner)
@@ -302,14 +302,14 @@ class MascotaModelTest(TestCase):
         self.assertEqual(mascotas.count(), 2)
 
     def test_especie_choices_enforced(self):
-        """R1.5: Invalid especie raises ValidationError"""
+        """R1.5: Especie inválida lanza ValidationError"""
         from mascotas.models import Mascota
         m = Mascota(nombre='Invalido', especie='Dinosaurio', sexo='Macho', propietario=self.owner)
         with self.assertRaisesMessage(Exception, 'is not a valid choice'):
             m.full_clean()
 
     def test_sexo_choices_enforced(self):
-        """R1.6: Invalid sexo raises ValidationError"""
+        """R1.6: Sexo inválido lanza ValidationError"""
         from mascotas.models import Mascota
         m = Mascota(nombre='Test', especie='Canino', sexo='Neutro', propietario=self.owner)
         with self.assertRaisesMessage(Exception, 'is not a valid choice'):
@@ -320,7 +320,7 @@ class AppRegistrationTest(TestCase):
     """REQ-09: App is registered in INSTALLED_APPS"""
 
     def test_mascotas_app_registered(self):
-        """R9.1: 'mascotas' is in INSTALLED_APPS"""
+        """R9.1: 'mascotas' está en INSTALLED_APPS"""
         self.assertIn('mascotas', settings.INSTALLED_APPS)
 
 
@@ -328,28 +328,28 @@ class URLConfigurationTest(TestCase):
     """REQ-08: URL configuration — all CRUD URLs resolve"""
 
     def test_lista_url_resolves(self):
-        """R8.1: mascotas:lista resolves to /mascotas/"""
+        """R8.1: mascotas:lista resuelve a /mascotas/"""
         url = reverse('mascotas:lista')
         self.assertEqual(url, '/mascotas/')
 
     def test_nuevo_url_resolves(self):
-        """R8.1: mascotas:nuevo resolves to /mascotas/nuevo/"""
+        """R8.1: mascotas:nuevo resuelve a /mascotas/nuevo/"""
         url = reverse('mascotas:nuevo')
         self.assertEqual(url, '/mascotas/nuevo/')
 
     def test_editar_url_resolves(self):
-        """R8.1: mascotas:editar with pk=1 resolves to /mascotas/editar/1/"""
+        """R8.1: mascotas:editar con pk=1 resuelve a /mascotas/editar/1/"""
         url = reverse('mascotas:editar', kwargs={'pk': 1})
         self.assertEqual(url, '/mascotas/editar/1/')
 
     def test_eliminar_url_resolves(self):
-        """R8.1: mascotas:eliminar with pk=1 resolves to /mascotas/eliminar/1/"""
+        """R8.1: mascotas:eliminar con pk=1 resuelve a /mascotas/eliminar/1/"""
         url = reverse('mascotas:eliminar', kwargs={'pk': 1})
         self.assertEqual(url, '/mascotas/eliminar/1/')
 
 
 # ========================================
-# PHASE 5: Edit View Tests (REQ-05)
+# FASE 5: Tests de Vista de Edición (REQ-05)
 # ========================================
 
 class MascotaEditViewTest(TestCase):
@@ -388,7 +388,7 @@ class MascotaEditViewTest(TestCase):
         )
 
     def test_veterinario_edits_any_mascota(self):
-        """R5.1: Veterinario edits any mascota"""
+        """R5.1: Veterinario edita cualquier mascota"""
         self.client.force_login(self.vet_user)
         resp = self.client.post(reverse('mascotas:editar', kwargs={'pk': self.other_mascota.pk}), {
             'nombre': 'Mishi Actualizada',
@@ -400,7 +400,7 @@ class MascotaEditViewTest(TestCase):
         self.assertEqual(self.other_mascota.nombre, 'Mishi Actualizada')
 
     def test_administrador_edits_any_mascota(self):
-        """R5.2: Administrador edits any mascota"""
+        """R5.2: Administrador edita cualquier mascota"""
         self.client.force_login(self.admin_user)
         resp = self.client.post(reverse('mascotas:editar', kwargs={'pk': self.other_mascota.pk}), {
             'nombre': 'Mishi Admin Edit',
@@ -412,7 +412,7 @@ class MascotaEditViewTest(TestCase):
         self.assertEqual(self.other_mascota.nombre, 'Mishi Admin Edit')
 
     def test_cliente_edits_own_mascota(self):
-        """R5.3: Cliente edits own mascota"""
+        """R5.3: Cliente edita su propia mascota"""
         self.client.force_login(self.owner_user)
         resp = self.client.post(reverse('mascotas:editar', kwargs={'pk': self.own_mascota.pk}), {
             'nombre': 'Firulais Editado',
@@ -424,20 +424,20 @@ class MascotaEditViewTest(TestCase):
         self.assertEqual(self.own_mascota.nombre, 'Firulais Editado')
 
     def test_cliente_cannot_edit_others_mascota(self):
-        """R5.4: Cliente cannot edit another user's mascota (403)"""
+        """R5.4: Cliente no puede editar mascota de otro usuario (403)"""
         self.client.force_login(self.owner_user)
         resp = self.client.get(reverse('mascotas:editar', kwargs={'pk': self.other_mascota.pk}))
         self.assertEqual(resp.status_code, 403)
 
     def test_unauthenticated_redirected_to_login_edit(self):
-        """R5.5: Unauthenticated redirected to login"""
+        """R5.5: No autenticado redirigido a login"""
         resp = self.client.get(reverse('mascotas:editar', kwargs={'pk': self.own_mascota.pk}))
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/usuarios/login/', resp.url)
 
 
 # ========================================
-# PHASE 6: Delete View Tests (REQ-06)
+# FASE 6: Tests de Vista de Eliminación (REQ-06)
 # ========================================
 
 class MascotaDeleteViewTest(TestCase):
@@ -468,20 +468,20 @@ class MascotaDeleteViewTest(TestCase):
         )
 
     def test_veterinario_deletes_with_confirmation(self):
-        """R6.1: Veterinario deletes mascota — GET=confirmation, POST=delete"""
+        """R6.1: Veterinario elimina mascota — GET=confirmación, POST=eliminar"""
         self.client.force_login(self.vet_user)
-        # GET shows confirmation page
+        # GET muestra página de confirmación
         resp_get = self.client.get(reverse('mascotas:eliminar', kwargs={'pk': self.mascota.pk}))
         self.assertEqual(resp_get.status_code, 200)
         self.assertContains(resp_get, 'ToDelete')
-        # POST deletes
+        # POST elimina
         resp_post = self.client.post(reverse('mascotas:eliminar', kwargs={'pk': self.mascota.pk}))
         self.assertEqual(resp_post.status_code, 302)
         from mascotas.models import Mascota
         self.assertFalse(Mascota.objects.filter(pk=self.mascota.pk).exists())
 
     def test_administrador_deletes_mascota(self):
-        """R6.2: Administrador deletes mascota"""
+        """R6.2: Administrador elimina mascota"""
         self.client.force_login(self.admin_user)
         resp = self.client.post(reverse('mascotas:eliminar', kwargs={'pk': self.mascota.pk}))
         self.assertEqual(resp.status_code, 302)
@@ -489,20 +489,20 @@ class MascotaDeleteViewTest(TestCase):
         self.assertFalse(Mascota.objects.filter(pk=self.mascota.pk).exists())
 
     def test_cliente_cannot_delete_403(self):
-        """R6.3: Cliente cannot delete (403)"""
+        """R6.3: Cliente no puede eliminar (403)"""
         self.client.force_login(self.cliente_user)
         resp = self.client.get(reverse('mascotas:eliminar', kwargs={'pk': self.mascota.pk}))
         self.assertEqual(resp.status_code, 403)
 
     def test_unauthenticated_redirected_to_login_delete(self):
-        """R6.4: Unauthenticated redirected to login"""
+        """R6.4: No autenticado redirigido a login"""
         resp = self.client.get(reverse('mascotas:eliminar', kwargs={'pk': self.mascota.pk}))
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/usuarios/login/', resp.url)
 
 
 # ========================================
-# PHASE 7: Dashboard Integration Tests (REQ-07)
+# FASE 7: Tests de Integración de Dashboard (REQ-07)
 # ========================================
 
 class DashboardIntegrationTest(TestCase):
@@ -517,7 +517,7 @@ class DashboardIntegrationTest(TestCase):
         )
 
     def test_dashboard_contains_mascotas_link(self):
-        """R7.1: Dashboard contains link to mascotas:lista"""
+        """R7.1: Dashboard contiene link a mascotas:lista"""
         from django.test import Client
         client = Client()
         client.force_login(self.vet_user)
@@ -528,37 +528,37 @@ class DashboardIntegrationTest(TestCase):
 
 
 # ========================================
-# PHASE 1 INFRA: Media Configuration Tests (T1.2, T1.3)
+# FASE 1 INFRA: Tests de Configuración de Media (T1.2, T1.3)
 # ========================================
 
 class MediaConfigTest(TestCase):
     """T1.2/T1.3: MEDIA_URL, MEDIA_ROOT, and debug media serving"""
 
     def test_media_url_configured(self):
-        """MEDIA_URL is set to '/media/'"""
+        """MEDIA_URL está configurado a '/media/'"""
         self.assertEqual(settings.MEDIA_URL, '/media/')
 
     def test_media_root_configured(self):
-        """MEDIA_ROOT is set and ends with 'media'"""
+        """MEDIA_ROOT está configurado y termina con 'media'"""
         self.assertTrue(hasattr(settings, 'MEDIA_ROOT'))
         self.assertTrue(str(settings.MEDIA_ROOT).endswith('media'))
 
     def test_media_serves_files_in_debug(self):
-        """When DEBUG=True, /media/ URL pattern exists in URL conf"""
+        """Cuando DEBUG=True, patrón URL /media/ existe en configuración de URLs"""
         from django.conf import settings as django_settings
         from huellitas_alegres.urls import urlpatterns
         if django_settings.DEBUG:
-            # Check that at least one URL pattern starts with 'media/'
+            # Verificar que al menos un patrón de URL empieza con 'media/'
             media_patterns = [p for p in urlpatterns if hasattr(p, 'pattern') and 'media' in str(p.pattern)]
             self.assertTrue(len(media_patterns) > 0, "No media URL pattern found when DEBUG=True")
 
 
 # ========================================
-# PHASE 1 INFRA: Mascota Model Enhancement Tests (T1.4, T1.5)
+# FASE 1 INFRA: Tests de Mejoras al Modelo Mascota (T1.4, T1.5)
 # ========================================
 
 class MascotaModelEnhancementTest(TestCase):
-    """T1.4/T1.5: New fields on Mascota model — alergias, esterilizado, foto"""
+    """T1.4/T1.5: Nuevos campos en modelo Mascota — alergias, esterilizado, foto"""
 
     def setUp(self):
         self.cliente_rol = Rol.objects.get(nombre='Cliente')
@@ -570,7 +570,7 @@ class MascotaModelEnhancementTest(TestCase):
 
     # T1.4 — alergias field
     def test_alergias_field_exists(self):
-        """Mascota can be created with alergias='Penicilina'"""
+        """Mascota puede ser creada con alergias='Penicilina'"""
         from mascotas.models import Mascota
         m = Mascota.objects.create(
             nombre='Fido', especie='Canino', sexo='Macho',
@@ -579,7 +579,7 @@ class MascotaModelEnhancementTest(TestCase):
         self.assertEqual(m.alergias, 'Penicilina')
 
     def test_alergias_default_ninguna(self):
-        """Mascota without alergias defaults to 'Ninguna'"""
+        """Mascota sin alergias por defecto es 'Ninguna'"""
         from mascotas.models import Mascota
         m = Mascota.objects.create(
             nombre='Mishi', especie='Felino', sexo='Hembra',
@@ -589,7 +589,7 @@ class MascotaModelEnhancementTest(TestCase):
 
     # T1.4 — esterilizado field
     def test_esterilizado_field_exists(self):
-        """Mascota can be created with esterilizado=True"""
+        """Mascota puede ser creada con esterilizado=True"""
         from mascotas.models import Mascota
         m = Mascota.objects.create(
             nombre='Rex', especie='Canino', sexo='Macho',
@@ -598,7 +598,7 @@ class MascotaModelEnhancementTest(TestCase):
         self.assertTrue(m.esterilizado)
 
     def test_esterilizado_default_false(self):
-        """Mascota without esterilizado defaults to False"""
+        """Mascota sin esterilizado por defecto es False"""
         from mascotas.models import Mascota
         m = Mascota.objects.create(
             nombre='Luna', especie='Felino', sexo='Hembra',
@@ -608,7 +608,7 @@ class MascotaModelEnhancementTest(TestCase):
 
     # T1.5 — foto field
     def test_foto_field_blank_and_null(self):
-        """Mascota can be created without foto (blank/null)"""
+        """Mascota puede ser creada sin foto (blank/null)"""
         from mascotas.models import Mascota
         m = Mascota.objects.create(
             nombre='Buddy', especie='Canino', sexo='Macho',
@@ -617,24 +617,24 @@ class MascotaModelEnhancementTest(TestCase):
         self.assertFalse(m.foto)
 
     def test_foto_upload_to_mascotas(self):
-        """Foto field has upload_to='mascotas/'"""
+        """Campo foto tiene upload_to='mascotas/'"""
         from mascotas.models import Mascota
         foto_field = Mascota._meta.get_field('foto')
         self.assertEqual(foto_field.upload_to, 'mascotas/')
 
 
 # ========================================
-# PHASE 1 INFRA: Usuario Cédula Test (T1.6)
+# FASE 1 INFRA: Test de Cédula de Usuario (T1.6)
 # ========================================
 
 class UsuarioCedulaTest(TestCase):
-    """T1.6: Cédula field on Usuario model"""
+    """T1.6: Campo Cédula en modelo Usuario"""
 
     def setUp(self):
         self.cliente_rol = Rol.objects.get(nombre='Cliente')
 
     def test_cedula_field_exists(self):
-        """Usuario can be created with cedula='12345678'"""
+        """Usuario puede ser creado con cedula='12345678'"""
         User = get_user_model()
         u = User.objects.create_user(
             username='cedula_test', email='cedula@test.com',
@@ -644,7 +644,7 @@ class UsuarioCedulaTest(TestCase):
         self.assertEqual(u.cedula, '12345678')
 
     def test_cedula_default_empty(self):
-        """Usuario without cedula defaults to empty string"""
+        """Usuario sin cedula por defecto es string vacío"""
         User = get_user_model()
         u = User.objects.create_user(
             username='cedula_empty', email='cedula_empty@test.com',
@@ -653,7 +653,7 @@ class UsuarioCedulaTest(TestCase):
         self.assertEqual(u.cedula, '')
 
     def test_cedula_blank_allowed(self):
-        """Usuario can be created with cedula='' (blank allowed)"""
+        """Usuario puede ser creado con cedula='' (blank permitido)"""
         User = get_user_model()
         u = User.objects.create_user(
             username='cedula_blank', email='cedula_blank@test.com',
@@ -664,7 +664,7 @@ class UsuarioCedulaTest(TestCase):
 
 
 # ========================================
-# PHASE 2: Model Logic — get_edad() Tests (REQ-03)
+# FASE 2: Lógica del Modelo — Tests de get_edad() (REQ-03)
 # ========================================
 
 class MascotaEdadTest(TestCase):
@@ -680,21 +680,21 @@ class MascotaEdadTest(TestCase):
 
     @staticmethod
     def _birth_date(years=0, months=0):
-        """Helper: calculate a birth date N years and M months ago, safe for any day."""
+        """Helper: calcular fecha de nacimiento N años y M meses atrás, seguro para cualquier día."""
         today = date.today()
-        # Compute year and month
+        # Calcular año y mes
         total_months = today.year * 12 + today.month - (years * 12 + months)
         y = total_months // 12
         m = total_months % 12
         if m == 0:
             y -= 1
             m = 12
-        # Use minimum of birth-day and 28 to avoid InvalidDay errors
+        # Usar mínimo de birth-day y 28 para evitar errores de InvalidDay
         d = min(today.day, 28)
         return date(y, m, d)
 
     def test_get_edad_years_and_months(self):
-        """R3.1: Mascota born 2 years 3 months ago returns '2 años, 3 meses'"""
+        """R3.1: Mascota nacida hace 2 años 3 meses devuelve '2 años, 3 meses'"""
         from mascotas.models import Mascota
         birth = self._birth_date(years=2, months=3)
         m = Mascota.objects.create(
@@ -704,7 +704,7 @@ class MascotaEdadTest(TestCase):
         self.assertEqual(m.get_edad(), '2 años, 3 meses')
 
     def test_get_edad_single_year(self):
-        """R3.2: Mascota born exactly 1 year ago returns '1 año' (singular)"""
+        """R3.2: Mascota nacida hace exactamente 1 año devuelve '1 año' (singular)"""
         from mascotas.models import Mascota
         birth = self._birth_date(years=1)
         m = Mascota.objects.create(
@@ -714,7 +714,7 @@ class MascotaEdadTest(TestCase):
         self.assertEqual(m.get_edad(), '1 año')
 
     def test_get_edad_months_only(self):
-        """R3.3: Mascota born 2 months ago returns '2 meses'"""
+        """R3.3: Mascota nacida hace 2 meses devuelve '2 meses'"""
         from mascotas.models import Mascota
         birth = self._birth_date(months=2)
         m = Mascota.objects.create(
@@ -724,7 +724,7 @@ class MascotaEdadTest(TestCase):
         self.assertEqual(m.get_edad(), '2 meses')
 
     def test_get_edad_null_fecha_nacimiento(self):
-        """R3.4: Mascota with no fecha_nacimiento returns 'Edad desconocida'"""
+        """R3.4: Mascota sin fecha_nacimiento devuelve 'Edad desconocida'"""
         from mascotas.models import Mascota
         m = Mascota.objects.create(
             nombre='SinFecha', especie='Felino', sexo='Hembra',
@@ -733,7 +733,7 @@ class MascotaEdadTest(TestCase):
         self.assertEqual(m.get_edad(), 'Edad desconocida')
 
     def test_get_edad_today_born(self):
-        """R3.5: Mascota born today returns 'Recién nacido'"""
+        """R3.5: Mascota nacida hoy devuelve 'Recién nacido'"""
         from mascotas.models import Mascota
         m = Mascota.objects.create(
             nombre='Bebe', especie='Canino', sexo='Macho',
@@ -743,7 +743,7 @@ class MascotaEdadTest(TestCase):
 
 
 # ========================================
-# PHASE 3: Search & Filter Tests (REQ-05, REQ-06, REQ-11, REQ-12)
+# FASE 3: Tests de Búsqueda y Filtro (REQ-05, REQ-06, REQ-11, REQ-12)
 # ========================================
 
 class MascotaSearchTest(TestCase):
@@ -782,7 +782,7 @@ class MascotaSearchTest(TestCase):
         )
 
     def test_search_by_nombre(self):
-        """R5.1: Search by nombre finds matching mascotas"""
+        """R5.1: Búsqueda por nombre encuentra mascotas coincidentes"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'), {'q': 'Fido'})
         self.assertEqual(resp.status_code, 200)
@@ -791,7 +791,7 @@ class MascotaSearchTest(TestCase):
         self.assertNotContains(resp, 'Piolin')
 
     def test_search_by_especie(self):
-        """R5.2: Search by especie finds matching mascotas"""
+        """R5.2: Búsqueda por especie encuentra mascotas coincidentes"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'), {'q': 'Canino'})
         self.assertEqual(resp.status_code, 200)
@@ -799,7 +799,7 @@ class MascotaSearchTest(TestCase):
         self.assertNotContains(resp, 'Mishi')
 
     def test_search_by_cedula(self):
-        """R5.3: Search by propietario cedula finds matching mascotas"""
+        """R5.3: Búsqueda por cédula del propietario encuentra mascotas coincidentes"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'), {'q': '12345678'})
         self.assertEqual(resp.status_code, 200)
@@ -808,7 +808,7 @@ class MascotaSearchTest(TestCase):
         self.assertNotContains(resp, 'Piolin')
 
     def test_search_no_results(self):
-        """R5.4: Search with no matching results shows empty"""
+        """R5.4: Búsqueda sin resultados coincidentes muestra vacío"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'), {'q': 'XYZ999'})
         self.assertEqual(resp.status_code, 200)
@@ -817,12 +817,12 @@ class MascotaSearchTest(TestCase):
         self.assertNotContains(resp, 'Piolin')
 
     def test_search_combined_with_especie_filter(self):
-        """R5.5: Search combined with especie filter"""
+        """R5.5: Búsqueda combinada con filtro de especie"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'), {'q': '12345678', 'especie': 'Canino'})
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'Fido')
-        self.assertNotContains(resp, 'Mishi')  # Felino, filtered out
+        self.assertNotContains(resp, 'Mishi')  # Felino, filtrado
 
 
 class MascotaSpeciesFilterTest(TestCase):
@@ -846,7 +846,7 @@ class MascotaSpeciesFilterTest(TestCase):
         Mascota.objects.create(nombre='Piolin', especie='Ave', sexo='Macho', propietario=self.owner)
 
     def test_filter_by_canino(self):
-        """R6.1: Filter by Canino shows only caninos"""
+        """R6.1: Filtrar por Canino muestra solo caninos"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'), {'especie': 'Canino'})
         self.assertEqual(resp.status_code, 200)
@@ -855,7 +855,7 @@ class MascotaSpeciesFilterTest(TestCase):
         self.assertNotContains(resp, 'Piolin')
 
     def test_filter_by_felino(self):
-        """R6.2: Filter by Felino shows only felinos"""
+        """R6.2: Filtrar por Felino muestra solo felinos"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'), {'especie': 'Felino'})
         self.assertEqual(resp.status_code, 200)
@@ -863,7 +863,7 @@ class MascotaSpeciesFilterTest(TestCase):
         self.assertNotContains(resp, 'Fido')
 
     def test_filter_invalid_species_shows_all(self):
-        """R6.3: Filter by invalid species shows all mascotas (ignores invalid filter)"""
+        """R6.3: Filtrar por especie inválida muestra todas las mascotas (ignora filtro inválido)"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'), {'especie': 'Dinosaurio'})
         self.assertEqual(resp.status_code, 200)
@@ -872,7 +872,7 @@ class MascotaSpeciesFilterTest(TestCase):
         self.assertContains(resp, 'Piolin')
 
     def test_filter_no_especie_shows_all(self):
-        """R6.4: No especie filter shows all mascotas"""
+        """R6.4: Sin filtro de especie muestra todas las mascotas"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'))
         self.assertEqual(resp.status_code, 200)
@@ -885,19 +885,19 @@ class MascotaFormEnhancementTest(TestCase):
     """REQ-11: MascotaForm includes new fields (alergias, esterilizado, foto)"""
 
     def test_form_includes_alergias(self):
-        """R11.1: MascotaForm has alergias field"""
+        """R11.1: MascotaForm tiene campo alergias"""
         from mascotas.forms import MascotaForm
         form = MascotaForm()
         self.assertIn('alergias', form.fields)
 
     def test_form_includes_esterilizado(self):
-        """R11.2: MascotaForm has esterilizado field"""
+        """R11.2: MascotaForm tiene campo esterilizado"""
         from mascotas.forms import MascotaForm
         form = MascotaForm()
         self.assertIn('esterilizado', form.fields)
 
     def test_form_includes_foto(self):
-        """R11.3: MascotaForm has foto field"""
+        """R11.3: MascotaForm tiene campo foto"""
         from mascotas.forms import MascotaForm
         form = MascotaForm()
         self.assertIn('foto', form.fields)
@@ -915,13 +915,13 @@ class MascotaSearchUITest(TestCase):
         )
 
     def test_search_bar_present(self):
-        """Search form with q input renders in list page"""
+        """Formulario de búsqueda con input q se renderiza en página de lista"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'))
         self.assertContains(resp, 'name="q"')
 
     def test_species_badges_present(self):
-        """Species filter badges render in list page including Todos"""
+        """Badges de filtro de especie se renderizan en página de lista incluyendo Todos"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'))
         self.assertContains(resp, 'Canino')
@@ -945,7 +945,7 @@ class PaginationPreservationTest(TestCase):
             password='pass123', rol=self.cliente_rol,
         )
         from mascotas.models import Mascota
-        # Create 15 mascotas to ensure pagination
+        # Crear 15 mascotas para asegurar paginación
         for i in range(15):
             especie = 'Canino' if i % 2 == 0 else 'Felino'
             Mascota.objects.create(
@@ -954,16 +954,16 @@ class PaginationPreservationTest(TestCase):
             )
 
     def test_pagination_preserves_search_query(self):
-        """R12.1: Page 2 link includes ?q= parameter"""
+        """R12.1: Link de página 2 incluye parámetro ?q="""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'), {'q': 'Mascota', 'page': 1})
         self.assertEqual(resp.status_code, 200)
-        # Verify pagination links preserve search query
+        # Verificar que links de paginación preservan query de búsqueda
         content = resp.content.decode()
         self.assertIn('q=Mascota', content)
 
     def test_pagination_preserves_especie_filter(self):
-        """R12.2: Page links include ?especie= parameter"""
+        """R12.2: Links de página incluyen parámetro ?especie="""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'), {'especie': 'Canino', 'page': 1})
         self.assertEqual(resp.status_code, 200)
@@ -971,7 +971,7 @@ class PaginationPreservationTest(TestCase):
         self.assertIn('especie=Canino', content)
 
     def test_pagination_preserves_combined_params(self):
-        """R12.3: Page links preserve both ?q= and ?especie="""
+        """R12.3: Links de página preservan ambos ?q= y ?especie="""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'), {'q': 'Mascota', 'especie': 'Canino', 'page': 1})
         self.assertEqual(resp.status_code, 200)
@@ -980,14 +980,14 @@ class PaginationPreservationTest(TestCase):
         self.assertIn('especie=Canino', content)
 
     def test_pagination_no_params_works(self):
-        """R12.4: Pagination works without any search params"""
+        """R12.4: Paginación funciona sin parámetros de búsqueda"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'), {'page': 1})
         self.assertEqual(resp.status_code, 200)
 
 
 # ========================================
-# PHASE 4: Detail View Tests (REQ-07, REQ-08, REQ-09)
+# FASE 4: Tests de Vista de Detalle (REQ-07, REQ-08, REQ-09)
 # ========================================
 
 class MascotaDetailViewTest(TestCase):
@@ -1021,43 +1021,43 @@ class MascotaDetailViewTest(TestCase):
         )
 
     def test_authenticated_user_can_access_detail(self):
-        """R7.1: Authenticated user can access detail page"""
+        """R7.1: Usuario autenticado puede acceder a página de detalle"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:detalle', kwargs={'pk': self.own_mascota.pk}))
         self.assertEqual(resp.status_code, 200)
 
     def test_owner_cliente_can_see_own_mascota(self):
-        """R7.2: Cliente can see detail of own mascota"""
+        """R7.2: Cliente puede ver detalle de su propia mascota"""
         self.client.force_login(self.owner_user)
         resp = self.client.get(reverse('mascotas:detalle', kwargs={'pk': self.own_mascota.pk}))
         self.assertEqual(resp.status_code, 200)
 
     def test_other_cliente_gets_403(self):
-        """R7.3: Cliente gets 403 for another user's mascota"""
+        """R7.3: Cliente recibe 403 para mascota de otro usuario"""
         self.client.force_login(self.other_user)
         resp = self.client.get(reverse('mascotas:detalle', kwargs={'pk': self.own_mascota.pk}))
         self.assertEqual(resp.status_code, 403)
 
     def test_admin_can_see_any_mascota(self):
-        """R7.4: Admin can see any mascota detail"""
+        """R7.4: Admin puede ver detalle de cualquier mascota"""
         self.client.force_login(self.admin_user)
         resp = self.client.get(reverse('mascotas:detalle', kwargs={'pk': self.own_mascota.pk}))
         self.assertEqual(resp.status_code, 200)
 
     def test_unauthenticated_redirected_to_login(self):
-        """R7.5: Unauthenticated user redirected to login"""
+        """R7.5: Usuario no autenticado redirigido a login"""
         resp = self.client.get(reverse('mascotas:detalle', kwargs={'pk': self.own_mascota.pk}))
         self.assertEqual(resp.status_code, 302)
         self.assertIn('/usuarios/login/', resp.url)
 
     def test_detail_nonexistent_mascota_returns_404(self):
-        """R7.6: Detail view for nonexistent mascota returns 404"""
+        """R7.6: Vista de detalle para mascota inexistente devuelve 404"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:detalle', kwargs={'pk': 99999}))
         self.assertEqual(resp.status_code, 404)
 
     def test_agendar_cita_link_present(self):
-        """Agendar Cita link is present on detail page"""
+        """Link de Agendar Cita está presente en página de detalle"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:detalle', kwargs={'pk': self.own_mascota.pk}))
         self.assertEqual(resp.status_code, 200)
@@ -1076,7 +1076,7 @@ class AllergyBannerTest(TestCase):
         )
 
     def test_allergy_banner_shows_when_alergias(self):
-        """R8.1: Mascota with alergias='Penicilina' shows red banner"""
+        """R8.1: Mascota con alergias='Penicilina' muestra banner rojo"""
         from mascotas.models import Mascota
         m = Mascota.objects.create(
             nombre='Alergico', especie='Canino', sexo='Macho',
@@ -1088,7 +1088,7 @@ class AllergyBannerTest(TestCase):
         self.assertContains(resp, 'Penicilina')
 
     def test_allergy_banner_hidden_when_ninguna(self):
-        """R8.2: Mascota with alergias='Ninguna' does NOT show banner"""
+        """R8.2: Mascota con alergias='Ninguna' NO muestra banner"""
         from mascotas.models import Mascota
         m = Mascota.objects.create(
             nombre='Sano', especie='Canino', sexo='Macho',
@@ -1099,7 +1099,7 @@ class AllergyBannerTest(TestCase):
         self.assertNotContains(resp, 'ALERTA')
 
     def test_allergy_banner_hidden_when_empty_string(self):
-        """R8.3: Mascota with alergias='' (empty string) does NOT show banner"""
+        """R8.3: Mascota con alergias='' (string vacío) NO muestra banner"""
         from mascotas.models import Mascota
         m = Mascota.objects.create(
             nombre='Vacio', especie='Canino', sexo='Macho',
@@ -1110,7 +1110,7 @@ class AllergyBannerTest(TestCase):
         self.assertNotContains(resp, 'ALERTA')
 
     def test_allergy_banner_content(self):
-        """R8.3: Banner contains the specific allergy text"""
+        """R8.3: Banner contiene el texto específico de alergia"""
         from mascotas.models import Mascota
         m = Mascota.objects.create(
             nombre='GatoAlergico', especie='Felino', sexo='Hembra',
@@ -1148,7 +1148,7 @@ class LastVisitTest(TestCase):
         )
 
     def test_last_visit_shows_date(self):
-        """R9.1: Mascota with Atendida Cita shows visit date"""
+        """R9.1: Mascota con Cita Atendida muestra fecha de visita"""
         from agenda.models import Cita
         Cita.objects.create(
             mascota=self.mascota, disponibilidad=self.disp,
@@ -1156,18 +1156,18 @@ class LastVisitTest(TestCase):
         )
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:detalle', kwargs={'pk': self.mascota.pk}))
-        # Django renders date as "April 23, 2026" format
+        # Django renderiza fecha como formato "April 23, 2026"
         self.assertContains(resp, '2026')
-        self.assertContains(resp, 'ltima visita')  # Matches both "Última" and "ultima"
+        self.assertContains(resp, 'ltima visita')  # Coincide con "Última" y "ultima"
 
     def test_last_visit_shows_no_visits(self):
-        """R9.2: Mascota with no citas shows 'Sin visitas registradas'"""
+        """R9.2: Mascota sin citas muestra 'Sin visitas registradas'"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:detalle', kwargs={'pk': self.mascota.pk}))
         self.assertContains(resp, 'Sin visitas registradas')
 
     def test_last_visit_ignores_cancelled(self):
-        """R9.3: Cancelled citas are ignored — shows 'Sin visitas registradas'"""
+        """R9.3: Citas Canceladas son ignoradas — muestra 'Sin visitas registradas'"""
         from agenda.models import Cita
         Cita.objects.create(
             mascota=self.mascota, disponibilidad=self.disp,
@@ -1178,7 +1178,7 @@ class LastVisitTest(TestCase):
         self.assertContains(resp, 'Sin visitas registradas')
 
     def test_last_visit_ignores_programada(self):
-        """R9.4: Programada citas are ignored for last visit"""
+        """R9.4: Citas Programadas son ignoradas para última visita"""
         from agenda.models import Cita
         Cita.objects.create(
             mascota=self.mascota, disponibilidad=self.disp,
@@ -1189,10 +1189,10 @@ class LastVisitTest(TestCase):
         self.assertContains(resp, 'Sin visitas registradas')
 
     def test_last_visit_shows_most_recent(self):
-        """R9.5: Multiple Atendida citas show the most recent one"""
+        """R9.5: Múltiples Citas Atendidas muestran la más reciente"""
         from agenda.models import Disponibilidad, Cita
         from datetime import timedelta
-        # Create an older availability
+        # Crear una disponibilidad más antigua
         old_date = date.today() - timedelta(days=30)
         disp_old = Disponibilidad.objects.create(
             fecha=old_date, hora_inicio='09:00', hora_fin='10:00',
@@ -1202,19 +1202,19 @@ class LastVisitTest(TestCase):
             mascota=self.mascota, disponibilidad=disp_old,
             estado='Atendida',
         )
-        # The existing self.disp is today (more recent)
+        # El self.disp existente es hoy (más reciente)
         Cita.objects.create(
             mascota=self.mascota, disponibilidad=self.disp,
             estado='Atendida',
         )
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:detalle', kwargs={'pk': self.mascota.pk}))
-        # Should show today's date (most recent), not 30 days ago
+        # Debe mostrar fecha de hoy (más reciente), no hace 30 días
         self.assertContains(resp, str(date.today().year))
 
 
 # ========================================
-# PHASE 5: Integration & Polish Tests
+# FASE 5: Tests de Integración y Pulido
 # ========================================
 
 class MascotaDetailLinkTest(TestCase):
@@ -1234,7 +1234,7 @@ class MascotaDetailLinkTest(TestCase):
         )
 
     def test_mascota_name_links_to_detail(self):
-        """Mascota name in list links to detail view"""
+        """Nombre de mascota en lista linkea a vista de detalle"""
         self.client.force_login(self.vet_user)
         resp = self.client.get(reverse('mascotas:lista'))
         detail_url = reverse('mascotas:detalle', kwargs={'pk': self.mascota.pk})
@@ -1245,17 +1245,17 @@ class MascotaAdminEnhancementTest(TestCase):
     """REQ-01/04: Admin updates for alergias, esterilizado, cedula"""
 
     def test_cedula_in_admin_list_display(self):
-        """Cedula appears in Usuario admin list_display"""
+        """Cédula aparece en list_display del admin de Usuario"""
         from usuarios.admin import UsuarioAdmin
         self.assertIn('cedula', UsuarioAdmin.list_display)
 
     def test_cedula_in_admin_search(self):
-        """Cedula appears in Usuario admin search_fields"""
+        """Cédula aparece en search_fields del admin de Usuario"""
         from usuarios.admin import UsuarioAdmin
         self.assertIn('cedula', UsuarioAdmin.search_fields)
 
     def test_alergias_in_mascota_admin(self):
-        """Alergias and esterilizado in Mascota admin"""
+        """Alergias y esterilizado en admin de Mascota"""
         from mascotas.admin import MascotaAdmin
         self.assertIn('alergias', MascotaAdmin.list_display)
         self.assertIn('esterilizado', MascotaAdmin.list_filter)
@@ -1285,13 +1285,13 @@ class ClienteMascotaCRUDTest(TestCase):
         )
 
     def test_cliente_can_access_crear_mascota(self):
-        """Cliente should be able to GET crear_mascota."""
+        """Cliente debe poder hacer GET a crear_mascota."""
         self.client.force_login(self.cliente)
         response = self.client.get(reverse('mascotas:nuevo'))
         self.assertEqual(response.status_code, 200)
 
     def test_cliente_can_create_mascota(self):
-        """Cliente can POST to create a mascota — propietario forced to request.user."""
+        """Cliente puede hacer POST para crear mascota — propietario forzado a request.user."""
         from mascotas.models import Mascota
         self.client.force_login(self.cliente)
         response = self.client.post(reverse('mascotas:nuevo'), data={
@@ -1305,7 +1305,7 @@ class ClienteMascotaCRUDTest(TestCase):
         self.assertEqual(mascota.propietario, self.cliente)
 
     def test_cliente_create_mascota_forces_propietario(self):
-        """Even if a malicious Cliente tries to set propietario, it should be forced to request.user."""
+        """Incluso si un Cliente malicioso intenta setear propietario, debe ser forzado a request.user."""
         from mascotas.models import Mascota
         self.client.force_login(self.cliente)
         response = self.client.post(reverse('mascotas:nuevo'), data={
@@ -1320,7 +1320,7 @@ class ClienteMascotaCRUDTest(TestCase):
         self.assertEqual(mascota.propietario, self.cliente)
 
     def test_cliente_sees_only_own_mascotas(self):
-        """Cliente list shows only their own mascotas."""
+        """Lista de Cliente muestra solo sus propias mascotas."""
         from mascotas.models import Mascota
         Mascota.objects.create(nombre='Rex', especie='Canino', sexo='Macho', propietario=self.cliente)
         Mascota.objects.create(nombre='Luna', especie='Felino', sexo='Hembra', propietario=self.other_cliente)
@@ -1332,7 +1332,7 @@ class ClienteMascotaCRUDTest(TestCase):
         self.assertEqual(mascotas[0].nombre, 'Rex')
 
     def test_cliente_can_edit_own_mascota(self):
-        """Cliente can edit their own mascota."""
+        """Cliente puede editar su propia mascota."""
         from mascotas.models import Mascota
         mascota = Mascota.objects.create(
             nombre='Rex', especie='Canino', sexo='Macho',
@@ -1350,7 +1350,7 @@ class ClienteMascotaCRUDTest(TestCase):
         self.assertEqual(mascota.nombre, 'Rex Updated')
 
     def test_cliente_cannot_edit_other_mascota(self):
-        """Cliente gets 403 when trying to edit another client's mascota."""
+        """Cliente recibe 403 al intentar editar mascota de otro cliente."""
         from mascotas.models import Mascota
         mascota = Mascota.objects.create(
             nombre='Luna', especie='Felino', sexo='Hembra',
@@ -1361,7 +1361,7 @@ class ClienteMascotaCRUDTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_cliente_cannot_delete_mascota(self):
-        """Cliente should NOT be able to delete a mascota (only Vet/Admin)."""
+        """Cliente NO debe poder eliminar una mascota (solo Vet/Admin)."""
         from mascotas.models import Mascota
         mascota = Mascota.objects.create(
             nombre='Rex', especie='Canino', sexo='Macho',
@@ -1372,7 +1372,7 @@ class ClienteMascotaCRUDTest(TestCase):
         self.assertIn(response.status_code, [403, 302])
 
     def test_cliente_redirect_after_login(self):
-        """After login, Cliente should be redirected to mascotas:lista."""
+        """Después del login, Cliente debe ser redirigido a mascotas:lista."""
         from usuarios.views import get_redirect_url
         url = get_redirect_url(self.cliente)
         self.assertEqual(url, reverse('mascotas:lista'))

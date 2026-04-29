@@ -21,7 +21,7 @@ TIPO_MOVIMIENTO_CHOICES = [
 
 
 class ProductoManager(models.Manager):
-    """Manager that filters out soft-deleted products by default."""
+    """Gestor que filtra productos eliminados suavemente por defecto."""
 
     def get_queryset(self):
         return super().get_queryset().filter(esta_activo=True)
@@ -70,7 +70,7 @@ class Producto(models.Model):
     fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de creación')
     fecha_ultima_modificacion = models.DateTimeField(auto_now=True, verbose_name='Última modificación')
 
-    # Managers: objects filters esta_activo=True, all_objects returns everything
+    # Gestores: objects filtra esta_activo=True, all_objects devuelve todo
     objects = ProductoManager()
     all_objects = models.Manager()
 
@@ -85,7 +85,7 @@ class Producto(models.Model):
 
     @property
     def estado_stock(self):
-        """Returns semáforo color: 'verde', 'amarillo', or 'rojo'."""
+        """Retorna color del semáforo: 'verde', 'amarillo', o 'rojo'."""
         if self.cantidad_stock <= 0:
             return 'rojo'
         if self.cantidad_stock <= self.stock_minimo * 1.5:

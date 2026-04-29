@@ -9,7 +9,7 @@ from .forms import ProveedorForm
 
 @login_required
 def lista_proveedores(request):
-    """Admin-only list of all suppliers."""
+    """Lista de todos los proveedores. Solo accesible por Administrador."""
     if request.user.rol.nombre != 'Administrador':
         raise PermissionDenied
     proveedores = Proveedor.objects.all().order_by('-esta_activo', 'nombre')
@@ -18,7 +18,7 @@ def lista_proveedores(request):
 
 @login_required
 def crear_proveedor(request):
-    """Admin-only create supplier."""
+    """Crear un nuevo proveedor. Solo accesible por Administrador."""
     if request.user.rol.nombre != 'Administrador':
         raise PermissionDenied
     if request.method == 'POST':
@@ -34,7 +34,7 @@ def crear_proveedor(request):
 
 @login_required
 def editar_proveedor(request, pk):
-    """Admin-only edit supplier."""
+    """Editar un proveedor existente. Solo accesible por Administrador."""
     if request.user.rol.nombre != 'Administrador':
         raise PermissionDenied
     proveedor = get_object_or_404(Proveedor, pk=pk)
@@ -51,7 +51,7 @@ def editar_proveedor(request, pk):
 
 @login_required
 def toggle_proveedor(request, pk):
-    """Admin-only toggle supplier active status."""
+    """Activar o desactivar un proveedor. Solo accesible por Administrador."""
     if request.user.rol.nombre != 'Administrador':
         raise PermissionDenied
     if request.method != 'POST':

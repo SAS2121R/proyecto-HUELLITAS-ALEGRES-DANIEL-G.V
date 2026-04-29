@@ -83,10 +83,10 @@ class Perfil(models.Model):
 
 
 class ConfiguracionClinica(models.Model):
-    """Singleton model for clinic configuration.
+    """Modelo singleton para la configuración de la clínica.
 
-    Only one instance should exist. Use ConfiguracionClinica.get_config() to get it.
-    Stores clinic info used in PDF comprobantes and reports.
+    Solo debe existir una instancia. Use ConfiguracionClinica.get_config() para obtenerla.
+    Almacena información de la clínica usada en comprobantes PDF y reportes.
     """
 
     nombre = models.CharField(
@@ -124,6 +124,6 @@ class ConfiguracionClinica(models.Model):
 
     @classmethod
     def get_config(cls):
-        """Get the singleton config instance, creating it if necessary."""
+        """Obtiene la instancia singleton de configuración, creándola si es necesario."""
         config, _ = cls.objects.get_or_create(pk=1)
         return config

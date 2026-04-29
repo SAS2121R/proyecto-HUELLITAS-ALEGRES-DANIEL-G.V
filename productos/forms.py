@@ -3,7 +3,7 @@ from .models import Producto, MovimientoInventario
 
 
 class ProductoForm(forms.ModelForm):
-    """Form for creating and updating products."""
+    """Formulario para crear y actualizar productos."""
 
     class Meta:
         model = Producto
@@ -16,10 +16,10 @@ class ProductoForm(forms.ModelForm):
 
 
 class MovimientoInventarioForm(forms.ModelForm):
-    """Form for manual inventory movements (Kardex entries).
+    """Formulario para movimientos manuales de inventario (entradas de Kardex).
 
-    usuario is set from request.user in the view.
-    historial_clinico is only set via signal, not manually.
+    usuario se establece desde request.user en la vista.
+    historial_clinico solo se establece mediante señal, no manualmente.
     """
 
     class Meta:

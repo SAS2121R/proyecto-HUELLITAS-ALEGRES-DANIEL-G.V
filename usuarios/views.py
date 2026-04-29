@@ -46,7 +46,7 @@ Usuario = get_user_model()
 
 
 def get_redirect_url(user):
-    """Return the appropriate post-login redirect URL based on user role."""
+    """Retorna la URL de redirección post-login según el rol del usuario."""
     rol_nombre = user.rol.nombre
     if rol_nombre == 'Administrador':
         return reverse('usuarios:admin_dashboard')
@@ -328,7 +328,7 @@ def register_view(request):
             form.save()
             messages.success(request, '¡Registro exitoso! Ya puedes iniciar sesión')
             return redirect('usuarios:login')
-        # Form has errors — render login page with form context
+        # El formulario tiene errores — renderizar página de login con contexto del formulario
         return render(request, 'usuarios/login.html', {'register_form': form})
     
     return redirect('usuarios:login')
@@ -374,7 +374,7 @@ def vet_dashboard(request):
 @login_required
 def mi_perfil(request):
     """Vista para que el usuario vea y edite su propio perfil.
-    Handles both PerfilForm (foto, bio) and PerfilEditForm (name, phone)."""
+    Maneja tanto PerfilForm (foto, bio) como PerfilEditForm (nombre, teléfono)."""
     perfil, created = Perfil.objects.get_or_create(usuario=request.user)
 
     if request.method == 'POST':
@@ -397,7 +397,7 @@ def mi_perfil(request):
         perfil_form = PerfilForm(instance=perfil)
         personal_form = PerfilEditForm(instance=request.user)
 
-    # Get user's mascotas count for display
+    # Obtener cantidad de mascotas del usuario para mostrar
     mascotas_count = request.user.mascotas.count()
 
     return render(request, 'usuarios/perfil.html', {
@@ -418,14 +418,14 @@ def cambiar_password(request):
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
             user = form.save()
-            # Keep the user logged in after password change
+            # Mantener al usuario autenticado después de cambiar la contraseña
             update_session_auth_hash(request, user)
             messages.success(request, 'Contraseña actualizada exitosamente.')
             return redirect('usuarios:mi_perfil')
     else:
         form = PasswordChangeForm(request.user)
 
-    # Add Bootstrap form-control class to all fields
+    # Agregar clase Bootstrap form-control a todos los campos
     for field in form.fields.values():
         field.widget.attrs.update({'class': 'form-control form-control-lg'})
 
@@ -443,13 +443,13 @@ def lista_usuarios(request):
 
 
 # ========================================
-# ADMIN DASHBOARD — Metrics & Overview
+# DASHBOARD DEL ADMIN — Métricas y Resumen
 # ========================================
 
 @login_required
 @admin_required
 def admin_dashboard(request):
-    """Admin Dashboard with key metrics, recent users, and recent pedidos."""
+    """Dashboard del Administrador con métricas clave, usuarios recientes y pedidos recientes."""
     from mascotas.models import Mascota
     from agenda.models import Cita
     from entregas.models import Pedido
@@ -457,21 +457,21 @@ def admin_dashboard(request):
     today = timezone.now().date()
     start_of_month = today.replace(day=1)
 
-    # User counts by role
+    # Conteo de usuarios por rol
     total_users = Usuario.objects.count()
     total_clientes = Usuario.objects.filter(rol__nombre='Cliente').count()
     total_veterinarios = Usuario.objects.filter(rol__nombre='Veterinario').count()
     total_domiciliarios = Usuario.objects.filter(rol__nombre='Domiciliario').count()
     total_admins = Usuario.objects.filter(rol__nombre='Administrador').count()
 
-    # Mascota counts
+    # Conteo de mascotas
     total_mascotas = Mascota.objects.count()
 
-    # Cita counts
+    # Conteo de citas
     citas_hoy = Cita.objects.filter(disponibilidad__fecha=today).count()
     citas_mes = Cita.objects.filter(disponibilidad__fecha__gte=start_of_month).count()
 
-    # Pedido counts & revenue
+    # Conteo de pedidos e ingresos
     pedidos_pendientes = Pedido.objects.filter(estado='pendiente').count()
     pedidos_en_camino = Pedido.objects.filter(estado='en_camino').count()
     pedidos_entregados_mes = Pedido.objects.filter(
@@ -481,13 +481,13 @@ def admin_dashboard(request):
         estado='entregado', fecha_entrega__date__gte=start_of_month
     ).aggregate(total=Sum(F('items__producto__precio') * F('items__cantidad')))['total'] or 0
 
-    # Recent users (last 5)
+    # Usuarios recientes (últimos 5)
     recent_users = Usuario.objects.select_related('rol').order_by('-fecha_registro')[:5]
 
-    # Recent pedidos (last 5)
+    # Pedidos recientes (últimos 5)
     recent_pedidos = Pedido.objects.select_related('cliente', 'domiciliario').order_by('-fecha_creacion')[:5]
 
-    # Inactive users
+    # Usuarios inactivos
     inactive_users = Usuario.objects.filter(is_active=False).count()
 
     context = {
@@ -511,13 +511,13 @@ def admin_dashboard(request):
 
 
 # ========================================
-# ADMIN — User Management CRUD
+# ADMIN — CRUD de Gestión de Usuarios
 # ========================================
 
 @login_required
 @admin_required
 def admin_users(request):
-    """List all users with search and role filter (Admin only)."""
+    """Lista todos los usuarios con búsqueda y filtro por rol (Solo Admin)."""
     qs = Usuario.objects.select_related('rol').all().order_by('-fecha_registro')
 
     search = request.GET.get('q', '').strip()
@@ -551,7 +551,7 @@ def admin_users(request):
 @login_required
 @admin_required
 def admin_user_create(request):
-    """Create a new staff user (Veterinario, Domiciliario, or Administrador)."""
+    """Crea un nuevo usuario de personal (Veterinario, Domiciliario o Administrador)."""
     if request.method == 'POST':
         form = CrearUsuarioForm(request.POST)
         if form.is_valid():
@@ -570,10 +570,10 @@ def admin_user_create(request):
 @login_required
 @admin_required
 def admin_user_update(request, pk):
-    """Edit user: role, name, phone, is_active (Admin only)."""
+    """Edita usuario: rol, nombre, teléfono, is_active (Solo Admin)."""
     user = get_object_or_404(Usuario, pk=pk)
 
-    # Prevent admin from deactivating themselves
+    # Evitar que el admin se desactive a sí mismo
     if user == request.user and request.method == 'POST' and not request.POST.get('is_active'):
         messages.error(request, 'No puedes desactivar tu propia cuenta.')
         return redirect('usuarios:admin_user_update', pk=pk)
@@ -597,13 +597,13 @@ def admin_user_update(request, pk):
 @login_required
 @admin_required
 def admin_user_toggle_active(request, pk):
-    """Toggle user is_active (Admin only). POST only."""
+    """Alterna el is_active del usuario (Solo Admin). Solo POST."""
     if request.method != 'POST':
         return redirect('usuarios:admin_users')
 
     user = get_object_or_404(Usuario, pk=pk)
 
-    # Prevent admin from deactivating themselves
+    # Evitar que el admin se desactive a sí mismo
     if user == request.user:
         messages.error(request, 'No puedes desactivar tu propia cuenta.')
         return redirect('usuarios:admin_users')
@@ -618,7 +618,7 @@ def admin_user_toggle_active(request, pk):
 @login_required
 @admin_required
 def admin_user_set_password(request, pk):
-    """Admin sets a temporary password for a user."""
+    """El Admin establece una contraseña temporal para un usuario."""
     user = get_object_or_404(Usuario, pk=pk)
 
     if request.method == 'POST':
@@ -641,7 +641,7 @@ def admin_user_set_password(request, pk):
 @login_required
 @admin_required
 def admin_configuracion(request):
-    """Admin can edit clinic configuration (singleton model)."""
+    """El Admin puede editar la configuración de la clínica (modelo singleton)."""
     from .models import ConfiguracionClinica
 
     config = ConfiguracionClinica.get_config()
