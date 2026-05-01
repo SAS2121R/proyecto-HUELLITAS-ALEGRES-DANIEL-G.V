@@ -10,6 +10,13 @@
 
     <h2 class="mb-4"><i class="bi bi-calendar-plus"></i> Solicitar Cita</h2>
 
+    {% if sin_disponibilidad %}
+    <div class="alert alert-warning" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <strong>No hay horarios disponibles</strong> en este momento. Por favor, consulte más tarde
+        o comuníquese con la clínica para agendar su cita.
+    </div>
+    {% else %}
     <div class="card shadow-sm">
         <div class="card-body">
             <form method="post" novalidate>
@@ -48,5 +55,6 @@
             </form>
         </div>
     </div>
+    {% endif %}
 </div>
 {% endblock %}

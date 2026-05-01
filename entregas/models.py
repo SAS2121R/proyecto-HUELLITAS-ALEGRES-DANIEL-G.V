@@ -55,6 +55,9 @@ class Pedido(models.Model):
         related_name='pedidos_como_domiciliario',
         limit_choices_to={'rol__nombre': 'Domiciliario'},
         verbose_name='Domiciliario',
+        null=True,
+        blank=True,
+        help_text='Se asigna automáticamente al crear el pedido, o el Admin puede reasignarlo después.',
     )
     estado = models.CharField(
         max_length=20,

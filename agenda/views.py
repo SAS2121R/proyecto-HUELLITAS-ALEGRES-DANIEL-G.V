@@ -151,9 +151,36 @@ def crear_cita(request):
 
 @login_required(login_url='/usuarios/login/')
 def solicitar_cita(request):
-    """Cliente solicita una cita — only their own mascotas, available slots."""
+    """Cliente solicita una cita — only their own mascotas, available slots.
+
+    Si no hay disponibilidades futuras, muestra un mensaje informativo en lugar
+    del formulario vacío para evitar la frustración del campo obligatorio sin opciones.
+    """
     if request.user.rol.nombre != 'Cliente':
         raise PermissionDenied
+
+    # Verificar si existen disponibilidades antes de construir el formulario
+    from datetime import date as date_cls
+    from .models import Disponibilidad
+    disponibles = Disponibilidad.objects.filter(
+        activa=True,
+        fecha__gte=date_cls.today(),
+    ).exclude(
+        pk__in=Cita.objects.filter(
+            estado__in=['Programada', 'Atendida']
+        ).values('disponibilidad_id')
+    ).exists()
+
+    if not disponibles:
+        messages.warning(
+            request,
+            'No hay horarios disponibles en este momento. '
+            'Por favor, consulte más tarde o comuníquese con la clínica.'
+        )
+        return render(request, 'agenda/solicitar_cita.html', {
+            'form': None,
+            'sin_disponibilidad': True,
+        })
 
     if request.method == 'POST':
         form = SolicitarCitaForm(request.POST, user=request.user)

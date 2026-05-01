@@ -10,11 +10,11 @@ from .models import Producto, MovimientoInventario, CATEGORIAS
 from .forms import ProductoForm, MovimientoInventarioForm
 
 
-@login_required(login_url='/usuarios/login/')
+@role_required('Veterinario', 'Administrador')
 def lista_productos(request):
     """Lista productos activos con búsqueda y filtro por categoría.
 
-    Usa Producto.objects (gestor por defecto) que filtra esta_activo=True.
+    Solo Vet y Admin pueden gestionar productos. El Cliente usa la Tienda.
     """
     qs = Producto.objects.select_related().order_by('nombre')
 
@@ -104,9 +104,9 @@ def entrada_inventario(request):
     })
 
 
-@login_required(login_url='/usuarios/login/')
+@role_required('Veterinario', 'Administrador')
 def kardex_producto(request, pk):
-    """Kardex — historial de movimientos de un producto específico."""
+    """Kardex — historial de movimientos de un producto específico. Solo Vet/Admin."""
     producto = get_object_or_404(Producto.all_objects, pk=pk)
     movimientos = MovimientoInventario.objects.filter(
         producto=producto
@@ -125,9 +125,9 @@ def kardex_producto(request, pk):
     })
 
 
-@login_required(login_url='/usuarios/login/')
+@role_required('Veterinario', 'Administrador')
 def alertas_stock(request):
-    """Mostrar productos con alertas de stock (estado_stock != 'verde')."""
+    """Mostrar productos con alertas de stock (estado_stock != 'verde'). Solo Vet/Admin."""
     alert_products = [p for p in Producto.objects.all() if p.estado_stock != 'verde']
     return render(request, 'productos/alertas.html', {
         'alert_products': alert_products,

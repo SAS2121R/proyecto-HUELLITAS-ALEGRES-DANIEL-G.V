@@ -21,6 +21,15 @@ class UsuarioAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
         ('Información Adicional', {'fields': ('cedula', 'telefono', 'rol', 'fecha_registro')}),
     )
+
+    # Campos que se muestran en el formulario de CREACIÓN de usuario.
+    # Incluye rol para evitar IntegrityError (rol_id NOT NULL constraint).
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'email', 'first_name', 'rol', 'password1', 'password2'),
+        }),
+    )
     
     # Campos de solo lectura
     readonly_fields = ('fecha_registro',)

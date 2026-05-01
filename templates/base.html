@@ -40,7 +40,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
   <div class="container">
     <a class="navbar-brand fw-bold" href="{% url 'inicio' %}">
-      <i class="bi bi-emoji-heart-eyes-fill"></i> Huellitas Alegres
+HUELLITAS ALEGRES
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
       <span class="navbar-toggler-icon"></span>
@@ -48,8 +48,6 @@
     <div class="collapse navbar-collapse" id="navbarMain">
       <ul class="navbar-nav me-auto">
         {% if user.is_authenticated %}
-        <li class="nav-item"><a href="{% url 'productos:lista' %}" class="nav-link"><i class="bi bi-box-seam"></i> Productos</a></li>
-
         {% if user.rol.nombre == 'Cliente' %}
         <li class="nav-item"><a href="{% url 'tienda:catalogo' %}" class="nav-link"><i class="bi bi-shop"></i> Tienda</a></li>
         <li class="nav-item"><a href="{% url 'mascotas:lista' %}" class="nav-link"><i class="bi bi-emoji-heart-eyes"></i> Mis Mascotas</a></li>
@@ -57,6 +55,7 @@
         <li class="nav-item"><a href="{% url 'historial:lista' %}" class="nav-link"><i class="bi bi-clipboard2-pulse"></i> Mi Historial</a></li>
         <li class="nav-item"><a href="{% url 'entregas:mis_pedidos' %}" class="nav-link"><i class="bi bi-bag-check"></i> Mis Pedidos</a></li>
         {% elif user.rol.nombre == 'Veterinario' %}
+        <li class="nav-item"><a href="{% url 'productos:lista' %}" class="nav-link"><i class="bi bi-box-seam"></i> Inventario</a></li>
         <li class="nav-item"><a href="{% url 'mascotas:lista' %}" class="nav-link"><i class="bi bi-emoji-heart-eyes"></i> Mascotas</a></li>
         <li class="nav-item"><a href="{% url 'agenda:lista_citas' %}" class="nav-link"><i class="bi bi-calendar"></i> Citas</a></li>
         <li class="nav-item"><a href="{% url 'historial:lista' %}" class="nav-link"><i class="bi bi-clipboard2-pulse"></i> Historial</a></li>
@@ -66,7 +65,7 @@
         <li class="nav-item"><a href="{% url 'agenda:lista_citas' %}" class="nav-link"><i class="bi bi-calendar"></i> Citas</a></li>
         <li class="nav-item"><a href="{% url 'historial:lista' %}" class="nav-link"><i class="bi bi-clipboard2-pulse"></i> Historial</a></li>
         <li class="nav-item"><a href="{% url 'servicios:lista' %}" class="nav-link"><i class="bi bi-heart-pulse"></i> Servicios</a></li>
-<li class="nav-item"><a href="{% url 'entregas:dashboard' %}" class="nav-link"><i class="bi bi-truck"></i> Entregas</a></li>
+        <li class="nav-item"><a href="{% url 'entregas:dashboard' %}" class="nav-link"><i class="bi bi-truck"></i> Entregas</a></li>
         <li class="nav-item"><a href="{% url 'entregas:torre_control' %}" class="nav-link"><i class="bi bi-broadcast"></i> Torre de Control</a></li>
         <li class="nav-item"><a href="{% url 'productos:lista' %}" class="nav-link"><i class="bi bi-box-seam"></i> Inventario</a></li>
         <li class="nav-item"><a href="{% url 'proveedores:lista' %}" class="nav-link"><i class="bi bi-shop-window"></i> Proveedores</a></li>
@@ -120,7 +119,7 @@
 
 <footer class="bg-dark text-white text-center py-3 mt-auto">
   <div class="container">
-    <small><i class="bi bi-emoji-heart-eyes-fill"></i> Huellitas Alegres — Clínica Veterinaria & Tienda</small>
+    <small>HUELLITAS ALEGRES — Clínica Veterinaria & Tienda</small>
   </div>
 </footer>
 
