@@ -43,7 +43,7 @@ Thumbs.db
 
 # Archivos estáticos recolectados (se regeneran con collectstatic)
 staticfiles/
-static/
+/static/
 **/static/admin/
 **/static/rest_framework/
 

@@ -77,7 +77,7 @@ ESTRUCTURA DEL SERVICIO:
                  ======================================== -->
             <div class="form-slide login">
                 <!-- FORMULARIO DE AUTENTICACIÓN - ENVÍO AL SERVIDOR -->
-                <form method="post" action="{% url 'usuarios:login_view' %}">
+                <form method="post" action="{% url 'usuarios:login' %}">
                     {% csrf_token %}
                     <!-- CAMPO DE CORREO ELECTRÓNICO -->
                     <!-- Validación: formato de email válido -->

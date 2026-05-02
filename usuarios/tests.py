@@ -642,10 +642,10 @@ class GetRedirectUrlHelperTest(TestCase):
         )
 
     def test_returns_admin_url_for_administrador(self):
-        """R8 scenario 1: Returns admin URL for Administrador"""
+        """R8 scenario 1: Returns admin dashboard URL for Administrador"""
         from .views import get_redirect_url
         url = get_redirect_url(self.admin_user)
-        self.assertEqual(url, reverse('usuarios:admin_user_list'))
+        self.assertEqual(url, reverse('usuarios:admin_dashboard'))
 
     def test_returns_vet_dashboard_url_for_veterinario(self):
         """R8 scenario 2: Returns vet dashboard URL for Veterinario"""
@@ -659,14 +659,14 @@ class GetRedirectUrlHelperTest(TestCase):
         url = get_redirect_url(self.cliente_user)
         self.assertEqual(url, reverse('mascotas:lista'))
 
-    def test_returns_productos_url_for_domiciliario(self):
-        """R8 scenario 4: Returns productos URL for Domiciliario"""
+    def test_returns_entregas_url_for_domiciliario(self):
+        """R8 scenario 4: Returns entregas dashboard URL for Domiciliario"""
         from .views import get_redirect_url
         url = get_redirect_url(self.domiciliario_user)
-        self.assertEqual(url, reverse('productos:lista'))
+        self.assertEqual(url, reverse('entregas:dashboard'))
 
-    def test_returns_productos_url_for_unknown_role(self):
-        """R8 scenario 5: Handles unexpected role with default (productos:lista)"""
+    def test_returns_login_url_for_unknown_role(self):
+        """R8 scenario 5: Handles unexpected role with redirect to login"""
         from .views import get_redirect_url
         # Create a mock user-like object with an unrecognized role
         class MockUser:
@@ -674,7 +674,7 @@ class GetRedirectUrlHelperTest(TestCase):
                 nombre = 'Guest'
             rol = MockRol()
         url = get_redirect_url(MockUser())
-        self.assertEqual(url, reverse('productos:lista'))
+        self.assertEqual(url, reverse('usuarios:login'))
 
 
 # ========================================
