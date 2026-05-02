@@ -9,6 +9,7 @@
 *.sqlite-journal
 *.db
 db.sqlite3
+db.sqlite3.vacio
 
 # Entorno virtual y Python
 .venv/
