@@ -3,11 +3,12 @@
 # ============================================
 
 # Base de datos (NUNCA subir)
-db.sqlite3
-db.sqlite3-journal
 *.sqlite3
 *.sqlite3-journal
+*.sqlite
+*.sqlite-journal
 *.db
+db.sqlite3
 
 # Entorno virtual y Python
 .venv/
@@ -42,11 +43,13 @@ Thumbs.db
 
 # Archivos estáticos recolectados (se regeneran con collectstatic)
 staticfiles/
-static/admin/
-static/rest_framework/
+static/
+**/static/admin/
+**/static/rest_framework/
 
 # Media files (subidos por usuarios)
 media/
+**/media/
 
 # Artefactos de Testsprite (no son parte del proyecto)
 testsprite_tests/
