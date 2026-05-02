@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404, redirect, render
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from django.db.models import Count, Sum, F, Q
@@ -12,6 +12,7 @@ from historial.models import HistorialClinico
 from productos.models import Producto
 from servicios.models import Servicio
 from mascotas.models import Mascota
+from usuarios.decorators import role_required
 
 
 def _render_to_pdf(template_path, context):
@@ -58,7 +59,7 @@ def _export_inventario_excel(queryset):
 
 
 @login_required
-@permission_required('agenda.view_cita', raise_exception=True)
+@role_required('Administrador', 'Veterinario')
 def reporte_citas(request):
     citas = Cita.objects.select_related('mascota', 'disponibilidad__veterinario').order_by('-disponibilidad__fecha')
     estado = request.GET.get('estado')
@@ -85,7 +86,7 @@ def reporte_citas(request):
 
 
 @login_required
-@permission_required('historial.view_historialclinico', raise_exception=True)
+@role_required('Administrador', 'Veterinario')
 def reporte_historial(request, mascota_pk):
     mascota = get_object_or_404(Mascota, pk=mascota_pk)
     historiales = HistorialClinico.objects.filter(mascota=mascota).select_related('veterinario').order_by('-fecha')
@@ -97,7 +98,7 @@ def reporte_historial(request, mascota_pk):
 
 
 @login_required
-@permission_required('productos.view_producto', raise_exception=True)
+@role_required('Administrador', 'Veterinario')
 def reporte_inventario(request):
     productos = Producto.objects.all().order_by('categoria', 'nombre')
     stock_bajo = request.GET.get('stock_bajo')
@@ -121,7 +122,7 @@ def reporte_inventario(request):
 
 
 @login_required
-@permission_required('servicios.view_servicio', raise_exception=True)
+@role_required('Administrador', 'Veterinario')
 def reporte_servicios(request):
     servicios = Servicio.objects.all().order_by('categoria', 'nombre')
     categoria = request.GET.get('categoria')
@@ -142,6 +143,7 @@ def reporte_servicios(request):
 # ========================================
 
 @login_required
+@role_required('Administrador')
 def admin_metricas(request):
     """Panel de métricas del Administrador: Top 5 Productos, Productividad de Staff, Tasa de Cumplimiento."""
     context = _get_metricas_context(request)
@@ -158,10 +160,6 @@ def _get_metricas_context(request):
     from entregas.models import Pedido, PedidoItem
     from usuarios.models import ConfiguracionClinica
     from django.utils import timezone
-
-    if request.user.rol.nombre != 'Administrador':
-        from django.core.exceptions import PermissionDenied
-        raise PermissionDenied
 
     today = timezone.now().date()
     start_of_month = today.replace(day=1)
