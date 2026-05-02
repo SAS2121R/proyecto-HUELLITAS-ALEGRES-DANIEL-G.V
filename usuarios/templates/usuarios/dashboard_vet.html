@@ -1,25 +1,25 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard Veterinario — {{ tienda }}{% endblock title %}
+{% block title %}Dashboard Veterinario — Huellitas Alegres{% endblock title %}
 
 {% block content %}
 <div class="row">
     <!-- Sidebar -->
     <div class="col-md-3 mb-4">
         <div class="list-group shadow-sm">
-            <a href="#" class="list-group-item list-group-item-action active">
+            <a href="{% url 'agenda:dashboard_vet' %}" class="list-group-item list-group-item-action active">
                 <i class="bi bi-speedometer2"></i> Inicio
             </a>
-            <a href="#" class="list-group-item list-group-item-action">
+            <a href="{% url 'agenda:dashboard_vet' %}" class="list-group-item list-group-item-action">
                 <i class="bi bi-calendar3"></i> Mi Agenda
             </a>
             <a href="{% url 'mascotas:lista' %}" class="list-group-item list-group-item-action">
                 <i class="bi bi-heart-pulse"></i> Pacientes
             </a>
-            <a href="#" class="list-group-item list-group-item-action">
+            <a href="{% url 'historial:lista' %}" class="list-group-item list-group-item-action">
                 <i class="bi bi-clipboard2-pulse"></i> Historial Clínico
             </a>
-            <a href="#" class="list-group-item list-group-item-action">
+            <a href="{% url 'servicios:lista' %}" class="list-group-item list-group-item-action">
                 <i class="bi bi-gear"></i> Servicios
             </a>
         </div>
@@ -29,36 +29,39 @@
     <div class="col-md-9">
         <div class="card shadow-sm mb-4">
             <div class="card-body">
-                <h2 class="card-title">Bienvenido, {{ user.first_name|default:user.username }}</h2>
+                <h2 class="card-title">Bienvenido, Dr/a. {{ user.first_name|default:user.username }}</h2>
                 <p class="card-text text-muted">Panel del Veterinario — Huellitas Alegres</p>
             </div>
         </div>
 
         <div class="row">
             <div class="col-md-4 mb-3">
-                <div class="card text-center shadow-sm">
+                <div class="card text-center shadow-sm card-hover h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Mi Agenda</h5>
+                        <i class="bi bi-calendar-check text-primary" style="font-size: 2rem;"></i>
+                        <h5 class="card-title mt-2">Mi Agenda</h5>
                         <p class="card-text text-muted">Gestiona tus horarios y citas programadas.</p>
-                        <a href="#" class="btn btn-outline-primary btn-sm">Ver Agenda</a>
+                        <a href="{% url 'agenda:dashboard_vet' %}" class="btn btn-outline-primary btn-sm">Ver Agenda</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 mb-3">
-                <div class="card text-center shadow-sm">
+                <div class="card text-center shadow-sm card-hover h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Pacientes</h5>
+                        <i class="bi bi-emoji-heart-eyes text-success" style="font-size: 2rem;"></i>
+                        <h5 class="card-title mt-2">Pacientes</h5>
                         <p class="card-text text-muted">Consulta el registro de mascotas.</p>
                         <a href="{% url 'mascotas:lista' %}" class="btn btn-outline-success btn-sm">Ver Pacientes</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 mb-3">
-                <div class="card text-center shadow-sm">
+                <div class="card text-center shadow-sm card-hover h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Historial Clínico</h5>
+                        <i class="bi bi-clipboard2-pulse text-info" style="font-size: 2rem;"></i>
+                        <h5 class="card-title mt-2">Historial Clínico</h5>
                         <p class="card-text text-muted">Registros de consultas y diagnósticos.</p>
-                        <a href="#" class="btn btn-outline-info btn-sm">Ver Historial</a>
+                        <a href="{% url 'historial:lista' %}" class="btn btn-outline-info btn-sm">Ver Historial</a>
                     </div>
                 </div>
             </div>

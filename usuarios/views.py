@@ -51,7 +51,7 @@ def get_redirect_url(user):
     if rol_nombre == 'Administrador':
         return reverse('usuarios:admin_dashboard')
     elif rol_nombre == 'Veterinario':
-        return reverse('usuarios:vet_dashboard')
+        return reverse('agenda:dashboard_vet')
     elif rol_nombre == 'Cliente':
         return reverse('mascotas:lista')
     elif rol_nombre == 'Domiciliario':

@@ -55,8 +55,8 @@ HUELLITAS ALEGRES
         <li class="nav-item"><a href="{% url 'historial:lista' %}" class="nav-link"><i class="bi bi-clipboard2-pulse"></i> Mi Historial</a></li>
         <li class="nav-item"><a href="{% url 'entregas:mis_pedidos' %}" class="nav-link"><i class="bi bi-bag-check"></i> Mis Pedidos</a></li>
         {% elif user.rol.nombre == 'Veterinario' %}
-        <li class="nav-item"><a href="{% url 'productos:lista' %}" class="nav-link"><i class="bi bi-box-seam"></i> Inventario</a></li>
-        <li class="nav-item"><a href="{% url 'mascotas:lista' %}" class="nav-link"><i class="bi bi-emoji-heart-eyes"></i> Mascotas</a></li>
+        <li class="nav-item"><a href="{% url 'agenda:dashboard_vet' %}" class="nav-link"><i class="bi bi-speedometer2"></i> Mi Agenda</a></li>
+        <li class="nav-item"><a href="{% url 'mascotas:lista' %}" class="nav-link"><i class="bi bi-heart-pulse"></i> Mascotas</a></li>
         <li class="nav-item"><a href="{% url 'agenda:lista_citas' %}" class="nav-link"><i class="bi bi-calendar"></i> Citas</a></li>
         <li class="nav-item"><a href="{% url 'historial:lista' %}" class="nav-link"><i class="bi bi-clipboard2-pulse"></i> Historial</a></li>
         <li class="nav-item"><a href="{% url 'servicios:lista' %}" class="nav-link"><i class="bi bi-heart-pulse"></i> Servicios</a></li>

@@ -651,7 +651,7 @@ class GetRedirectUrlHelperTest(TestCase):
         """R8 scenario 2: Returns vet dashboard URL for Veterinario"""
         from .views import get_redirect_url
         url = get_redirect_url(self.vet_user)
-        self.assertEqual(url, reverse('usuarios:vet_dashboard'))
+        self.assertEqual(url, reverse('agenda:dashboard_vet'))
 
     def test_returns_mascotas_url_for_cliente(self):
         """R8 scenario 3: Returns mascotas URL for Cliente"""
