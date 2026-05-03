@@ -58,8 +58,7 @@
                             <label for="direccion_entrega" class="form-label fw-bold">Dirección de entrega *</label>
                             <input type="text" name="direccion_entrega" id="direccion_entrega" class="form-control form-control-lg"
                                    placeholder="Calle 10 # 25-30, Apartamento 3B" required
-                                   value="{{ direccion|default:request.user.first_name|default:'' }}">
-                            {% comment %}Pre-fill with user data if available{% endcomment %}
+                                   value="{{ direccion|default:'' }}">
                             <div class="form-text">La dirección donde recibirás tu pedido.</div>
                         </div>
                         <div class="mb-3">
