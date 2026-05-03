@@ -1,8 +1,8 @@
 import re
-from datetime import date
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 from .models import HistorialClinico, Adjunto, MAX_ADJUNTO_SIZE
 
@@ -33,7 +33,8 @@ class HistorialClinicoForm(forms.ModelForm):
 
     def clean_proxima_vacunacion(self):
         fecha = self.cleaned_data.get('proxima_vacunacion')
-        if fecha and fecha < date.today():
+        local_today = timezone.localdate()
+        if fecha and fecha < local_today:
             raise ValidationError('La próxima vacunación debe ser una fecha futura.')
         return fecha
 
@@ -90,7 +91,8 @@ class AtenderCitaForm(forms.ModelForm):
 
     def clean_proxima_vacunacion(self):
         fecha = self.cleaned_data.get('proxima_vacunacion')
-        if fecha and fecha < date.today():
+        local_today = timezone.localdate()
+        if fecha and fecha < local_today:
             raise ValidationError('La próxima vacunación debe ser una fecha futura.')
         return fecha
 

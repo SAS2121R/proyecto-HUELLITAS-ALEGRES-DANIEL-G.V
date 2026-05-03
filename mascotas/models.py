@@ -1,7 +1,6 @@
-from datetime import date
-
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 
 ESPECIE_CHOICES = [
@@ -53,7 +52,7 @@ class Mascota(models.Model):
         if self.fecha_nacimiento is None:
             return 'Edad desconocida'
 
-        today = date.today()
+        today = timezone.localdate()
         birth = self.fecha_nacimiento
 
         if birth > today:

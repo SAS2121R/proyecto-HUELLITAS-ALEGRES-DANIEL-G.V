@@ -160,11 +160,11 @@ def solicitar_cita(request):
         raise PermissionDenied
 
     # Verificar si existen disponibilidades antes de construir el formulario
-    from datetime import date as date_cls
+    from django.utils import timezone as dj_tz
     from .models import Disponibilidad
     disponibles = Disponibilidad.objects.filter(
         activa=True,
-        fecha__gte=date_cls.today(),
+        fecha__gte=dj_tz.localdate(),
     ).exclude(
         pk__in=Cita.objects.filter(
             estado__in=['Programada', 'Atendida']

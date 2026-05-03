@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from datetime import date
+from django.utils import timezone
 
 
 ESTADO_CHOICES = [
@@ -46,7 +46,7 @@ class Disponibilidad(models.Model):
         if self.hora_inicio and self.hora_fin and self.hora_inicio >= self.hora_fin:
             errors['hora_fin'] = 'La hora de fin debe ser posterior a la hora de inicio.'
         # fecha must not be in the past
-        if self.fecha and self.fecha < date.today():
+        if self.fecha and self.fecha < timezone.localdate():
             errors['fecha'] = 'No se pueden crear disponibilidades en fechas pasadas.'
         # Overlap detection (only if time/date are valid)
         if not errors.get('hora_fin') and not errors.get('fecha') and self.veterinario_id and self.fecha and self.hora_inicio and self.hora_fin:

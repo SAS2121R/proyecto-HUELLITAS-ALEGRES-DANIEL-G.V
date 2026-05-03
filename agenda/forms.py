@@ -142,10 +142,10 @@ class SolicitarCitaForm(forms.ModelForm):
         if user:
             self.fields['mascota'].queryset = Mascota.objects.filter(propietario=user).order_by('nombre')
         # Filter disponibilidad to active & unoccupied slots with future dates
-        from datetime import date as date_cls
+        from django.utils import timezone as dj_tz
         available_ids = Disponibilidad.objects.filter(
             activa=True,
-            fecha__gte=date_cls.today(),
+            fecha__gte=dj_tz.localdate(),
         ).exclude(
             pk__in=Cita.objects.filter(
                 estado__in=['Programada', 'Atendida']

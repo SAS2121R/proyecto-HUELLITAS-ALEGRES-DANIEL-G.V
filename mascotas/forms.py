@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from datetime import date
+from django.utils import timezone
 from .models import Mascota
 
 
@@ -17,6 +17,6 @@ class MascotaForm(forms.ModelForm):
 
     def clean_fecha_nacimiento(self):
         fecha = self.cleaned_data.get('fecha_nacimiento')
-        if fecha and fecha > date.today():
+        if fecha and fecha > timezone.localdate():
             raise ValidationError('La fecha de nacimiento no puede ser futura.')
         return fecha
