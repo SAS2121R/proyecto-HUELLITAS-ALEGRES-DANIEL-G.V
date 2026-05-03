@@ -142,7 +142,6 @@
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
-                                <input type="hidden" name="nuevo_estado" value="entregado">
                                 <div class="mb-3">
                                     <label for="id_foto_evidencia" class="form-label fw-bold"><i class="bi bi-camera"></i> Foto de Evidencia</label>
                                     <input type="file" name="foto_evidencia" id="id_foto_evidencia" class="form-control form-control-lg" accept="image/*">
@@ -156,7 +155,7 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="submit" class="btn btn-success btn-lg">
+                                <button type="submit" name="nuevo_estado" value="entregado" class="btn btn-success btn-lg">
                                     <i class="bi bi-check-circle"></i> Confirmar Entrega
                                 </button>
                             </div>
@@ -174,7 +173,6 @@
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
-                                <input type="hidden" name="nuevo_estado" value="cancelado">
                                 <div class="mb-3">
                                     <label for="incidente_notas_input" class="form-label fw-bold">Motivo del incidente *</label>
                                     <textarea name="incidente_notas" id="incidente_notas_input" class="form-control" rows="4" required placeholder="Describa qué pasó..."></textarea>
@@ -182,7 +180,7 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Volver</button>
-                                <button type="submit" class="btn btn-danger btn-lg">
+                                <button type="submit" name="nuevo_estado" value="cancelado" class="btn btn-danger btn-lg">
                                     <i class="bi bi-x-circle"></i> Confirmar Cancelación
                                 </button>
                             </div>
