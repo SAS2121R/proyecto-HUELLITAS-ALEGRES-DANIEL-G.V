@@ -57,9 +57,23 @@
                     <p class="card-text small text-muted"><i class="bi bi-clock"></i> {{ pedido.fecha_creacion|date:"d/m/Y H:i" }}</p>
                 </div>
                 <div class="card-footer bg-transparent">
-                    <a href="{% url 'entregas:detalle' pedido.pk %}" class="btn btn-primary btn-lg w-100">
+                    <a href="{% url 'entregas:detalle' pedido.pk %}" class="btn btn-primary w-100 mb-2">
                         <i class="bi bi-arrow-right-circle"></i> Ver Detalle
                     </a>
+                    {% if user.rol.nombre == 'Domiciliario' or user.rol.nombre == 'Administrador' %}
+                    {% if pedido.estado == 'pendiente' %}
+                    <form method="post" action="{% url 'entregas:cambiar_estado' pedido.pk %}" class="d-inline w-100">
+                        {% csrf_token %}
+                        <button type="submit" name="nuevo_estado" value="en_camino" class="btn btn-info w-100">
+                            <i class="bi bi-scooter"></i> Iniciar Entrega
+                        </button>
+                    </form>
+                    {% elif pedido.estado == 'en_camino' %}
+                    <a href="{% url 'entregas:detalle' pedido.pk %}" class="btn btn-success w-100">
+                        <i class="bi bi-box-seam"></i> Confirmar Entrega
+                    </a>
+                    {% endif %}
+                    {% endif %}
                 </div>
             </div>
         </div>
