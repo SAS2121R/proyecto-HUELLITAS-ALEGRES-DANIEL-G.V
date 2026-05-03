@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 
+{% block back_button %}{% include 'includes/back_button.html' %}{% endblock %}
 {% block content %}
 <div class="container py-4">
   <h1 class="mb-4">{{ form.instance.pk|yesno:'Editar Mascota,Registrar Mascota' }}</h1>

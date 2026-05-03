@@ -10,6 +10,9 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
+/* Reset browser defaults */
+html, body { margin: 0; padding: 0; }
+
 /* Nav brand */
 .navbar-brand i { font-size: 1.4rem; }
 
@@ -39,8 +42,14 @@
 .dropdown-item { border-radius: .375rem; padding: .5rem 1rem; margin: .1rem .25rem; }
 .dropdown-item:hover { background-color: #f0f0ff; }
 
-/* Ensure body has min-height for sticky footer */
+/* Full-height layout — navbar pinned to top, no gaps */
 body { min-height: 100vh; display: flex; flex-direction: column; background-color: #f8f9fa; }
+
+/* Sticky navbar with no top gap */
+.navbar { position: sticky; top: 0; z-index: 1030; }
+
+/* Messages sit below navbar without extra gap */
+.messages-container { margin-top: 0; }
 </style>
 {% block extra_css %}{% endblock %}
 </head>
@@ -64,11 +73,7 @@ body { min-height: 100vh; display: flex; flex-direction: column; background-colo
         <li class="nav-item"><a href="{% url 'historial:lista' %}" class="nav-link"><i class="bi bi-clipboard2-pulse"></i> Mi Historial</a></li>
         <li class="nav-item"><a href="{% url 'entregas:mis_pedidos' %}" class="nav-link"><i class="bi bi-bag-check"></i> Mis Pedidos</a></li>
         {% elif user.rol.nombre == 'Veterinario' %}
-        <li class="nav-item"><a href="{% url 'agenda:dashboard_vet' %}" class="nav-link"><i class="bi bi-speedometer2"></i> Mi Agenda</a></li>
-        <li class="nav-item"><a href="{% url 'mascotas:lista' %}" class="nav-link"><i class="bi bi-heart-pulse"></i> Mascotas</a></li>
-        <li class="nav-item"><a href="{% url 'agenda:lista_citas' %}" class="nav-link"><i class="bi bi-calendar"></i> Citas</a></li>
-        <li class="nav-item"><a href="{% url 'historial:lista' %}" class="nav-link"><i class="bi bi-clipboard2-pulse"></i> Historial</a></li>
-        <li class="nav-item"><a href="{% url 'servicios:lista' %}" class="nav-link"><i class="bi bi-heart-pulse"></i> Servicios</a></li>
+        {# Sin links centrales — la sidebar del dashboard vet tiene toda la navegación #}
         {% elif user.rol.nombre == 'Administrador' %}
         <li class="nav-item"><a href="{% url 'mascotas:lista' %}" class="nav-link"><i class="bi bi-emoji-heart-eyes"></i> Mascotas</a></li>
         <li class="nav-item"><a href="{% url 'agenda:lista_citas' %}" class="nav-link"><i class="bi bi-calendar"></i> Citas</a></li>
@@ -113,7 +118,7 @@ body { min-height: 100vh; display: flex; flex-direction: column; background-colo
 </nav>
 
 {% if messages %}
-<div class="container mt-3">
+<div class="messages-container container-fluid px-3 px-md-4 pt-3">
   {% for message in messages %}
   <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
     {{ message }}
@@ -123,7 +128,8 @@ body { min-height: 100vh; display: flex; flex-direction: column; background-colo
 </div>
 {% endif %}
 
-<div class="container-fluid mt-3 mb-5 px-3 px-md-4">
+<div class="container-fluid mb-5 px-3 px-md-4 pt-3">
+  {% block back_button %}{% endblock back_button %}
   {% block content %}{% endblock content %}
 </div>
 
