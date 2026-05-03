@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block back_button %}{% include 'includes/back_button.html' %}{% endblock %}
 {% block content %}
 <div class="container py-4" style="position: relative;">
   <!-- Imagen de fondo semitransparente -->
@@ -11,21 +12,32 @@
        z-index: -1;">
   </div>
   <h1>{{ form.instance.pk|yesno:"Editar producto,Nuevo producto" }}</h1>
+
+  {% if form.errors %}
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <strong>Error al guardar.</strong> Revisá los campos marcados en rojo.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {% endif %}
+
   <form method="post" novalidate>
     {% csrf_token %}
     {{ form.non_field_errors }}
+
     <div class="mb-3">
       {{ form.nombre.label_tag }}
       {{ form.nombre }}
       {{ form.nombre.errors }}
     </div>
+
     <div class="mb-3">
       {{ form.descripcion.label_tag }}
       {{ form.descripcion }}
       {{ form.descripcion.errors }}
     </div>
+
     <div class="row mb-3">
-      <div class="col">
+      <div class="col-md-4">
         {{ form.precio.label_tag }}
         <div class="input-group">
           <span class="input-group-text">$</span>
@@ -33,14 +45,37 @@
         </div>
         {{ form.precio.errors }}
       </div>
-      <div class="col">
+      <div class="col-md-4">
         {{ form.cantidad_stock.label_tag }}
         {{ form.cantidad_stock }}
         {{ form.cantidad_stock.errors }}
       </div>
+      <div class="col-md-4">
+        {{ form.stock_minimo.label_tag }}
+        {{ form.stock_minimo }}
+        {{ form.stock_minimo.errors }}
+      </div>
     </div>
-    <button type="submit" class="btn btn-success">Guardar</button>
-    <a href="{% url 'productos:lista' %}" class="btn btn-secondary">Cancelar</a>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        {{ form.categoria.label_tag }}
+        {{ form.categoria }}
+        {{ form.categoria.errors }}
+      </div>
+      <div class="col-md-6">
+        {{ form.proveedor.label_tag }}
+        {{ form.proveedor }}
+        {{ form.proveedor.errors }}
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-success">
+      <i class="bi bi-check-lg me-1"></i> Guardar
+    </button>
+    <a href="{% url 'productos:lista' %}" class="btn btn-secondary ms-2">
+      <i class="bi bi-x-lg me-1"></i> Cancelar
+    </a>
   </form>
 </div>
 {% endblock %}
