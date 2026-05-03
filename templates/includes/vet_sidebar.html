@@ -1,0 +1,46 @@
+{# Vet sidebar — included from base.html when user is Veterinario #}
+<div class="sidebar-heading">Principal</div>
+<nav class="nav flex-column">
+    <a href="{% url 'agenda:dashboard_vet' %}" class="nav-link {% if '/agenda/dashboard' in request.path %}active{% endif %}">
+        <i class="fas fa-tachometer-alt"></i> Inicio
+    </a>
+    <a href="{% url 'agenda:dashboard_vet' %}#citas" class="nav-link {% if '/agenda/' in request.path and 'dashboard' not in request.path %}active{% endif %}">
+        <i class="fas fa-calendar-check"></i> Mi Agenda
+    </a>
+    <a href="{% url 'agenda:lista_citas' %}" class="nav-link {% if '/agenda/' in request.path and 'dashboard' not in request.path %}active{% endif %}">
+        <i class="fas fa-clock"></i> Citas
+    </a>
+</nav>
+
+<div class="sidebar-heading">Clínica</div>
+<nav class="nav flex-column">
+    <a href="{% url 'mascotas:lista' %}" class="nav-link {% if '/mascotas/' in request.path %}active{% endif %}">
+        <i class="fas fa-paw"></i> Pacientes
+    </a>
+    <a href="{% url 'historial:lista' %}" class="nav-link {% if '/historial/' in request.path %}active{% endif %}">
+        <i class="fas fa-file-medical"></i> Historial
+    </a>
+    <a href="{% url 'servicios:lista' %}" class="nav-link {% if '/servicios/' in request.path %}active{% endif %}">
+        <i class="fas fa-stethoscope"></i> Servicios
+    </a>
+</nav>
+
+<div class="sidebar-heading">Acciones</div>
+<nav class="nav flex-column">
+    <a href="{% url 'agenda:crear_disponibilidad' %}" class="nav-link {% if '/disponibilidad/crear' in request.path %}active{% endif %}">
+        <i class="fas fa-plus-circle"></i> Nueva Disponibilidad
+    </a>
+    <a href="{% url 'historial:crear' %}" class="nav-link {% if '/historial/crear' in request.path %}active{% endif %}">
+        <i class="fas fa-notes-medical"></i> Nuevo Historial
+    </a>
+</nav>
+
+<div class="sidebar-heading">Mi Perfil</div>
+<nav class="nav flex-column">
+    <a href="{% url 'usuarios:mi_perfil' %}" class="nav-link {% if '/perfil' in request.path %}active{% endif %}">
+        <i class="fas fa-user-circle"></i> Mi Perfil
+    </a>
+    <a href="{% url 'usuarios:cambiar_password' %}" class="nav-link {% if '/password' in request.path %}active{% endif %}">
+        <i class="fas fa-key"></i> Contraseña
+    </a>
+</nav>

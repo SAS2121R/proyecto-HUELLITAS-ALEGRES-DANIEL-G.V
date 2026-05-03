@@ -4,40 +4,6 @@
 
 {% block extra_css %}
 <style>
-    .vet-sidebar {
-        min-height: calc(100vh - 56px);
-        background: linear-gradient(180deg, #1a3a4a 0%, #1e5c6e 100%);
-        padding-top: 1rem;
-        margin: -1rem 0 0 0;
-    }
-    .vet-sidebar .nav-link {
-        color: rgba(255,255,255,.75);
-        padding: .65rem 1rem;
-        border-radius: .375rem;
-        margin: .12rem .5rem;
-        transition: all .2s;
-        font-size: .9rem;
-    }
-    .vet-sidebar .nav-link:hover,
-    .vet-sidebar .nav-link.active {
-        color: #fff;
-        background: rgba(44,159,175,.35);
-    }
-    .vet-sidebar .nav-link.active {
-        border-left: 3px solid #2c9faf;
-    }
-    .vet-sidebar .nav-link i {
-        width: 1.5rem;
-        text-align: center;
-    }
-    .vet-sidebar .sidebar-heading {
-        color: rgba(255,255,255,.45);
-        font-size: .65rem;
-        text-transform: uppercase;
-        letter-spacing: .12rem;
-        padding: .5rem 1rem .2rem;
-        margin-top: .5rem;
-    }
     .agenda-card {
         border: none;
         border-radius: .75rem;
@@ -47,242 +13,188 @@
         border-radius: .75rem .75rem 0 0;
         font-weight: 600;
     }
-    @media (max-width: 767.98px) {
-        .vet-sidebar {
-            min-height: auto;
-            margin-bottom: 1rem;
-        }
-    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="row g-0">
-    <!-- Sidebar -->
-    <div class="col-md-3 col-lg-2 vet-sidebar">
-        <div class="sidebar-heading">Principal</div>
-        <nav class="nav flex-column">
-            <a href="{% url 'agenda:dashboard_vet' %}" class="nav-link active">
-                <i class="fas fa-tachometer-alt"></i> Inicio
-            </a>
-            <a href="{% url 'agenda:dashboard_vet' %}" class="nav-link">
-                <i class="fas fa-calendar-check"></i> Mi Agenda
-            </a>
-            <a href="{% url 'agenda:lista_citas' %}" class="nav-link">
-                <i class="fas fa-clock"></i> Citas
-            </a>
-        </nav>
-
-        <div class="sidebar-heading">Clínica</div>
-        <nav class="nav flex-column">
-            <a href="{% url 'mascotas:lista' %}" class="nav-link">
-                <i class="fas fa-paw"></i> Pacientes
-            </a>
-            <a href="{% url 'historial:lista' %}" class="nav-link">
-                <i class="fas fa-file-medical"></i> Historial
-            </a>
-            <a href="{% url 'servicios:lista' %}" class="nav-link">
-                <i class="fas fa-stethoscope"></i> Servicios
-            </a>
-        </nav>
-
-        <div class="sidebar-heading">Acciones</div>
-        <nav class="nav flex-column">
-            <a href="{% url 'agenda:crear_disponibilidad' %}" class="nav-link">
-                <i class="fas fa-plus-circle"></i> Nueva Disponibilidad
-            </a>
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1" style="color: #1a5c6e;">
             {% if user.rol.nombre == 'Veterinario' %}
-            <a href="{% url 'historial:crear' %}" class="nav-link">
-                <i class="fas fa-notes-medical"></i> Nuevo Historial
-            </a>
+                <i class="fas fa-calendar-check me-2"></i>Mi Agenda
+            {% else %}
+                <i class="fas fa-calendar-alt me-2"></i>Agenda General
             {% endif %}
-        </nav>
+        </h1>
+        <p class="text-muted mb-0">
+            {% if user.rol.nombre == 'Veterinario' %}
+                Dr/a. {{ user.first_name|default:user.username }}
+            {% else %}
+                Vista administrativa completa
+            {% endif %}
+        </p>
+    </div>
+    <div>
+        <a href="{% url 'agenda:crear_disponibilidad' %}" class="btn btn-sm" style="background-color: #2c9faf; color: #fff; border-radius: 2rem;">
+            <i class="fas fa-plus me-1"></i> Nueva Disponibilidad
+        </a>
+    </div>
+</div>
+
+<!-- Disponibilidades y Citas -->
+<div class="row g-3">
+    <div class="col-lg-6 mb-3">
+        <div class="card agenda-card shadow-sm">
+            <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #2c9faf 0%, #1e8a9e 100%);">
+                <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Disponibilidades</h5>
+                <a href="{% url 'agenda:crear_disponibilidad' %}" class="btn btn-sm btn-light" style="border-radius: 2rem;">
+                    <i class="fas fa-plus"></i> Nueva
+                </a>
+            </div>
+            <div class="card-body">
+                {% if page_obj_disp %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                {% if user.rol.nombre == 'Administrador' %}
+                                <th>Veterinario</th>
+                                {% endif %}
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for d in page_obj_disp %}
+                            <tr>
+                                {% if user.rol.nombre == 'Administrador' %}
+                                <td>{{ d.veterinario }}</td>
+                                {% endif %}
+                                <td>{{ d.fecha|date:"d/m/Y" }}</td>
+                                <td>{{ d.hora_inicio|time:"H:i" }}–{{ d.hora_fin|time:"H:i" }}</td>
+                                <td>
+                                    {% if d.activa %}
+                                        {% if d.esta_ocupada %}
+                                        <span class="badge bg-warning text-dark"><i class="fas fa-exclamation-circle me-1"></i>Ocupada</span>
+                                        {% else %}
+                                        <span class="badge" style="background-color: #2c9faf;"><i class="fas fa-check-circle me-1"></i>Libre</span>
+                                        {% endif %}
+                                    {% else %}
+                                    <span class="badge bg-secondary"><i class="fas fa-minus-circle me-1"></i>Inactiva</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'agenda:editar_disponibilidad' d.pk %}" class="btn btn-sm btn-outline-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'agenda:eliminar_disponibilidad' d.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if page_obj_disp.paginator.num_pages > 1 %}
+                <nav aria-label="Disponibilidades pagination" class="mt-3">
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        {% if page_obj_disp.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?disp_page={{ page_obj_disp.previous_page_number }}&cita_page={{ page_obj_citas.number }}">&#8592;</a></li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">&#8592;</span></li>
+                        {% endif %}
+                        {% for num in page_obj_disp.paginator.page_range %}
+                          {% if page_obj_disp.number == num %}
+                          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                          {% elif num >= page_obj_disp.number|add:-2 and num <= page_obj_disp.number|add:2 %}
+                          <li class="page-item"><a class="page-link" href="?disp_page={{ num }}&cita_page={{ page_obj_citas.number }}">{{ num }}</a></li>
+                          {% endif %}
+                        {% endfor %}
+                        {% if page_obj_disp.has_next %}
+                        <li class="page-item"><a class="page-link" href="?disp_page={{ page_obj_disp.next_page_number }}&cita_page={{ page_obj_citas.number }}">&#8594;</a></li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">&#8594;</span></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                {% else %}
+                <p class="text-muted text-center mb-0"><i class="fas fa-calendar-times me-1"></i>No hay disponibilidades registradas.</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="col-md-9 col-lg-10" style="min-height: calc(100vh - 56px); background-color: #f0f7f9; margin-top: -1rem;">
-        <div class="p-3 p-md-4 pt-4">
-            <!-- Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1 class="h3 mb-1" style="color: #1a5c6e;">
-                        {% if user.rol.nombre == 'Veterinario' %}
-                            <i class="fas fa-calendar-check me-2"></i>Mi Agenda
-                        {% else %}
-                            <i class="fas fa-calendar-alt me-2"></i>Agenda General
-                        {% endif %}
-                    </h1>
-                    <p class="text-muted mb-0">
-                        {% if user.rol.nombre == 'Veterinario' %}
-                            Dr/a. {{ user.first_name|default:user.username }}
-                        {% else %}
-                            Vista administrativa completa
-                        {% endif %}
-                    </p>
-                </div>
-                <div>
-                    <a href="{% url 'agenda:crear_disponibilidad' %}" class="btn btn-sm" style="background-color: #2c9faf; color: #fff; border-radius: 2rem;">
-                        <i class="fas fa-plus me-1"></i> Nueva Disponibilidad
-                    </a>
-                </div>
+    <div class="col-lg-6 mb-3">
+        <div class="card agenda-card shadow-sm">
+            <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);">
+                <h5 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Citas</h5>
+                <a href="{% url 'agenda:lista_citas' %}" class="btn btn-sm btn-light" style="border-radius: 2rem;">
+                    <i class="fas fa-list"></i> Ver todas
+                </a>
             </div>
-
-            <!-- Disponibilidades y Citas -->
-            <div class="row g-3">
-                <div class="col-lg-6 mb-3">
-                    <div class="card agenda-card shadow-sm">
-                        <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #2c9faf 0%, #1e8a9e 100%);">
-                            <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Disponibilidades</h5>
-                            <a href="{% url 'agenda:crear_disponibilidad' %}" class="btn btn-sm btn-light" style="border-radius: 2rem;">
-                                <i class="fas fa-plus"></i> Nueva
-                            </a>
-                        </div>
-                        <div class="card-body">
-                            {% if page_obj_disp %}
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            {% if user.rol.nombre == 'Administrador' %}
-                                            <th>Veterinario</th>
-                                            {% endif %}
-                                            <th>Fecha</th>
-                                            <th>Hora</th>
-                                            <th>Estado</th>
-                                            <th>Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for d in page_obj_disp %}
-                                        <tr>
-                                            {% if user.rol.nombre == 'Administrador' %}
-                                            <td>{{ d.veterinario }}</td>
-                                            {% endif %}
-                                            <td>{{ d.fecha|date:"d/m/Y" }}</td>
-                                            <td>{{ d.hora_inicio|time:"H:i" }}–{{ d.hora_fin|time:"H:i" }}</td>
-                                            <td>
-                                                {% if d.activa %}
-                                                    {% if d.esta_ocupada %}
-                                                    <span class="badge bg-warning text-dark"><i class="fas fa-exclamation-circle me-1"></i>Ocupada</span>
-                                                    {% else %}
-                                                    <span class="badge" style="background-color: #2c9faf;"><i class="fas fa-check-circle me-1"></i>Libre</span>
-                                                    {% endif %}
-                                                {% else %}
-                                                <span class="badge bg-secondary"><i class="fas fa-minus-circle me-1"></i>Inactiva</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                <a href="{% url 'agenda:editar_disponibilidad' d.pk %}" class="btn btn-sm btn-outline-warning" title="Editar">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <a href="{% url 'agenda:eliminar_disponibilidad' d.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                            {% if page_obj_disp.paginator.num_pages > 1 %}
-                            <nav aria-label="Disponibilidades pagination" class="mt-3">
-                                <ul class="pagination pagination-sm justify-content-center mb-0">
-                                    {% if page_obj_disp.has_previous %}
-                                    <li class="page-item"><a class="page-link" href="?disp_page={{ page_obj_disp.previous_page_number }}&cita_page={{ page_obj_citas.number }}">&#8592;</a></li>
-                                    {% else %}
-                                    <li class="page-item disabled"><span class="page-link">&#8592;</span></li>
+            <div class="card-body">
+                {% if page_obj_citas %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Paciente</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cita in page_obj_citas %}
+                            <tr>
+                                <td><i class="fas fa-paw me-1" style="color: #2c9faf;"></i> {{ cita.mascota }}</td>
+                                <td>{{ cita.disponibilidad.fecha|date:"d/m/Y" }}</td>
+                                <td>
+                                    {% if cita.estado == 'Programada' %}
+                                    <span class="badge" style="background-color: #2c9faf;"><i class="fas fa-clock me-1"></i>Programada</span>
+                                    {% elif cita.estado == 'Atendida' %}
+                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Atendida</span>
+                                    {% elif cita.estado == 'Cancelada' %}
+                                    <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Cancelada</span>
                                     {% endif %}
-                                    {% for num in page_obj_disp.paginator.page_range %}
-                                      {% if page_obj_disp.number == num %}
-                                      <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                                      {% elif num >= page_obj_disp.number|add:-2 and num <= page_obj_disp.number|add:2 %}
-                                      <li class="page-item"><a class="page-link" href="?disp_page={{ num }}&cita_page={{ page_obj_citas.number }}">{{ num }}</a></li>
-                                      {% endif %}
-                                    {% endfor %}
-                                    {% if page_obj_disp.has_next %}
-                                    <li class="page-item"><a class="page-link" href="?disp_page={{ page_obj_disp.next_page_number }}&cita_page={{ page_obj_citas.number }}">&#8594;</a></li>
-                                    {% else %}
-                                    <li class="page-item disabled"><span class="page-link">&#8594;</span></li>
-                                    {% endif %}
-                                </ul>
-                            </nav>
-                            {% endif %}
-                            {% else %}
-                            <p class="text-muted text-center mb-0"><i class="fas fa-calendar-times me-1"></i>No hay disponibilidades registradas.</p>
-                            {% endif %}
-                        </div>
-                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-
-                <div class="col-lg-6 mb-3">
-                    <div class="card agenda-card shadow-sm">
-                        <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);">
-                            <h5 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Citas</h5>
-                            <a href="{% url 'agenda:lista_citas' %}" class="btn btn-sm btn-light" style="border-radius: 2rem;">
-                                <i class="fas fa-list"></i> Ver todas
-                            </a>
-                        </div>
-                        <div class="card-body">
-                            {% if page_obj_citas %}
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Paciente</th>
-                                            <th>Fecha</th>
-                                            <th>Estado</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for cita in page_obj_citas %}
-                                        <tr>
-                                            <td><i class="fas fa-paw me-1" style="color: #2c9faf;"></i> {{ cita.mascota }}</td>
-                                            <td>{{ cita.disponibilidad.fecha|date:"d/m/Y" }}</td>
-                                            <td>
-                                                {% if cita.estado == 'Programada' %}
-                                                <span class="badge" style="background-color: #2c9faf;"><i class="fas fa-clock me-1"></i>Programada</span>
-                                                {% elif cita.estado == 'Atendida' %}
-                                                <span class="badge bg-success"><i class="fas fa-check me-1"></i>Atendida</span>
-                                                {% elif cita.estado == 'Cancelada' %}
-                                                <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Cancelada</span>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                            {% if page_obj_citas.paginator.num_pages > 1 %}
-                            <nav aria-label="Citas pagination" class="mt-3">
-                                <ul class="pagination pagination-sm justify-content-center mb-0">
-                                    {% if page_obj_citas.has_previous %}
-                                    <li class="page-item"><a class="page-link" href="?disp_page={{ page_obj_disp.number }}&cita_page={{ page_obj_citas.previous_page_number }}">&#8592;</a></li>
-                                    {% else %}
-                                    <li class="page-item disabled"><span class="page-link">&#8592;</span></li>
-                                    {% endif %}
-                                    {% for num in page_obj_citas.paginator.page_range %}
-                                      {% if page_obj_citas.number == num %}
-                                      <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                                      {% elif num >= page_obj_citas.number|add:-2 and num <= page_obj_citas.number|add:2 %}
-                                      <li class="page-item"><a class="page-link" href="?disp_page={{ page_obj_disp.number }}&cita_page={{ num }}">{{ num }}</a></li>
-                                      {% endif %}
-                                    {% endfor %}
-                                    {% if page_obj_citas.has_next %}
-                                    <li class="page-item"><a class="page-link" href="?disp_page={{ page_obj_disp.number }}&cita_page={{ page_obj_citas.next_page_number }}">&#8594;</a></li>
-                                    {% else %}
-                                    <li class="page-item disabled"><span class="page-link">&#8594;</span></li>
-                                    {% endif %}
-                                </ul>
-                            </nav>
-                            {% endif %}
-                            {% else %}
-                            <p class="text-muted text-center mb-0"><i class="fas fa-calendar-check me-1"></i>No hay citas registradas.</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+                {% if page_obj_citas.paginator.num_pages > 1 %}
+                <nav aria-label="Citas pagination" class="mt-3">
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        {% if page_obj_citas.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?disp_page={{ page_obj_disp.number }}&cita_page={{ page_obj_citas.previous_page_number }}">&#8592;</a></li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">&#8592;</span></li>
+                        {% endif %}
+                        {% for num in page_obj_citas.paginator.page_range %}
+                          {% if page_obj_citas.number == num %}
+                          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                          {% elif num >= page_obj_citas.number|add:-2 and num <= page_obj_citas.number|add:2 %}
+                          <li class="page-item"><a class="page-link" href="?disp_page={{ page_obj_disp.number }}&cita_page={{ num }}">{{ num }}</a></li>
+                          {% endif %}
+                        {% endfor %}
+                        {% if page_obj_citas.has_next %}
+                        <li class="page-item"><a class="page-link" href="?disp_page={{ page_obj_disp.number }}&cita_page={{ page_obj_citas.next_page_number }}">&#8594;</a></li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">&#8594;</span></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                {% else %}
+                <p class="text-muted text-center mb-0"><i class="fas fa-calendar-check me-1"></i>No hay citas registradas.</p>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock content %}

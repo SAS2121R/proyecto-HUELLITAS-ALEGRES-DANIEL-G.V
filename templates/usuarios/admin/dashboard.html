@@ -4,40 +4,6 @@
 
 {% block extra_css %}
 <style>
-    .admin-sidebar {
-        min-height: calc(100vh - 56px);
-        background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-        padding-top: 1rem;
-        margin: -1rem 0 0 0;
-    }
-    .admin-sidebar .nav-link {
-        color: rgba(255,255,255,.7);
-        padding: .6rem 1rem;
-        border-radius: .375rem;
-        margin: .15rem .5rem;
-        transition: all .2s;
-    }
-    .admin-sidebar .nav-link:hover,
-    .admin-sidebar .nav-link.active {
-        color: #fff;
-        background: rgba(255,255,255,.1);
-    }
-    .admin-sidebar .nav-link.active {
-        background: rgba(102,126,234,.3);
-        border-left: 3px solid #667eea;
-    }
-    .admin-sidebar .nav-link i {
-        width: 1.5rem;
-        text-align: center;
-    }
-    .admin-sidebar .sidebar-heading {
-        color: rgba(255,255,255,.4);
-        font-size: .7rem;
-        text-transform: uppercase;
-        letter-spacing: .1rem;
-        padding: .5rem 1rem .3rem;
-        margin-top: .5rem;
-    }
     .metric-card {
         border: none;
         border-radius: .75rem;
@@ -60,290 +26,213 @@
         text-transform: uppercase;
         letter-spacing: .05rem;
     }
-    @media (max-width: 767.98px) {
-        .admin-sidebar {
-            min-height: auto;
-            margin-bottom: 1rem;
-        }
-    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="row g-0">
-    <!-- Sidebar -->
-    <div class="col-md-3 col-lg-2 admin-sidebar">
-        <div class="sidebar-heading">Principal</div>
-        <nav class="nav flex-column">
-            <a href="{% url 'usuarios:admin_dashboard' %}" class="nav-link active">
-                <i class="bi bi-speedometer2"></i> Dashboard
-            </a>
-            <a href="{% url 'usuarios:admin_users' %}" class="nav-link">
-                <i class="bi bi-people"></i> Usuarios
-            </a>
-            <a href="{% url 'usuarios:admin_configuracion' %}" class="nav-link">
-                <i class="bi bi-building"></i> Configuración
-            </a>
-        </nav>
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1"><i class="bi bi-speedometer2"></i> Panel de Administración</h1>
+        <p class="text-muted mb-0">Bienvenido/a, {{ user.get_full_name|default:user.email }}</p>
+    </div>
+    <div>
+        <a href="{% url 'reportes:admin_metricas' %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-bar-chart-line"></i> Métricas
+        </a>
+    </div>
+</div>
 
-        <div class="sidebar-heading">Gestión</div>
-        <nav class="nav flex-column">
-            <a href="{% url 'mascotas:lista' %}" class="nav-link">
-                <i class="bi bi-emoji-heart-eyes"></i> Mascotas
-            </a>
-            <a href="{% url 'agenda:lista_citas' %}" class="nav-link">
-                <i class="bi bi-calendar"></i> Citas
-            </a>
-            <a href="{% url 'historial:lista' %}" class="nav-link">
-                <i class="bi bi-clipboard2-pulse"></i> Historial
-            </a>
-            <a href="{% url 'servicios:lista' %}" class="nav-link">
-                <i class="bi bi-heart-pulse"></i> Servicios
-            </a>
-        </nav>
+<!-- Metrics Row -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card metric-card shadow-sm text-white bg-primary">
+            <div class="card-body">
+                <i class="bi bi-people"></i>
+                <div class="metric-value">{{ total_users }}</div>
+                <div class="metric-label">Usuarios</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card metric-card shadow-sm text-white bg-danger">
+            <div class="card-body">
+                <i class="bi bi-emoji-heart-eyes"></i>
+                <div class="metric-value">{{ total_mascotas }}</div>
+                <div class="metric-label">Mascotas</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card metric-card shadow-sm text-white bg-success">
+            <div class="card-body">
+                <i class="bi bi-calendar-check"></i>
+                <div class="metric-value">{{ citas_hoy }}</div>
+                <div class="metric-label">Citas Hoy</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card metric-card shadow-sm text-white bg-warning">
+            <div class="card-body">
+                <i class="bi bi-cash-coin"></i>
+                <div class="metric-value">${{ ingresos_mes|floatformat:0 }}</div>
+                <div class="metric-label">Ingresos Mes</div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        <div class="sidebar-heading">Inventario & Entregas</div>
-        <nav class="nav flex-column">
-            <a href="{% url 'productos:lista' %}" class="nav-link">
-                <i class="bi bi-box-seam"></i> Inventario
-            </a>
-            <a href="{% url 'proveedores:lista' %}" class="nav-link">
-                <i class="bi bi-shop-window"></i> Proveedores
-            </a>
-            <a href="{% url 'entregas:dashboard' %}" class="nav-link">
-                <i class="bi bi-truck"></i> Entregas
-            </a>
-            <a href="{% url 'entregas:torre_control' %}" class="nav-link">
-                <i class="bi bi-broadcast"></i> Torre de Control
-            </a>
-        </nav>
-
-        <div class="sidebar-heading">Reportes</div>
-        <nav class="nav flex-column">
-            <a href="{% url 'reportes:admin_metricas' %}" class="nav-link">
-                <i class="bi bi-bar-chart-line"></i> Métricas
-            </a>
-            <a href="{% url 'reportes:citas' %}" class="nav-link">
-                <i class="bi bi-file-earmark-text"></i> Reporte Citas
-            </a>
-            <a href="{% url 'reportes:inventario' %}" class="nav-link">
-                <i class="bi bi-file-earmark-bar-graph"></i> Reporte Inventario
-            </a>
-            <a href="{% url 'reportes:servicios' %}" class="nav-link">
-                <i class="bi bi-file-earmark-medical"></i> Reporte Servicios
-            </a>
-        </nav>
+<!-- Role Breakdown + Orders Status -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-people"></i> Usuarios por Rol</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-person"></i> Clientes</span>
+                        <span class="badge bg-primary rounded-pill">{{ total_clientes }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-heart-pulse"></i> Veterinarios</span>
+                        <span class="badge bg-success rounded-pill">{{ total_veterinarios }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-truck"></i> Domiciliarios</span>
+                        <span class="badge bg-info rounded-pill">{{ total_domiciliarios }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-shield-check"></i> Administradores</span>
+                        <span class="badge bg-dark rounded-pill">{{ total_admins }}</span>
+                    </li>
+                    {% if inactive_users %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center text-danger">
+                        <span><i class="bi bi-person-x"></i> Inactivos</span>
+                        <span class="badge bg-danger rounded-pill">{{ inactive_users }}</span>
+                    </li>
+                    {% endif %}
+                </ul>
+                <a href="{% url 'usuarios:admin_users' %}" class="btn btn-outline-primary btn-sm mt-2 w-100">
+                    <i class="bi bi-gear"></i> Gestionar Usuarios
+                </a>
+            </div>
+        </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="col-md-9 col-lg-10 bg-light" style="min-height: calc(100vh - 56px); margin-top: -1rem;">
-        <div class="p-3 p-md-4 pt-4">
-            <!-- Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1 class="h3 mb-1"><i class="bi bi-speedometer2"></i> Panel de Administración</h1>
-                    <p class="text-muted mb-0">Bienvenido/a, {{ user.get_full_name|default:user.email }}</p>
-                </div>
-                <div>
-                    <a href="{% url 'reportes:admin_metricas' %}" class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-bar-chart-line"></i> Métricas
-                    </a>
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="bi bi-box-seam"></i> Pedidos</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-clock text-warning"></i> Pendientes</span>
+                        <span class="badge bg-warning text-dark rounded-pill">{{ pedidos_pendientes }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-truck text-info"></i> En Camino</span>
+                        <span class="badge bg-info rounded-pill">{{ pedidos_en_camino }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-check-circle text-success"></i> Entregados (mes)</span>
+                        <span class="badge bg-success rounded-pill">{{ pedidos_entregados_mes }}</span>
+                    </li>
+                </ul>
+                <a href="{% url 'entregas:dashboard' %}" class="btn btn-outline-warning btn-sm mt-2 w-100">
+                    <i class="bi bi-eye"></i> Ver Pedidos
+                </a>
+                <a href="{% url 'entregas:torre_control' %}" class="btn btn-outline-dark btn-sm mt-1 w-100">
+                    <i class="bi bi-broadcast"></i> Torre de Control
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-calendar"></i> Citas</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-calendar-event"></i> Hoy</span>
+                        <span class="badge bg-primary rounded-pill">{{ citas_hoy }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-calendar-month"></i> Este Mes</span>
+                        <span class="badge bg-secondary rounded-pill">{{ citas_mes }}</span>
+                    </li>
+                </ul>
+                <a href="{% url 'agenda:lista_citas' %}" class="btn btn-outline-success btn-sm mt-2 w-100">
+                    <i class="bi bi-calendar"></i> Ver Citas
+                </a>
+                <a href="{% url 'reportes:admin_metricas' %}" class="btn btn-outline-success btn-sm mt-1 w-100">
+                    <i class="bi bi-bar-chart-line"></i> Métricas
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="bi bi-person-plus"></i> Usuarios Recientes</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr><th>Nombre</th><th>Rol</th><th>Fecha</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for u in recent_users %}
+                            <tr>
+                                <td>{{ u.get_full_name|default:u.email }}</td>
+                                <td><span class="badge bg-{% if u.rol.nombre == 'Administrador' %}dark{% elif u.rol.nombre == 'Veterinario' %}success{% elif u.rol.nombre == 'Domiciliario' %}info{% else %}primary{% endif %}">{{ u.rol.nombre }}</span></td>
+                                <td>{{ u.fecha_registro|date:"d/m/Y" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center text-muted py-3">Sin usuarios</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Metrics Row -->
-            <div class="row g-3 mb-4">
-                <div class="col-6 col-lg-3">
-                    <div class="card metric-card shadow-sm text-white bg-primary">
-                        <div class="card-body">
-                            <i class="bi bi-people"></i>
-                            <div class="metric-value">{{ total_users }}</div>
-                            <div class="metric-label">Usuarios</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-lg-3">
-                    <div class="card metric-card shadow-sm text-white bg-danger">
-                        <div class="card-body">
-                            <i class="bi bi-emoji-heart-eyes"></i>
-                            <div class="metric-value">{{ total_mascotas }}</div>
-                            <div class="metric-label">Mascotas</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-lg-3">
-                    <div class="card metric-card shadow-sm text-white bg-success">
-                        <div class="card-body">
-                            <i class="bi bi-calendar-check"></i>
-                            <div class="metric-value">{{ citas_hoy }}</div>
-                            <div class="metric-label">Citas Hoy</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-lg-3">
-                    <div class="card metric-card shadow-sm text-white bg-warning">
-                        <div class="card-body">
-                            <i class="bi bi-cash-coin"></i>
-                            <div class="metric-value">${{ ingresos_mes|floatformat:0 }}</div>
-                            <div class="metric-label">Ingresos Mes</div>
-                        </div>
-                    </div>
-                </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="bi bi-bag-check"></i> Pedidos Recientes</h5>
             </div>
-
-            <!-- Role Breakdown + Orders Status -->
-            <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-people"></i> Usuarios por Rol</h5>
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span><i class="bi bi-person"></i> Clientes</span>
-                                    <span class="badge bg-primary rounded-pill">{{ total_clientes }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span><i class="bi bi-heart-pulse"></i> Veterinarios</span>
-                                    <span class="badge bg-success rounded-pill">{{ total_veterinarios }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span><i class="bi bi-truck"></i> Domiciliarios</span>
-                                    <span class="badge bg-info rounded-pill">{{ total_domiciliarios }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span><i class="bi bi-shield-check"></i> Administradores</span>
-                                    <span class="badge bg-dark rounded-pill">{{ total_admins }}</span>
-                                </li>
-                                {% if inactive_users %}
-                                <li class="list-group-item d-flex justify-content-between align-items-center text-danger">
-                                    <span><i class="bi bi-person-x"></i> Inactivos</span>
-                                    <span class="badge bg-danger rounded-pill">{{ inactive_users }}</span>
-                                </li>
-                                {% endif %}
-                            </ul>
-                            <a href="{% url 'usuarios:admin_users' %}" class="btn btn-outline-primary btn-sm mt-2 w-100">
-                                <i class="bi bi-gear"></i> Gestionar Usuarios
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-header bg-warning text-dark">
-                            <h5 class="mb-0"><i class="bi bi-box-seam"></i> Pedidos</h5>
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span><i class="bi bi-clock text-warning"></i> Pendientes</span>
-                                    <span class="badge bg-warning text-dark rounded-pill">{{ pedidos_pendientes }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span><i class="bi bi-truck text-info"></i> En Camino</span>
-                                    <span class="badge bg-info rounded-pill">{{ pedidos_en_camino }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span><i class="bi bi-check-circle text-success"></i> Entregados (mes)</span>
-                                    <span class="badge bg-success rounded-pill">{{ pedidos_entregados_mes }}</span>
-                                </li>
-                            </ul>
-                            <a href="{% url 'entregas:dashboard' %}" class="btn btn-outline-warning btn-sm mt-2 w-100">
-                                <i class="bi bi-eye"></i> Ver Pedidos
-                            </a>
-                            <a href="{% url 'entregas:torre_control' %}" class="btn btn-outline-dark btn-sm mt-1 w-100">
-                                <i class="bi bi-broadcast"></i> Torre de Control
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-header bg-success text-white">
-                            <h5 class="mb-0"><i class="bi bi-calendar"></i> Citas</h5>
-                        </div>
-                        <div class="card-body">
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span><i class="bi bi-calendar-event"></i> Hoy</span>
-                                    <span class="badge bg-primary rounded-pill">{{ citas_hoy }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span><i class="bi bi-calendar-month"></i> Este Mes</span>
-                                    <span class="badge bg-secondary rounded-pill">{{ citas_mes }}</span>
-                                </li>
-                            </ul>
-                            <a href="{% url 'agenda:lista_citas' %}" class="btn btn-outline-success btn-sm mt-2 w-100">
-                                <i class="bi bi-calendar"></i> Ver Citas
-                            </a>
-                            <a href="{% url 'reportes:admin_metricas' %}" class="btn btn-outline-success btn-sm mt-1 w-100">
-                                <i class="bi bi-bar-chart-line"></i> Métricas
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-header bg-dark text-white">
-                            <h5 class="mb-0"><i class="bi bi-person-plus"></i> Usuarios Recientes</h5>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-sm mb-0">
-                                    <thead class="table-light">
-                                        <tr><th>Nombre</th><th>Rol</th><th>Fecha</th></tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for u in recent_users %}
-                                        <tr>
-                                            <td>{{ u.get_full_name|default:u.email }}</td>
-                                            <td><span class="badge bg-{% if u.rol.nombre == 'Administrador' %}dark{% elif u.rol.nombre == 'Veterinario' %}success{% elif u.rol.nombre == 'Domiciliario' %}info{% else %}primary{% endif %}">{{ u.rol.nombre }}</span></td>
-                                            <td>{{ u.fecha_registro|date:"d/m/Y" }}</td>
-                                        </tr>
-                                        {% empty %}
-                                        <tr><td colspan="3" class="text-center text-muted py-3">Sin usuarios</td></tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-header bg-dark text-white">
-                            <h5 class="mb-0"><i class="bi bi-bag-check"></i> Pedidos Recientes</h5>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-sm mb-0">
-                                    <thead class="table-light">
-                                        <tr><th>#</th><th>Cliente</th><th>Estado</th><th>Fecha</th></tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for p in recent_pedidos %}
-                                        <tr>
-                                            <td><a href="{% url 'entregas:detalle' p.pk %}">#{{ p.pk }}</a></td>
-                                            <td>{{ p.cliente.get_full_name|default:p.cliente.email }}</td>
-                                            <td><span class="badge bg-{% if p.estado == 'pendiente' %}warning text-dark{% elif p.estado == 'en_camino' %}info{% elif p.estado == 'entregado' %}success{% else %}danger{% endif %}">{{ p.get_estado_display }}</span></td>
-                                            <td>{{ p.fecha_creacion|date:"d/m/Y H:i" }}</td>
-                                        </tr>
-                                        {% empty %}
-                                        <tr><td colspan="4" class="text-center text-muted py-3">Sin pedidos</td></tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr><th>#</th><th>Cliente</th><th>Estado</th><th>Fecha</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for p in recent_pedidos %}
+                            <tr>
+                                <td><a href="{% url 'entregas:detalle' p.pk %}">#{{ p.pk }}</a></td>
+                                <td>{{ p.cliente.get_full_name|default:p.cliente.email }}</td>
+                                <td><span class="badge bg-{% if p.estado == 'pendiente' %}warning text-dark{% elif p.estado == 'en_camino' %}info{% elif p.estado == 'entregado' %}success{% else %}danger{% endif %}">{{ p.get_estado_display }}</span></td>
+                                <td>{{ p.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-3">Sin pedidos</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

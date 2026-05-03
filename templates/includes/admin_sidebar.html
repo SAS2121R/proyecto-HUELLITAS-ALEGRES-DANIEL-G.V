@@ -1,0 +1,61 @@
+{# Admin sidebar — included from base.html when user is Administrador #}
+<div class="sidebar-heading">Principal</div>
+<nav class="nav flex-column">
+    <a href="{% url 'usuarios:admin_dashboard' %}" class="nav-link {% if '/admin' in request.path and '/usuarios' in request.path %}active{% endif %}">
+        <i class="bi bi-speedometer2"></i> Dashboard
+    </a>
+    <a href="{% url 'usuarios:admin_users' %}" class="nav-link {% if '/usuarios' in request.path and 'admin' in request.path and 'dashboard' not in request.path and 'configuracion' not in request.path %}active{% endif %}">
+        <i class="bi bi-people"></i> Usuarios
+    </a>
+    <a href="{% url 'usuarios:admin_configuracion' %}" class="nav-link {% if '/configuracion' in request.path %}active{% endif %}">
+        <i class="bi bi-building"></i> Configuración
+    </a>
+</nav>
+
+<div class="sidebar-heading">Gestión</div>
+<nav class="nav flex-column">
+    <a href="{% url 'mascotas:lista' %}" class="nav-link {% if '/mascotas/' in request.path %}active{% endif %}">
+        <i class="bi bi-emoji-heart-eyes"></i> Mascotas
+    </a>
+    <a href="{% url 'agenda:lista_citas' %}" class="nav-link {% if '/agenda/' in request.path %}active{% endif %}">
+        <i class="bi bi-calendar"></i> Citas
+    </a>
+    <a href="{% url 'historial:lista' %}" class="nav-link {% if '/historial/' in request.path %}active{% endif %}">
+        <i class="bi bi-clipboard2-pulse"></i> Historial
+    </a>
+    <a href="{% url 'servicios:lista' %}" class="nav-link {% if '/servicios/' in request.path %}active{% endif %}">
+        <i class="bi bi-heart-pulse"></i> Servicios
+    </a>
+</nav>
+
+<div class="sidebar-heading">Inventario & Entregas</div>
+<nav class="nav flex-column">
+    <a href="{% url 'productos:lista' %}" class="nav-link {% if '/productos/' in request.path %}active{% endif %}">
+        <i class="bi bi-box-seam"></i> Inventario
+    </a>
+    <a href="{% url 'proveedores:lista' %}" class="nav-link {% if '/proveedores/' in request.path %}active{% endif %}">
+        <i class="bi bi-shop-window"></i> Proveedores
+    </a>
+    <a href="{% url 'entregas:dashboard' %}" class="nav-link {% if '/entregas/' in request.path %}active{% endif %}">
+        <i class="bi bi-truck"></i> Entregas
+    </a>
+    <a href="{% url 'entregas:torre_control' %}" class="nav-link {% if '/torre' in request.path %}active{% endif %}">
+        <i class="bi bi-broadcast"></i> Torre de Control
+    </a>
+</nav>
+
+<div class="sidebar-heading">Reportes</div>
+<nav class="nav flex-column">
+    <a href="{% url 'reportes:admin_metricas' %}" class="nav-link {% if '/metricas' in request.path %}active{% endif %}">
+        <i class="bi bi-bar-chart-line"></i> Métricas
+    </a>
+    <a href="{% url 'reportes:citas' %}" class="nav-link {% if '/reportes/citas' in request.path %}active{% endif %}">
+        <i class="bi bi-file-earmark-text"></i> Reporte Citas
+    </a>
+    <a href="{% url 'reportes:inventario' %}" class="nav-link {% if '/reportes/inventario' in request.path %}active{% endif %}">
+        <i class="bi bi-file-earmark-bar-graph"></i> Reporte Inventario
+    </a>
+    <a href="{% url 'reportes:servicios' %}" class="nav-link {% if '/reportes/servicios' in request.path %}active{% endif %}">
+        <i class="bi bi-file-earmark-medical"></i> Reporte Servicios
+    </a>
+</nav>
