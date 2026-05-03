@@ -1,0 +1,29 @@
+{# Cliente sidebar — included from base.html when user is Cliente #}
+<div class="sidebar-heading">Mi Cuenta</div>
+<nav class="nav flex-column">
+    <a href="{% url 'tienda:catalogo' %}" class="nav-link {% if '/tienda/' in request.path %}active{% endif %}">
+        <i class="bi bi-shop"></i> Tienda
+    </a>
+    <a href="{% url 'mascotas:lista' %}" class="nav-link {% if '/mascotas/' in request.path %}active{% endif %}">
+        <i class="bi bi-emoji-heart-eyes"></i> Mis Mascotas
+    </a>
+    <a href="{% url 'agenda:lista_citas' %}" class="nav-link {% if '/agenda/' in request.path %}active{% endif %}">
+        <i class="bi bi-calendar"></i> Mis Citas
+    </a>
+    <a href="{% url 'historial:lista' %}" class="nav-link {% if '/historial/' in request.path %}active{% endif %}">
+        <i class="bi bi-clipboard2-pulse"></i> Mi Historial
+    </a>
+    <a href="{% url 'entregas:mis_pedidos' %}" class="nav-link {% if '/mis-pedidos' in request.path %}active{% endif %}">
+        <i class="bi bi-bag-check"></i> Mis Pedidos
+    </a>
+</nav>
+
+<div class="sidebar-heading">Mi Perfil</div>
+<nav class="nav flex-column">
+    <a href="{% url 'usuarios:mi_perfil' %}" class="nav-link {% if '/perfil' in request.path %}active{% endif %}">
+        <i class="bi bi-person"></i> Mi Perfil
+    </a>
+    <a href="{% url 'usuarios:cambiar_password' %}" class="nav-link {% if '/password' in request.path %}active{% endif %}">
+        <i class="bi bi-key"></i> Contraseña
+    </a>
+</nav>

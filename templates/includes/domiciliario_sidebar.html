@@ -1,0 +1,20 @@
+{# Domiciliario sidebar — included from base.html when user is Domiciliario #}
+<div class="sidebar-heading">Entregas</div>
+<nav class="nav flex-column">
+    <a href="{% url 'entregas:dashboard' %}" class="nav-link {% if '/entregas/' in request.path and '/resumen' not in request.path %}active{% endif %}">
+        <i class="bi bi-truck"></i> Entregas
+    </a>
+    <a href="{% url 'entregas:resumen' %}" class="nav-link {% if '/resumen' in request.path %}active{% endif %}">
+        <i class="bi bi-clipboard-check"></i> Resumen
+    </a>
+</nav>
+
+<div class="sidebar-heading">Mi Perfil</div>
+<nav class="nav flex-column">
+    <a href="{% url 'usuarios:mi_perfil' %}" class="nav-link {% if '/perfil' in request.path %}active{% endif %}">
+        <i class="bi bi-person"></i> Mi Perfil
+    </a>
+    <a href="{% url 'usuarios:cambiar_password' %}" class="nav-link {% if '/password' in request.path %}active{% endif %}">
+        <i class="bi bi-key"></i> Contraseña
+    </a>
+</nav>
