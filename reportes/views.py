@@ -161,7 +161,7 @@ def _get_metricas_context(request):
     from usuarios.models import ConfiguracionClinica
     from django.utils import timezone
 
-    today = timezone.now().date()
+    today = timezone.localdate()
     start_of_month = today.replace(day=1)
 
     top_productos = PedidoItem.objects.filter(

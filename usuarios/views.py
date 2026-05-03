@@ -456,7 +456,7 @@ def admin_dashboard(request):
     from agenda.models import Cita
     from entregas.models import Pedido
 
-    today = timezone.now().date()
+    today = timezone.localdate()
     start_of_month = today.replace(day=1)
 
     # Conteo de usuarios por rol

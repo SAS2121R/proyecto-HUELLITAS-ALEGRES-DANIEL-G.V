@@ -180,7 +180,7 @@ def resumen(request):
     if request.user.rol.nombre == 'Cliente':
         raise PermissionDenied
 
-    today = timezone.now().date()
+    today = timezone.localdate()
     if request.user.rol.nombre == 'Administrador':
         pedidos = Pedido.objects.filter(estado='entregado', fecha_entrega__date=today)
     else:  # Domiciliario
