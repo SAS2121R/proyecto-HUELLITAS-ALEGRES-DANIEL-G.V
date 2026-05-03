@@ -30,7 +30,7 @@ openspec/
 .atl/
 .engram/
 
-# Configuración de entorno y SECRETOS
+# Configuracion de entorno y SECRETOS
 .env
 .env.*
 *.key
@@ -41,8 +41,9 @@ openspec/
 .idea/
 .DS_Store
 Thumbs.db
+$null
 
-# Archivos estáticos recolectados (se regeneran con collectstatic)
+# Archivos estaticos recolectados (se regeneran con collectstatic)
 staticfiles/
 /static/
 **/static/admin/
@@ -52,7 +53,7 @@ staticfiles/
 media/
 **/media/
 
-# Artefactos de Testsprite (no son parte del proyecto)
+# Artefactos de Testsprite
 testsprite_tests/
 tests_sprite_tests_placeholder.txt
 TestSprite-Reporte-Frontend.zip
