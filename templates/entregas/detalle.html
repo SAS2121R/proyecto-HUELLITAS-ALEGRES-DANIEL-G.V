@@ -105,42 +105,74 @@
         </div>
     </div>
 
-    <!-- Action Buttons — BIG for mobile -->
+    <!-- Action Buttons — Separate forms per action to avoid required field blocking -->
     {% if estado_form %}
     <div class="card shadow-sm">
         <div class="card-body">
             <h5 class="card-title"><i class="bi bi-arrow-right-circle"></i> Cambiar Estado</h5>
-            <form method="post" action="{% url 'entregas:cambiar_estado' pedido.pk %}" enctype="multipart/form-data">
-                {% csrf_token %}
 
-                <!-- Big action buttons -->
+            {% if pedido.estado == 'pendiente' %}
+            <!-- Form: Iniciar Entrega -->
+            <form method="post" action="{% url 'entregas:cambiar_estado' pedido.pk %}">
+                {% csrf_token %}
                 <div class="d-grid gap-3 d-md-flex justify-content-md-center mb-3">
-                    {% if pedido.estado == 'pendiente' %}
                     <button type="submit" name="nuevo_estado" value="en_camino" class="btn btn-info btn-lg px-5">
                         <i class="bi bi-scooter"></i> Iniciar Entrega
                     </button>
                     <button type="button" class="btn btn-outline-danger btn-lg px-5" data-bs-toggle="modal" data-bs-target="#cancelModal">
                         <i class="bi bi-x-circle"></i> Cancelar
                     </button>
-                    {% elif pedido.estado == 'en_camino' %}
-                    <button type="button" class="btn btn-success btn-lg px-5" data-bs-toggle="modal" data-bs-target="#entregadoModal">
-                        <i class="bi bi-box-seam"></i> Marcar Entregado
-                    </button>
-                    <button type="button" class="btn btn-outline-danger btn-lg px-5" data-bs-toggle="modal" data-bs-target="#cancelModal">
-                        <i class="bi bi-x-circle"></i> Reportar Incidente
-                    </button>
-                    {% endif %}
                 </div>
+            </form>
 
-                <!-- Modal: Entregado (with evidence upload) -->
-                {% if pedido.estado == 'en_camino' %}
-                <div class="modal fade" id="entregadoModal" tabindex="-1">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header bg-success text-white">
-                                <h5 class="modal-title"><i class="bi bi-box-seam"></i> Confirmar Entrega</h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <!-- Modal: Cancelación (pendiente) — separate form -->
+            <div class="modal fade" id="cancelModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title"><i class="bi bi-x-circle"></i> Reportar Incidente / Cancelar</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="post" action="{% url 'entregas:cambiar_estado' pedido.pk %}">
+                            {% csrf_token %}
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label for="incidente_notas_input" class="form-label fw-bold">Motivo del incidente *</label>
+                                    <textarea name="incidente_notas" id="incidente_notas_input" class="form-control" rows="4" required placeholder="Describa qué pasó..."></textarea>
+                                </div>
                             </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Volver</button>
+                                <button type="submit" name="nuevo_estado" value="cancelado" class="btn btn-danger btn-lg">
+                                    <i class="bi bi-x-circle"></i> Confirmar Cancelación
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            {% elif pedido.estado == 'en_camino' %}
+            <!-- Buttons: Marcar Entregado + Reportar Incidente -->
+            <div class="d-grid gap-3 d-md-flex justify-content-md-center mb-3">
+                <button type="button" class="btn btn-success btn-lg px-5" data-bs-toggle="modal" data-bs-target="#entregadoModal">
+                    <i class="bi bi-box-seam"></i> Marcar Entregado
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-lg px-5" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                    <i class="bi bi-x-circle"></i> Reportar Incidente
+                </button>
+            </div>
+
+            <!-- Modal: Entregado — separate form with enctype for files -->
+            <div class="modal fade" id="entregadoModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title"><i class="bi bi-box-seam"></i> Confirmar Entrega</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="post" action="{% url 'entregas:cambiar_estado' pedido.pk %}" enctype="multipart/form-data">
+                            {% csrf_token %}
                             <div class="modal-body">
                                 <div class="mb-3">
                                     <label for="id_foto_evidencia" class="form-label fw-bold"><i class="bi bi-camera"></i> Foto de Evidencia</label>
@@ -159,19 +191,21 @@
                                     <i class="bi bi-check-circle"></i> Confirmar Entrega
                                 </button>
                             </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
-                {% endif %}
+            </div>
 
-                <!-- Modal: Cancelación -->
-                <div class="modal fade" id="cancelModal" tabindex="-1">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header bg-danger text-white">
-                                <h5 class="modal-title"><i class="bi bi-x-circle"></i> Reportar Incidente / Cancelar</h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                            </div>
+            <!-- Modal: Cancelación (en_camino) — separate form -->
+            <div class="modal fade" id="cancelModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title"><i class="bi bi-x-circle"></i> Reportar Incidente / Cancelar</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="post" action="{% url 'entregas:cambiar_estado' pedido.pk %}">
+                            {% csrf_token %}
                             <div class="modal-body">
                                 <div class="mb-3">
                                     <label for="incidente_notas_input" class="form-label fw-bold">Motivo del incidente *</label>
@@ -184,10 +218,11 @@
                                     <i class="bi bi-x-circle"></i> Confirmar Cancelación
                                 </button>
                             </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
-            </form>
+            </div>
+            {% endif %}
         </div>
     </div>
     {% elif pedido.estado == 'entregado' %}
