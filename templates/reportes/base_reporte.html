@@ -23,13 +23,13 @@
 </head>
 <body>
 <div class="header">
-    <h1>Huellitas Alegres</h1>
-    <p>NIT 901.234.567-8 | Clinica Veterinaria</p>
-    <p>Calle 10 # 25-30, Bogota | Tel: 601-555-0123 | info@huellitasalegres.com</p>
+    <h1>{{ config.nombre|default:"Huellitas Alegres" }}</h1>
+    <p>NIT {{ config.nit|default:"Sin NIT" }} | Clínica Veterinaria</p>
+    <p>{{ config.direccion|default:"Sin dirección" }} | Tel: {{ config.telefono|default:"Sin teléfono" }} | {{ config.email|default:"Sin email" }}</p>
 </div>
 {% block content %}{% endblock %}
 <div class="footer">
-    Reporte generado el {% now "d/m/Y H:i" %} | Huellitas Alegres
+    Reporte generado el {% now "d/m/Y H:i" %} | {{ config.nombre|default:"Huellitas Alegres" }}
 </div>
 </body>
 </html>

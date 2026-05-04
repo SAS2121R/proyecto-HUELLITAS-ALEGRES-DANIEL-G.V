@@ -13,6 +13,7 @@ from productos.models import Producto
 from servicios.models import Servicio
 from mascotas.models import Mascota
 from usuarios.decorators import role_required
+from usuarios.models import ConfiguracionClinica
 
 
 def _render_to_pdf(template_path, context):
@@ -81,6 +82,7 @@ def reporte_citas(request):
         'confirmadas': confirmadas,
         'pendientes': pendientes,
         'canceladas': canceladas,
+        'config': ConfiguracionClinica.get_config(),
     }
     return _render_to_pdf('reportes/reporte_citas.html', context)
 
@@ -93,6 +95,7 @@ def reporte_historial(request, mascota_pk):
     context = {
         'mascota': mascota,
         'historiales': historiales,
+        'config': ConfiguracionClinica.get_config(),
     }
     return _render_to_pdf('reportes/reporte_historial.html', context)
 
@@ -114,6 +117,7 @@ def reporte_inventario(request):
         'total_valor': total_valor,
         'critico': critico,
         'bajo': bajo,
+        'config': ConfiguracionClinica.get_config(),
     }
     fmt = request.GET.get('format', 'pdf')
     if fmt == 'excel':
@@ -134,6 +138,7 @@ def reporte_servicios(request):
         'servicios': servicios,
         'total': total,
         'activos': activos,
+        'config': ConfiguracionClinica.get_config(),
     }
     return _render_to_pdf('reportes/reporte_servicios.html', context)
 
