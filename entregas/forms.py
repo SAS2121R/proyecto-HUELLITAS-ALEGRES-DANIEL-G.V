@@ -104,21 +104,30 @@ class CambiarEstadoForm(forms.Form):
 
 
 class EvidenciaForm(forms.ModelForm):
-    """Formulario para subir evidencia de entrega (foto + firma opcional)."""
+    """Formulario para subir evidencia de entrega (foto + firma obligatorias)."""
+
+    foto_evidencia = forms.ImageField(
+        required=True,
+        widget=forms.FileInput(attrs={
+            'class': 'form-control form-control-lg',
+            'accept': 'image/*',
+            'required': True,
+        }),
+        error_messages={'required': 'La foto de evidencia es obligatoria.'},
+    )
+    firma_imagen = forms.ImageField(
+        required=True,
+        widget=forms.FileInput(attrs={
+            'class': 'form-control form-control-lg',
+            'accept': 'image/*',
+            'required': True,
+        }),
+        error_messages={'required': 'La firma del cliente es obligatoria.'},
+    )
 
     class Meta:
         model = Pedido
         fields = ['foto_evidencia', 'firma_imagen']
-        widgets = {
-            'foto_evidencia': forms.FileInput(attrs={
-                'class': 'form-control form-control-lg',
-                'accept': 'image/*',
-            }),
-            'firma_imagen': forms.FileInput(attrs={
-                'class': 'form-control form-control-lg',
-                'accept': 'image/*',
-            }),
-        }
 
     def clean_foto_evidencia(self):
         foto = self.cleaned_data.get('foto_evidencia')

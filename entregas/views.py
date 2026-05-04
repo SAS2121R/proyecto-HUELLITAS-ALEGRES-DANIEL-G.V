@@ -111,8 +111,13 @@ def cambiar_estado(request, pk):
         messages.error(request, f'Transición no válida: {pedido.get_estado_display()} → {nuevo_estado}')
         return redirect('entregas:detalle', pk=pk)
 
-    # Manejar fotos de evidencia para entregado
+    # Manejar fotos de evidencia para entregado (AMBAS obligatorias)
     if nuevo_estado == 'entregado':
+        foto = request.FILES.get('foto_evidencia')
+        firma = request.FILES.get('firma_imagen')
+        if not foto or not firma:
+            messages.error(request, '¡Error! Es obligatorio cargar tanto la foto de evidencia como la firma del cliente.')
+            return redirect('entregas:detalle', pk=pk)
         evidencia_form = EvidenciaForm(request.POST, request.FILES, instance=pedido)
         if evidencia_form.is_valid():
             evidencia_form.save()

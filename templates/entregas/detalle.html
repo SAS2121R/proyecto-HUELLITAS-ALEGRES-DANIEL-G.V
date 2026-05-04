@@ -175,14 +175,14 @@
                             {% csrf_token %}
                             <div class="modal-body">
                                 <div class="mb-3">
-                                    <label for="id_foto_evidencia" class="form-label fw-bold"><i class="bi bi-camera"></i> Foto de Evidencia</label>
-                                    <input type="file" name="foto_evidencia" id="id_foto_evidencia" class="form-control form-control-lg" accept="image/*">
-                                    <div class="form-text">Tome una foto del paquete entregado. Máximo 5MB.</div>
+                                    <label for="id_foto_evidencia" class="form-label fw-bold"><i class="bi bi-camera"></i> Foto de Evidencia *</label>
+                                    <input type="file" name="foto_evidencia" id="id_foto_evidencia" class="form-control form-control-lg" accept="image/*" required>
+                                    <div class="form-text">Tome una foto del paquete entregado. Máximo 5MB. Obligatorio.</div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="id_firma_imagen" class="form-label fw-bold"><i class="bi bi-pen"></i> Firma del Cliente (opcional)</label>
-                                    <input type="file" name="firma_imagen" id="id_firma_imagen" class="form-control form-control-lg" accept="image/*">
-                                    <div class="form-text">Imagen de la firma del cliente. Máximo 5MB.</div>
+                                    <label for="id_firma_imagen" class="form-label fw-bold"><i class="bi bi-pen"></i> Firma del Cliente *</label>
+                                    <input type="file" name="firma_imagen" id="id_firma_imagen" class="form-control form-control-lg" accept="image/*" required>
+                                    <div class="form-text">Imagen de la firma del cliente. Máximo 5MB. Obligatorio.</div>
                                 </div>
                             </div>
                             <div class="modal-footer">
