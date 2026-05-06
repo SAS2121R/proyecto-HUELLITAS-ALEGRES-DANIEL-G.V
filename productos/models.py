@@ -1,6 +1,17 @@
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
+from PIL import Image
+import io
+
+# Tamaño máximo para imágenes de producto: 5 MB (coherente con evidencias y perfiles)
+MAX_PRODUCTO_IMAGEN_SIZE = 5 * 1024 * 1024  # 5242880 bytes
+# Resolución máxima: la imagen se redimensiona automáticamente si excede estos valores
+PRODUCTO_IMAGEN_MAX_WIDTH = 800
+PRODUCTO_IMAGEN_MAX_HEIGHT = 800
+# Calidad de compresión JPEG al redimensionar (1-95)
+PRODUCTO_IMAGEN_CALIDAD = 85
 
 
 def producto_imagen_upload_path(instance, filename):
@@ -94,6 +105,37 @@ class Producto(models.Model):
 
     def __str__(self):
         return self.nombre
+
+    def clean(self):
+        """Valida tamaño de imagen antes de guardar."""
+        super().clean()
+        if self.imagen and hasattr(self.imagen, 'size') and self.imagen.size > MAX_PRODUCTO_IMAGEN_SIZE:
+            raise ValidationError({
+                'imagen': f'La imagen excede el tamaño máximo permitido de {MAX_PRODUCTO_IMAGEN_SIZE // (1024*1024)} MB.'
+            })
+
+    def save(self, *args, **kwargs):
+        """Redimensiona automáticamente imágenes de producto para optimizar carga y almacenamiento.
+
+        Si la imagen excede 800x800px, se redimensiona manteniendo proporción.
+        Se comprime a JPEG calidad 85 para reducir peso sin pérdida visible.
+        """
+        super().save(*args, **kwargs)
+
+        if self.imagen:
+            should_resize = False
+            try:
+                img = Image.open(self.imagen.path)
+                img = img.convert('RGB')  # Asegurar formato compatible
+
+                if img.width > PRODUCTO_IMAGEN_MAX_WIDTH or img.height > PRODUCTO_IMAGEN_MAX_HEIGHT:
+                    img.thumbnail((PRODUCTO_IMAGEN_MAX_WIDTH, PRODUCTO_IMAGEN_MAX_HEIGHT), Image.LANCZOS)
+                    should_resize = True
+
+                if should_resize:
+                    img.save(self.imagen.path, 'JPEG', quality=PRODUCTO_IMAGEN_CALIDAD, optimize=True)
+            except Exception:
+                pass  # Si falla resize, la imagen original queda guardada
 
     @property
     def estado_stock(self):
