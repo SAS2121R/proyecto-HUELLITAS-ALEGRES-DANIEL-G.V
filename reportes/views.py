@@ -289,11 +289,6 @@ def admin_metricas_excel(request):
     ws.cell(row=row, column=1, value='Productividad de Staff')
     ws.cell(row=row, column=1).font = section_font
     row += 1
-    for col, h in ['Veterinario', 'Citas este Mes', 'Citas Total'], range(1, 4):
-        cell = ws.cell(row=row, column=col, value=h)
-        cell.font = header_font
-        cell.fill = header_fill
-    # Corrección: usar zip correctamente para los encabezados
     for idx, h in enumerate(['Veterinario', 'Citas este Mes', 'Citas Total'], 1):
         cell = ws.cell(row=row, column=idx, value=h)
         cell.font = header_font
