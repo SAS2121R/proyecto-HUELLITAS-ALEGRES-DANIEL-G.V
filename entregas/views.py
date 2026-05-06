@@ -10,11 +10,29 @@ from django.utils import timezone
 from xhtml2pdf import pisa
 import io
 
-from usuarios.models import ConfiguracionClinica
+from django.db.models import Count, Q
+from usuarios.models import ConfiguracionClinica, Usuario
 from usuarios.decorators import role_required
 from .models import Pedido, ESTADO_CHOICES
 from .forms import CambiarEstadoForm, EvidenciaForm, PedidoForm, PedidoItemFormSet, ReasignarDomiciliarioForm
 from productos.models import Producto, MovimientoInventario
+
+
+def asignar_domiciliario_disponible():
+    """Asigna el domiciliario disponible con MENOS pedidos activos (pendiente + en_camino).
+    Round-robin justo: el que menos carga tiene recibe el pedido nuevo.
+    Retorna None si no hay domiciliarios disponibles."""
+    domiciliarios = Usuario.objects.filter(
+        rol__nombre='Domiciliario',
+        is_active=True,
+        is_disponible=True,
+    ).annotate(
+        pedidos_activos=Count(
+            'pedidos_como_domiciliario',
+            filter=Q(pedidos_como_domiciliario__estado__in=['pendiente', 'en_camino']),
+        )
+    ).order_by('pedidos_activos', 'id')
+    return domiciliarios.first()
 
 
 @login_required(login_url='/usuarios/login/')
@@ -137,6 +155,11 @@ def cambiar_estado(request, pk):
     if nuevo_estado == 'cancelado':
         pedido.incidente_notas = incidente_notas
         pedido.incidente_fecha = timezone.now()
+        # Marcar domiciliario como no disponible si tenía uno asignado
+        if pedido.domiciliario:
+            pedido.domiciliario.is_disponible = False
+            pedido.domiciliario.save(update_fields=['is_disponible'])
+            messages.warning(request, f'{pedido.domiciliario.get_full_name() or pedido.domiciliario.email} marcado como No Disponible. Puede reincorporarlo desde la Torre de Control.')
     if nuevo_estado == 'entregado':
         pedido.fecha_entrega = timezone.now()
         # Descontar stock del producto de cada item
@@ -160,12 +183,22 @@ def cambiar_estado(request, pk):
 
 @role_required('Administrador')
 def crear_pedido(request):
-    """Vista solo para Admin para crear un nuevo Pedido con items."""
+    """Vista solo para Admin para crear un nuevo Pedido con items.
+    Si no se selecciona domiciliario, se asigna automáticamente al disponible con menos carga."""
     if request.method == 'POST':
         form = PedidoForm(request.POST)
         formset = PedidoItemFormSet(request.POST)
         if form.is_valid() and formset.is_valid():
-            pedido = form.save()
+            pedido = form.save(commit=False)
+            # Asignar domiciliario automático si no se seleccionó uno
+            if not pedido.domiciliario_id:
+                dom = asignar_domiciliario_disponible()
+                if dom:
+                    pedido.domiciliario = dom
+                    messages.info(request, f'Domiciliario asignado automáticamente: {dom.get_full_name() or dom.email}')
+                else:
+                    messages.warning(request, 'No hay domiciliarios disponibles. El pedido quedó sin domiciliario asignado.')
+            pedido.save()
             formset.instance = pedido
             items = formset.save()
             messages.success(request, f'Pedido #{pedido.pk} creado exitosamente.')
@@ -333,9 +366,17 @@ def torre_control(request):
     except (PageNotAnInteger, EmptyPage):
         page_obj = paginator.page(1)
 
-    # Obtener domiciliarios para el dropdown de reasignación
+    # Obtener TODOS los domiciliarios (para mostrar estado de disponibilidad)
     from usuarios.models import Usuario
-    domiciliarios = Usuario.objects.filter(rol__nombre='Domiciliario', is_active=True).order_by('first_name')
+    domiciliarios = Usuario.objects.filter(
+        rol__nombre='Domiciliario', is_active=True
+    ).annotate(
+        pedidos_activos=Count(
+            'pedidos_como_domiciliario',
+            filter=Q(pedidos_como_domiciliario__estado__in=['pendiente', 'en_camino']),
+        )
+    ).order_by('first_name')
+    domiciliarios_disponibles = domiciliarios.filter(is_disponible=True)
 
     return render(request, 'entregas/torre_control.html', {
         'page_obj': page_obj,
@@ -348,4 +389,20 @@ def torre_control(request):
         'entregados': entregados,
         'cancelados': cancelados,
         'domiciliarios': domiciliarios,
+        'domiciliarios_disponibles': domiciliarios_disponibles,
     })
+
+
+@role_required('Administrador')
+def toggle_disponibilidad(request, pk):
+    """Vista para que Admin habilite/deshabilite un domiciliario.
+    POST only — redirige de vuelta a torre de control."""
+    if request.method != 'POST':
+        return redirect('entregas:torre_control')
+
+    domiciliario = get_object_or_404(Usuario, pk=pk, rol__nombre='Domiciliario')
+    domiciliario.is_disponible = not domiciliario.is_disponible
+    domiciliario.save(update_fields=['is_disponible'])
+    estado = 'disponible' if domiciliario.is_disponible else 'no disponible'
+    messages.success(request, f'{domiciliario.get_full_name() or domiciliario.email} ahora está {estado}.')
+    return redirect('entregas:torre_control')

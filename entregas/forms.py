@@ -30,7 +30,10 @@ class PedidoForm(forms.ModelForm):
         # Filtrar cliente y domiciliario por rol
         from usuarios.models import Usuario
         self.fields['cliente'].queryset = Usuario.objects.filter(rol__nombre='Cliente')
-        self.fields['domiciliario'].queryset = Usuario.objects.filter(rol__nombre='Domiciliario')
+        self.fields['domiciliario'].queryset = Usuario.objects.filter(
+            rol__nombre='Domiciliario', is_active=True, is_disponible=True
+        ).order_by('first_name')
+        self.fields['domiciliario'].empty_label = '— Asignar automáticamente (menos cargado) —'
 
 
 class PedidoItemForm(forms.ModelForm):
@@ -155,5 +158,5 @@ class ReasignarDomiciliarioForm(forms.Form):
         super().__init__(*args, **kwargs)
         from usuarios.models import Usuario
         self.fields['domiciliario'].queryset = Usuario.objects.filter(
-            rol__nombre='Domiciliario', is_active=True
+            rol__nombre='Domiciliario', is_active=True, is_disponible=True
         ).order_by('first_name')

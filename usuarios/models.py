@@ -33,6 +33,11 @@ class Usuario(AbstractUser):
     is_active = models.BooleanField(default=True, verbose_name='Activo')
     telefono = models.CharField(max_length=15, blank=True, default='', verbose_name='Teléfono')
     cedula = models.CharField(max_length=20, blank=True, default='', db_index=True, verbose_name='Cédula')
+    is_disponible = models.BooleanField(
+        default=True,
+        verbose_name='Disponible para entregas',
+        help_text='Solo aplica para Domiciliarios. Desmárcalo si el domiciliario no está disponible (moto en taller, enfermo, etc.).',
+    )
     rol = models.ForeignKey(
         Rol, on_delete=models.PROTECT, verbose_name='Rol',
         related_name='usuarios'
