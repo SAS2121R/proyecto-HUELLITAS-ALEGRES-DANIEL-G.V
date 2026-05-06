@@ -245,9 +245,10 @@ def checkout(request):
             })
 
         from usuarios.models import Usuario
+        from entregas.views import asignar_domiciliario_disponible
 
-        # Auto-assign first available Domiciliario
-        domiciliario = Usuario.objects.filter(rol__nombre='Domiciliario').first()
+        # Round-robin: assign to available domiciliario with least active orders
+        domiciliario = asignar_domiciliario_disponible()
 
         # Create Pedido
         pedido = Pedido.objects.create(
@@ -274,6 +275,8 @@ def checkout(request):
         request.session.modified = True
 
         messages.success(request, f'¡Pedido #{pedido.pk} creado exitosamente! Tu domiciliario asignado es {domiciliario.get_full_name() if domiciliario else "pendiente de asignación"}.')
+        if not domiciliario:
+            messages.warning(request, 'No hay domiciliarios disponibles en este momento. Un administrador asignará uno pronto.')
         return redirect('entregas:mis_pedidos')
 
     return render(request, 'tienda/checkout.html', {
