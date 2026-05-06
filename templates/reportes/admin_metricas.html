@@ -139,7 +139,7 @@
                             <circle class="progress-ring__fill"
                                     cx="32" cy="32" r="26"
                                     data-percent="{{ tasa_cumplimiento }}"
-                                    style="stroke: {% if tasa_cumplimiento >= 90 %}#198754{% elif tasa_cumplimiento >= 70 %}#28a745{% else %}#fd7e14% endif %};"/>
+                                    style="stroke: {% if tasa_cumplimiento >= 90 %}#198754{% elif tasa_cumplimiento >= 70 %}#28a745{% else %}#fd7e14{% endif %};"/>
                         </svg>
                         <span class="mini-ring-center text-{% if tasa_cumplimiento >= 70 %}success{% else %}warning{% endif %}">{{ tasa_cumplimiento }}%</span>
                     </div>
@@ -243,7 +243,7 @@
                                         id="ring-fill"
                                         cx="90" cy="90" r="72"
                                         data-percent="{{ tasa_cumplimiento }}"
-                                        style="stroke: {% if tasa_cumplimiento >= 90 %}#198754{% elif tasa_cumplimiento >= 70 %}#28a745{% else %}#fd7e14% endif %};"/>
+style="stroke: {% if tasa_cumplimiento >= 90 %}#198754{% elif tasa_cumplimiento >= 70 %}#28a745{% else %}#fd7e14{% endif %};"/>
                             </svg>
                             <div class="progress-ring-center">
                                 <div class="ring-value text-{% if tasa_cumplimiento >= 90 %}success{% elif tasa_cumplimiento >= 70 %}success{% else %}warning{% endif %}" id="ring-value">{{ tasa_cumplimiento }}%</div>
