@@ -3,6 +3,11 @@ from django.conf import settings
 from django.core.validators import MinValueValidator
 
 
+def producto_imagen_upload_path(instance, filename):
+    """Ruta: media/productos/<producto_pk>/<filename>"""
+    return f'productos/{instance.pk or "nuevo"}/{filename}'
+
+
 CATEGORIAS = [
     ('vacunas', 'Vacunas'),
     ('medicamentos', 'Medicamentos'),
@@ -32,6 +37,13 @@ class Producto(models.Model):
 
     nombre = models.CharField(max_length=100, unique=True, verbose_name='Nombre')
     descripcion = models.TextField(blank=True, default='', verbose_name='Descripción')
+    imagen = models.ImageField(
+        upload_to=producto_imagen_upload_path,
+        blank=True,
+        null=True,
+        verbose_name='Imagen del producto',
+        help_text='Foto de referencia del producto. Opcional.',
+    )
     categoria = models.CharField(
         max_length=20,
         choices=CATEGORIAS,

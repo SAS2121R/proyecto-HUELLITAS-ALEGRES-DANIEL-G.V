@@ -7,11 +7,15 @@ class ProductoForm(forms.ModelForm):
 
     class Meta:
         model = Producto
-        fields = ['nombre', 'descripcion', 'precio', 'cantidad_stock',
+        fields = ['nombre', 'descripcion', 'imagen', 'precio', 'cantidad_stock',
                    'categoria', 'stock_minimo', 'proveedor']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'descripcion': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'imagen': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*',
+            }),
             'precio': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
             'cantidad_stock': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
             'stock_minimo': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),

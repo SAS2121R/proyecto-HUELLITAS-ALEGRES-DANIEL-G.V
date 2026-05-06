@@ -51,7 +51,7 @@ def lista_productos(request):
 @role_required('Veterinario', 'Administrador')
 def create_product(request):
     """Crear nuevo producto. Requiere rol Vet o Admin."""
-    form = ProductoForm(request.POST or None)
+    form = ProductoForm(request.POST or None, request.FILES or None)
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.success(request, 'Producto creado exitosamente.')
@@ -63,7 +63,7 @@ def create_product(request):
 def edit_product(request, pk):
     """Editar producto existente. Requiere rol Vet o Admin."""
     prod = get_object_or_404(Producto.all_objects, pk=pk)
-    form = ProductoForm(request.POST or None, instance=prod)
+    form = ProductoForm(request.POST or None, request.FILES or None, instance=prod)
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.success(request, 'Producto actualizado exitosamente.')
