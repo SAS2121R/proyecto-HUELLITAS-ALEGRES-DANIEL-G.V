@@ -2,6 +2,93 @@
 
 {% block title %}Métricas de Negocio — Huellitas Alegres{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* ── Progress Ring (Donut) ── */
+    .progress-ring-container {
+        position: relative;
+        width: 180px;
+        height: 180px;
+        margin: 0 auto;
+    }
+    .progress-ring {
+        transform: rotate(-90deg);
+        filter: drop-shadow(0 2px 6px rgba(0,0,0,.15));
+    }
+    .progress-ring__bg {
+        fill: none;
+        stroke: #e9ecef;
+        stroke-width: 12;
+    }
+    .progress-ring__fill {
+        fill: none;
+        stroke-width: 12;
+        stroke-linecap: round;
+        stroke-dasharray: 452;
+        stroke-dashoffset: 452;
+        transition: stroke-dashoffset 1.6s cubic-bezier(.4,0,.2,1), stroke .3s ease;
+    }
+    .progress-ring__fill.animated {
+        /* offset set via JS after element is in viewport */
+    }
+    .progress-ring-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+    .progress-ring-center .ring-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+    .progress-ring-center .ring-label {
+        font-size: .75rem;
+        text-transform: uppercase;
+        letter-spacing: .08rem;
+        color: #6c757d;
+        margin-top: 2px;
+    }
+    /* Mini ring for card */
+    .progress-ring-mini {
+        width: 64px;
+        height: 64px;
+    }
+    .progress-ring-mini svg {
+        width: 64px;
+        height: 64px;
+    }
+    .progress-ring-mini .progress-ring__bg { stroke-width: 14; stroke: #e9ecef; }
+    .progress-ring-mini .progress-ring__fill { stroke-width: 14; stroke-dasharray: 163; stroke-dashoffset: 163; }
+    .mini-ring-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%,-50%);
+        font-size: .85rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+    /* Detail stats */
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        padding: .55rem 0;
+    }
+    .stat-item .stat-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .9rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -43,11 +130,23 @@
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card shadow-sm text-center card-hover border-{% if tasa_cumplimiento >= 80 %}success{% elif tasa_cumplimiento >= 50 %}warning{% else %}danger{% endif %}">
-                <div class="card-body">
-                    <i class="bi bi-check2-all fs-2 text-{% if tasa_cumplimiento >= 80 %}success{% elif tasa_cumplimiento >= 50 %}warning{% else %}danger{% endif %}"></i>
-                    <h3 class="mt-1 mb-0">{{ tasa_cumplimiento }}%</h3>
-                    <small class="text-muted">Tasa de Cumplimiento</small>
+            <div class="card shadow-sm text-center card-hover position-relative" style="overflow:hidden;">
+                <div class="card-body d-flex align-items-center justify-content-center gap-3">
+                    <!-- Mini Progress Ring -->
+                    <div class="progress-ring-mini position-relative">
+                        <svg viewBox="0 0 64 64">
+                            <circle class="progress-ring__bg" cx="32" cy="32" r="26"/>
+                            <circle class="progress-ring__fill"
+                                    cx="32" cy="32" r="26"
+                                    data-percent="{{ tasa_cumplimiento }}"
+                                    style="stroke: {% if tasa_cumplimiento >= 90 %}#198754{% elif tasa_cumplimiento >= 70 %}#28a745{% else %}#fd7e14% endif %};"/>
+                        </svg>
+                        <span class="mini-ring-center text-{% if tasa_cumplimiento >= 70 %}success{% else %}warning{% endif %}">{{ tasa_cumplimiento }}%</span>
+                    </div>
+                    <div class="text-start">
+                        <h4 class="mb-0 fw-bold text-{% if tasa_cumplimiento >= 90 %}success{% elif tasa_cumplimiento >= 70 %}success{% else %}warning{% endif %}">{{ tasa_cumplimiento }}%</h4>
+                        <small class="text-muted">Cumplimiento</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -127,27 +226,54 @@
         </div>
     </div>
 
-    <!-- TASA CUMPLIMIENTO DETALLE -->
+    <!-- TASA CUMPLIMIENTO DETALLE — Donut Ring -->
     <div class="row g-4 mt-1">
         <div class="col-md-6">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm" style="box-shadow: 0 .35rem .8rem rgba(0,0,0,.08);">
                 <div class="card-header bg-dark text-white">
                     <h5 class="mb-0"><i class="bi bi-speedometer2"></i> Tasa de Cumplimiento</h5>
                 </div>
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <h2 class="mb-0 text-{% if tasa_cumplimiento >= 80 %}success{% elif tasa_cumplimiento >= 50 %}warning{% else %}danger{% endif %}">{{ tasa_cumplimiento }}%</h2>
-                            <small class="text-muted">de pedidos entregados exitosamente</small>
+                    <div class="d-flex align-items-center gap-4">
+                        <!-- Progress Ring -->
+                        <div class="progress-ring-container flex-shrink-0">
+                            <svg class="progress-ring" viewBox="0 0 180 180" width="180" height="180">
+                                <circle class="progress-ring__bg" cx="90" cy="90" r="72"/>
+                                <circle class="progress-ring__fill"
+                                        id="ring-fill"
+                                        cx="90" cy="90" r="72"
+                                        data-percent="{{ tasa_cumplimiento }}"
+                                        style="stroke: {% if tasa_cumplimiento >= 90 %}#198754{% elif tasa_cumplimiento >= 70 %}#28a745{% else %}#fd7e14% endif %};"/>
+                            </svg>
+                            <div class="progress-ring-center">
+                                <div class="ring-value text-{% if tasa_cumplimiento >= 90 %}success{% elif tasa_cumplimiento >= 70 %}success{% else %}warning{% endif %}" id="ring-value">{{ tasa_cumplimiento }}%</div>
+                                <div class="ring-label">Cumplimiento</div>
+                            </div>
                         </div>
-                        <div class="text-end">
-                            <p class="mb-1"><strong>{{ total_entregados }}</strong> entregados</p>
-                            <p class="mb-1"><strong>{{ con_incidente }}</strong> con incidentes</p>
-                            <p class="mb-0"><strong>{{ total_pedidos }}</strong> total</p>
+                        <!-- Stats -->
+                        <div class="flex-grow-1">
+                            <div class="stat-item">
+                                <span class="stat-icon bg-success bg-opacity-10 text-success"><i class="bi bi-check-circle-fill"></i></span>
+                                <div>
+                                    <div class="fw-bold">{{ total_entregados }}</div>
+                                    <small class="text-muted">Entregados</small>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                                <div>
+                                    <div class="fw-bold">{{ con_incidente }}</div>
+                                    <small class="text-muted">Con incidentes</small>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-icon bg-secondary bg-opacity-10 text-secondary"><i class="bi bi-receipt"></i></span>
+                                <div>
+                                    <div class="fw-bold">{{ total_pedidos }}</div>
+                                    <small class="text-muted">Total pedidos</small>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="progress" style="height: 25px;">
-                        <div class="progress-bar bg-success" style="width: {{ tasa_cumplimiento }}%">{{ tasa_cumplimiento }}%</div>
                     </div>
                 </div>
             </div>
@@ -170,4 +296,37 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    /* ── Animate main ring ── */
+    const ringFill = document.getElementById('ring-fill');
+    if (ringFill) {
+        const pct = parseFloat(ringFill.dataset.percent) || 0;
+        const r = parseFloat(ringFill.getAttribute('r'));
+        const C = 2 * Math.PI * r;
+        ringFill.style.strokeDasharray = C;
+        ringFill.style.strokeDashoffset = C;          // start empty
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                ringFill.style.strokeDashoffset = C - (C * pct / 100);
+            });
+        });
+    }
+
+    /* ── Animate mini rings (card) ── */
+    document.querySelectorAll('.progress-ring-mini .progress-ring__fill').forEach(el => {
+        const pct = parseFloat(el.dataset.percent) || 0;
+        const r = parseFloat(el.getAttribute('r'));
+        const C = 2 * Math.PI * r;
+        el.style.strokeDasharray = C;
+        el.style.strokeDashoffset = C;
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                el.style.strokeDashoffset = C - (C * pct / 100);
+            });
+        });
+    });
+});
+</script>
 {% endblock %}
