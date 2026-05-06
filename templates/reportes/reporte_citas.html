@@ -3,8 +3,8 @@
 <div class="summary-box">
     <h4>Resumen de Citas</h4>
     <table>
-        <tr><td><strong>Total:</strong></td><td>{{ total }}</td><td><strong>Confirmadas:</strong></td><td>{{ confirmadas }}</td></tr>
-        <tr><td><strong>Pendientes:</strong></td><td>{{ pendientes }}</td><td><strong>Canceladas:</strong></td><td>{{ canceladas }}</td></tr>
+        <tr><td><strong>Total:</strong></td><td>{{ total }}</td><td><strong>Atendidas:</strong></td><td>{{ atendidas }}</td></tr>
+        <tr><td><strong>Programadas:</strong></td><td>{{ programadas }}</td><td><strong>Canceladas:</strong></td><td>{{ canceladas }}</td></tr>
     </table>
 </div>
 <table>
@@ -26,10 +26,10 @@
             <td>{{ c.disponibilidad.fecha }}</td>
             <td>{{ c.disponibilidad.hora_inicio }}</td>
             <td>
-                {% if c.estado == 'confirmada' %}
-                <span class="badge badge-success">Confirmada</span>
-                {% elif c.estado == 'pendiente' %}
-                <span class="badge badge-warning">Pendiente</span>
+                {% if c.estado == 'Atendida' %}
+                <span class="badge badge-success">Atendida</span>
+                {% elif c.estado == 'Programada' %}
+                <span class="badge badge-warning">Programada</span>
                 {% else %}
                 <span class="badge badge-danger">Cancelada</span>
                 {% endif %}

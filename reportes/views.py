@@ -73,14 +73,14 @@ def reporte_citas(request):
     if fecha_hasta:
         citas = citas.filter(disponibilidad__fecha__lte=fecha_hasta)
     total = citas.count()
-    confirmadas = citas.filter(estado='confirmada').count()
-    pendientes = citas.filter(estado='pendiente').count()
-    canceladas = citas.filter(estado='cancelada').count()
+    atendidas = citas.filter(estado='Atendida').count()
+    programadas = citas.filter(estado='Programada').count()
+    canceladas = citas.filter(estado='Cancelada').count()
     context = {
         'citas': citas,
         'total': total,
-        'confirmadas': confirmadas,
-        'pendientes': pendientes,
+        'atendidas': atendidas,
+        'programadas': programadas,
         'canceladas': canceladas,
         'config': ConfiguracionClinica.get_config(),
     }
