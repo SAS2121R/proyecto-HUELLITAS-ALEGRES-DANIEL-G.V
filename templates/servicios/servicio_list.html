@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load formato %}
 {% block back_button %}{% include 'includes/back_button.html' %}{% endblock %}
 {% block content %}
 <div class="container py-4">
@@ -37,7 +38,7 @@
           <tr>
             <td>{{ s.nombre }}</td>
             <td>{{ s.get_categoria_display }}</td>
-            <td>${{ s.tarifa|floatformat:0 }}</td>
+            <td>{{ s.tarifa|pesos }}</td>
             <td>{{ s.duracion_minutos }} min</td>
             {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
             <td>
