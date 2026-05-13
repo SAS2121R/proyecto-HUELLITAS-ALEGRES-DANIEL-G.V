@@ -11,13 +11,13 @@ Plataforma web desarrollada con Django que permite administrar de forma completa
 - [Descripción General](#-descripción-general)
 - [Roles del Sistema](#-roles-del-sistema)
 - [Funcionalidades por Rol](#-funcionalidades-por-rol)
+- [Características Técnicas Destacadas](#-características-técnicas-destacadas)
 - [Tecnologías](#-tecnologías)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
 - [Instalación](#-instalación)
 - [Creación del Superusuario](#-creación-del-superusuario)
 - [Ejecución](#-ejecución)
 - [Pruebas](#-pruebas)
-- [Capturas de Pantalla](#-capturas-de-pantalla)
 - [Autor](#-autor)
 
 ---
@@ -35,9 +35,9 @@ El sistema implementa un modelo de **roles diferenciados** donde cada tipo de us
 | Rol | Descripción |
 |-----|-------------|
 | 🩺 **Veterinario** | Gestiona citas, atiende pacientes, registra historial clínico y genera reportes |
-| 🚗 **Domiciliario** | Gestiona pedidos, cambia estados de entrega y genera comprobantes PDF |
+| 🚗 **Domiciliario** | Gestiona pedidos asignados, cambia estados de entrega, sube evidencia fotográfica |
 | 👤 **Cliente** | Registra mascotas, solicita citas, compra en la tienda y consulta su historial |
-| 👑 **Administrador** | Control total: usuarios, métricas, configuración y torre de control |
+| 👑 **Administrador** | Control total: usuarios, métricas, configuración, torre de control y disponibilidad |
 
 ---
 
@@ -48,36 +48,67 @@ El sistema implementa un modelo de **roles diferenciados** donde cada tipo de us
 - CRUD de disponibilidades (bloques horarios)
 - Gestión de citas (crear, confirmar, cancelar)
 - Historial clínico completo con adjuntos (hasta 5 MB)
-- Catálogo de servicios veterinarios
+- Catálogo de servicios veterinarios con tarifas en pesos colombianos
 - Reportes en PDF/Excel de citas, historial, inventario y servicios
 
 ### 🚗 Domiciliario
-- Dashboard con pedidos asignados
-- Cambio de estado de pedidos (pendiente → en camino → entregado)
-- Deducción automática de inventario al entregar
-- Registro de incidentes al cancelar
-- Resumen diario de entregas
-- Comprobante PDF con datos de la clínica
+- Dashboard con pedidos asignados y acciones inline (Iniciar Entrega, Confirmar, Cancelar)
+- Cambio de estado con transiciones validadas (pendiente → en camino → entregado)
+- Evidencia obligatoria: foto y firma para confirmar entrega
+- Deducción automática de inventario al entregar pedidos
+- Registro de incidentes con motivo obligatorio al cancelar
+- Resumen diario de entregas con totales
+- Comprobante PDF con datos dinámicos de la clínica (NIT, dirección, teléfono)
 
 ### 👤 Cliente
 - Registro de cuenta propia con auto-asignación de rol
 - Dashboard personalizado con sus mascotas y citas
 - CRUD completo de sus mascotas
 - Solicitud y cancelación de citas
-- Tienda en línea: catálogo, carrito en sesión, checkout
-- Consulta de pedidos realizados
+- **Tienda en línea**: catálogo con imágenes de productos, badges de disponibilidad, carrito en sesión, checkout con asignación automática de domiciliario
+- Consulta de pedidos realizados con seguimiento
 - Historial clínico de sus mascotas (solo lectura)
 - Mi Perfil: edición de datos y cambio de contraseña
 
 ### 👑 Administrador
 - Dashboard con métricas: usuarios, mascotas, citas, ingresos del mes
 - **Gestión de Usuarios**: crear, editar, activar/desactivar, asignar contraseña temporal
-- **Torre de Control**: vista global de pedidos con reasignación inline de domiciliario
-- **Métricas de Negocio**: Top 5 Productos, Productividad de Staff, Tasa de Cumplimiento
-- **Exportación de Métricas**: PDF y Excel para llevar al contador
-- **Configuración Clínica**: modelo singleton (NIT, dirección, teléfono, email) que se refleja en todos los PDF
+- **Torre de Control**: vista global de pedidos con reasignación inline de domiciliario, tabla de domiciliarios con estado de disponibilidad y botones Reincorporar/Desactivar
+- **Métricas de Negocio**: Top 5 Productos, Productividad de Staff, Tasa de Cumplimiento (donut ring animado)
+- **Exportación de Métricas**: PDF y Excel con datos dinámicos de ConfiguraciónClínica
+- **Configuración Clínica**: modelo singleton (NIT, dirección, teléfono, email) reflejado en todos los PDF
 - **Gestión de Proveedores**: CRUD completo con vinculación al inventario
+- **Gestión de Productos**: CRUD con campos de tarifa (formato pesos colombianos) y subida de imágenes con redimensionamiento automático
 - Reportes PDF/Excel de citas, historial, inventario y servicios
+
+---
+
+## 🚀 Características Técnicas Destacadas
+
+### 🔄 Asignación Round-Robin de Domiciliarios
+El sistema asigna automáticamente pedidos al domiciliario **disponible con menos carga** (pedidos activos: pendiente + en camino). Cuando un domiciliario cancela por incidente, se marca como **no disponible** y el Admin puede reincorporarlo desde la Torre de Control con un solo clic.
+
+### 📊 Donut Ring de Tasa de Cumplimiento
+Las métricas de negocio muestran la tasa de cumplimiento como un **anillo de progreso SVG animado** con umbrales de color: >90% verde, 70-89% esmeralda, <70% naranja. Se llena suavemente al cargar la página.
+
+### 🛒 Tienda con Estados de Disponibilidad
+Los productos en el catálogo muestran badges inteligentes según el stock:
+- 🟢 **Disponible** (stock > 10)
+- 🟠 **¡Últimas unidades!** (stock 1-10)
+- 🔴 **Agotado** (stock = 0, botón deshabilitado)
+- El stock exacto solo lo ve el Administrador
+
+### 🖼️ Imágenes de Producto con Optimización Automática
+Los productos pueden tener fotos de referencia subidas por el Admin. El sistema **redimensiona automáticamente** a 800x800px con compresión JPEG calidad 85%, reduciendo fotos de celular de 5MB a ~150KB. Los productos sin imagen muestran un placeholder elegante.
+
+### 💵 Formato Pesos Colombianos
+Las tarifas y precios se muestran con **puntos de miles** ($85.000 en vez de $85000) mediante filtros de template personalizados. El formulario de servicios acepta entrada con o sin puntos (85.000 o 85000).
+
+### 🛡️ Sidebar Persistente por Rol
+Cada rol tiene su propia barra lateral con colores diferenciados (Admin: azul oscuro, Vet: turquesa, Cliente: púrpura, Domiciliario: gris con acento ámbar) que persiste en todas las páginas. El navbar es slim con solo logo y perfil.
+
+### 📝 Evidencia Obligatoria de Entrega
+Para confirmar una entrega, el domiciliario **debe** subir foto de evidencia y firma del cliente. Ambos campos son obligatorios en modelo, formulario y vista. Un pedido no puede pasar a "entregado" sin ellos.
 
 ---
 
@@ -91,9 +122,11 @@ El sistema implementa un modelo de **roles diferenciados** donde cada tipo de us
 | **Plantillas** | Django Templates con herencia y bloques |
 | **PDF** | xhtml2pdf |
 | **Excel** | openpyxl |
+| **Imágenes** | Pillow (redimensionamiento automático) |
 | **Autenticación** | Django AUTH_USER_MODEL personalizado (email como USERNAME_FIELD) |
 | **Autorización** | Modelo Rol personalizado + decoradores por rol |
 | **Sesiones** | Django Sessions (carrito de compras) |
+| **Zona Horaria** | America/Bogota (timezone.localdate()) |
 
 ---
 
@@ -101,18 +134,42 @@ El sistema implementa un modelo de **roles diferenciados** donde cada tipo de us
 
 ```
 huellitas_alegres/
-├── agenda/            # Disponibilidades y Citas
-├── entregas/          # Pedidos y Domicilio
-├── historial/         # Historial Clínico y Adjuntos
-├── huellitas_alegres/ # Configuración del proyecto Django
-├── mascotas/          # Mascotas (pacientes)
-├── productos/         # Inventario y Kardex
-├── proveedores/       # Proveedores (CRUD)
-├── reportes/          # Reportes PDF/Excel y Métricas Admin
-├── servicios/         # Catálogo de Servicios Veterinarios
-├── tienda/            # Catálogo, Carrito y Checkout
-├── usuarios/          # Usuarios, Roles, Perfil, Configuración Clínica
-├── templates/         # Plantillas base y compartidas
+├── agenda/                # Disponibilidades y Citas
+│   ├── models.py          # Disponibilidad, Cita (estados: Programada, Atendida, Cancelada)
+│   ├── forms.py           # DisponibilidadForm, CitaForm, CitaClienteForm
+│   └── views.py           # Dashboard vet, CRUD disponibilidades y citas
+├── entregas/              # Pedidos y Domicilio
+│   ├── models.py          # Pedido (estados: pendiente, en_camino, entregado, cancelado), PedidoItem
+│   ├── forms.py           # PedidoForm, CambiarEstadoForm, EvidenciaForm, ReasignarDomiciliarioForm
+│   ├── views.py           # Dashboard, detalle, torre de control, asignar_domiciliario_disponible()
+│   └── urls.py            # toggle_disponibilidad, etc.
+├── historial/             # Historial Clínico y Adjuntos
+├── huellitas_alegres/     # Configuración del proyecto Django
+│   └── templatetags/      # Filtros personalizados (no usado — los filtros están en servicios/)
+├── mascotas/               # Mascotas (pacientes)
+├── productos/              # Inventario y Kardex
+│   ├── models.py          # Producto (con imagen + auto-resize), MovimientoInventario
+│   ├── forms.py           # ProductoForm (tarifa como CharField con limpieza de puntos)
+│   └── views.py           # CRUD con request.FILES para imágenes
+├── proveedores/            # Proveedores (CRUD)
+├── reportes/              # Reportes PDF/Excel y Métricas Admin
+│   └── views.py           # admin_metricas, admin_metricas_pdf, admin_metricas_excel
+├── servicios/              # Catálogo de Servicios Veterinarios
+│   ├── forms.py           # ServicioForm (tarifa CharField con limpieza de puntos)
+│   └── templatetags/      # formato.py (filtros: pesos, miles)
+├── tienda/                # Catálogo, Carrito y Checkout
+│   └── views.py           # Checkout con asignación round-robin de domiciliario
+├── usuarios/              # Usuarios, Roles, Perfil, Configuración Clínica
+│   ├── models.py          # Usuario (con is_disponible), Rol, Perfil, ConfiguracionClinica
+│   ├── decorators.py      # role_required
+│   └── views.py           # Auth, dashboards, gestión de usuarios
+├── templates/             # Plantillas base y compartidas
+│   ├── base.html          # Layout con sidebar condicional por rol
+│   ├── includes/          # admin_sidebar, vet_sidebar, cliente_sidebar, domiciliario_sidebar
+│   ├── reportes/         # admin_metricas.html (donut ring SVG), base_reporte.html
+│   ├── entregas/          # dashboard, detalle, torre_control (disponibilidad toggle)
+│   ├── tienda/            # catalogo.html (card-img-top + availability badges)
+│   └── productos/          # product_form.html (enctype + image preview)
 └── manage.py
 ```
 
@@ -124,7 +181,7 @@ huellitas_alegres/
 
 ```bash
 git clone https://github.com/SAS2121R/proyecto-HUELLITAS-ALEGRES-DANIEL-G.V.git
-cd proyecto-HUELLITAS-ALEGRES-DANIEL-G.V/huellitas_alegres
+cd proyecto-HUELLITAS-ALEGRES-DANIEL-G.V
 ```
 
 2. **Crear y activar entorno virtual:**
@@ -210,22 +267,6 @@ Ejecutar pruebas de una app específica:
 python manage.py test proveedores
 python manage.py test usuarios.tests.ConfiguracionClinicaTest
 ```
-
----
-
-## 📸 Capturas de Pantalla
-
-### Dashboard del Administrador
-Panel con métricas en tiempo real: usuarios, mascotas, citas, ingresos, estado de pedidos y actividad reciente.
-
-### Tienda del Cliente
-Catálogo de productos con carrito en sesión, checkout y seguimiento de pedidos.
-
-### Torre de Control
-Vista global de todos los pedidos con reasignación inline de domiciliario.
-
-### Métricas de Negocio
-Top 5 Productos más vendidos, Productividad de Staff, Tasa de Cumplimiento, con exportación a PDF y Excel.
 
 ---
 
