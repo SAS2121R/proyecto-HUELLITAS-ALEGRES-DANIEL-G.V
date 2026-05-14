@@ -10,7 +10,9 @@ from .forms import MascotaForm
 
 @login_required(login_url='/usuarios/login/')
 def cliente_dashboard(request):
-    """Dashboard del Cliente — portal con accesos rápidos."""
+    """Dashboard del Cliente — solo rol Cliente."""
+    if request.user.rol.nombre != 'Cliente':
+        raise PermissionDenied
     return render(request, 'mascotas/cliente_dashboard.html')
 
 
@@ -22,8 +24,10 @@ def lista_mascotas(request):
 
     if request.user.rol.nombre in ('Veterinario', 'Administrador'):
         mascotas_list = Mascota.objects.all()
-    else:
+    elif request.user.rol.nombre == 'Cliente':
         mascotas_list = Mascota.objects.filter(propietario=request.user)
+    else:
+        raise PermissionDenied
 
     # Filter by search query (nombre, especie, cédula del propietario)
     if q:
@@ -56,7 +60,10 @@ def lista_mascotas(request):
 
 @login_required(login_url='/usuarios/login/')
 def crear_mascota(request):
-    """Crear nueva mascota — Vet/Admin/Vet puede crear; Cliente obtiene propietario forzado."""
+    """Crear nueva mascota — Cliente, Vet y Admin pueden crear."""
+    # Domiciliario no puede crear mascotas
+    if request.user.rol.nombre == 'Domiciliario':
+        raise PermissionDenied
     if request.method == 'POST':
         form = MascotaForm(request.POST, request.FILES)
         if form.is_valid():
@@ -76,7 +83,9 @@ def crear_mascota(request):
 
 @login_required(login_url='/usuarios/login/')
 def editar_mascota(request, pk):
-    """Editar mascota — Vet/Admin editan cualquiera, Cliente solo las propias."""
+    """Editar mascota — Vet/Admin editan cualquiera, Cliente solo las propias, Domiciliario=403."""
+    if request.user.rol.nombre == 'Domiciliario':
+        raise PermissionDenied
     mascota = get_object_or_404(Mascota, pk=pk)
     # Ownership check for Cliente role
     if request.user.rol.nombre == 'Cliente' and mascota.propietario != request.user:
@@ -93,10 +102,13 @@ def editar_mascota(request, pk):
     return render(request, 'mascotas/mascota_form.html', {'form': form})
 
 
-@role_required('Veterinario', 'Administrador')
+@login_required(login_url='/usuarios/login/')
 def eliminar_mascota(request, pk):
-    """Eliminar mascota — solo Veterinario y Administrador."""
+    """Eliminar mascota — Veterinario, Administrador, o Cliente (propietario)."""
     mascota = get_object_or_404(Mascota, pk=pk)
+    if request.user.rol.nombre not in ('Veterinario', 'Administrador'):
+        if mascota.propietario != request.user:
+            raise PermissionDenied
     if request.method == 'POST':
         mascota.delete()
         messages.success(request, 'Mascota eliminada exitosamente.')
@@ -106,7 +118,9 @@ def eliminar_mascota(request, pk):
 
 @login_required(login_url='/usuarios/login/')
 def detalle_mascota(request, pk):
-    """Detalle de mascota — Vet/Admin ven cualquier mascota, Cliente solo las propias."""
+    """Detalle de mascota — Vet/Admin ven cualquier mascota, Cliente solo las propias, Domiciliario=403."""
+    if request.user.rol.nombre == 'Domiciliario':
+        raise PermissionDenied
     mascota = get_object_or_404(Mascota, pk=pk)
     if request.user.rol.nombre == 'Cliente' and mascota.propietario != request.user:
         from django.core.exceptions import PermissionDenied

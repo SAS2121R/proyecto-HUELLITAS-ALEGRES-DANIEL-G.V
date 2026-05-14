@@ -13,7 +13,7 @@ from .forms import DisponibilidadForm, CitaForm, SolicitarCitaForm
 @login_required(login_url='/usuarios/login/')
 def dashboard_vet(request):
     """Dashboard veterinario — disponibilidades + citas del usuario actual."""
-    if request.user.rol.nombre == 'Cliente':
+    if request.user.rol.nombre not in ('Veterinario', 'Administrador'):
         raise PermissionDenied
     if request.user.rol.nombre == 'Veterinario':
         disponibilidades = Disponibilidad.objects.filter(veterinario=request.user)
@@ -42,8 +42,8 @@ def dashboard_vet(request):
 
 @login_required(login_url='/usuarios/login/')
 def lista_disponibilidades(request):
-    """Lista de disponibilidades (Vet=own, Admin=all, Cliente=403)."""
-    if request.user.rol.nombre == 'Cliente':
+    """Lista de disponibilidades (Vet=own, Admin=all)."""
+    if request.user.rol.nombre not in ('Veterinario', 'Administrador'):
         raise PermissionDenied
     if request.user.rol.nombre == 'Veterinario':
         qs = Disponibilidad.objects.filter(veterinario=request.user)
@@ -76,8 +76,8 @@ def crear_disponibilidad(request):
 
 @login_required(login_url='/usuarios/login/')
 def editar_disponibilidad(request, pk):
-    """Editar disponibilidad — Vet solo propia, Admin cualquiera, Cliente 403."""
-    if request.user.rol.nombre == 'Cliente':
+    """Editar disponibilidad — Vet solo propia, Admin cualquiera."""
+    if request.user.rol.nombre not in ('Veterinario', 'Administrador'):
         raise PermissionDenied
     disponibilidad = get_object_or_404(Disponibilidad, pk=pk)
     if request.user.rol.nombre == 'Veterinario' and disponibilidad.veterinario != request.user:
@@ -95,8 +95,8 @@ def editar_disponibilidad(request, pk):
 
 @login_required(login_url='/usuarios/login/')
 def eliminar_disponibilidad(request, pk):
-    """Eliminar disponibilidad con confirmación — Vet solo propia, Admin cualquiera, Cliente 403."""
-    if request.user.rol.nombre == 'Cliente':
+    """Eliminar disponibilidad con confirmación — Vet solo propia, Admin cualquiera."""
+    if request.user.rol.nombre not in ('Veterinario', 'Administrador'):
         raise PermissionDenied
     disponibilidad = get_object_or_404(Disponibilidad, pk=pk)
     if request.user.rol.nombre == 'Veterinario' and disponibilidad.veterinario != request.user:
@@ -118,13 +118,15 @@ def eliminar_disponibilidad(request, pk):
 
 @login_required(login_url='/usuarios/login/')
 def lista_citas(request):
-    """Lista de citas (Vet=own, Admin=all, Cliente=own pets)."""
+    """Lista de citas (Vet=own, Admin=all, Cliente=own pets, Domiciliario=403)."""
     if request.user.rol.nombre == 'Veterinario':
         qs = Cita.objects.filter(disponibilidad__veterinario=request.user)
     elif request.user.rol.nombre == 'Administrador':
         qs = Cita.objects.all()
-    else:  # Cliente
+    elif request.user.rol.nombre == 'Cliente':
         qs = Cita.objects.filter(mascota__propietario=request.user)
+    else:
+        raise PermissionDenied
     qs = qs.select_related('mascota', 'disponibilidad', 'disponibilidad__veterinario')
     paginator = Paginator(qs, 10)
     page = request.GET.get('page', 1)
@@ -198,8 +200,8 @@ def solicitar_cita(request):
 
 @login_required(login_url='/usuarios/login/')
 def editar_cita(request, pk):
-    """Editar cita — Vet own only, Admin any, Cliente 403."""
-    if request.user.rol.nombre == 'Cliente':
+    """Editar cita — Vet own only, Admin any."""
+    if request.user.rol.nombre not in ('Veterinario', 'Administrador'):
         raise PermissionDenied
     cita = get_object_or_404(Cita, pk=pk)
     if request.user.rol.nombre == 'Veterinario' and cita.disponibilidad.veterinario != request.user:

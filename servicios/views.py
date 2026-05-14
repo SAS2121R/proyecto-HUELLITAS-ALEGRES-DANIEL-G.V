@@ -41,9 +41,9 @@ def lista_servicios(request):
     })
 
 
-@role_required('Veterinario', 'Administrador')
+@role_required('Administrador')
 def crear_servicio(request):
-    """Crear nuevo servicio — Vet/Admin only."""
+    """Crear nuevo servicio — solo Administrador."""
     form = ServicioForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         form.save()
@@ -52,9 +52,9 @@ def crear_servicio(request):
     return render(request, 'servicios/servicio_form.html', {'form': form})
 
 
-@role_required('Veterinario', 'Administrador')
+@role_required('Administrador')
 def editar_servicio(request, pk):
-    """Editar servicio existente — Vet/Admin only."""
+    """Editar servicio existente — solo Administrador."""
     servicio = get_object_or_404(Servicio.all_objects, pk=pk)
     form = ServicioForm(request.POST or None, instance=servicio)
     if request.method == 'POST' and form.is_valid():
@@ -64,9 +64,9 @@ def editar_servicio(request, pk):
     return render(request, 'servicios/servicio_form.html', {'form': form, 'servicio': servicio})
 
 
-@role_required('Veterinario', 'Administrador')
+@role_required('Administrador')
 def eliminar_servicio(request, pk):
-    """Soft-delete service (set esta_activo=False) — Vet/Admin only."""
+    """Soft-delete service (set esta_activo=False) — solo Administrador."""
     servicio = get_object_or_404(Servicio.all_objects, pk=pk)
     if request.method == 'POST':
         servicio.esta_activo = False

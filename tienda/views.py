@@ -56,7 +56,7 @@ def catalogo(request):
     })
 
 
-@login_required(login_url='/usuarios/login/')
+@role_required('Cliente')
 def agregar_carrito(request, pk):
     """Add a product to the session cart. POST only.
 
@@ -96,7 +96,7 @@ def agregar_carrito(request, pk):
     return redirect('tienda:catalogo')
 
 
-@login_required(login_url='/usuarios/login/')
+@role_required('Cliente')
 def carrito(request):
     """View and manage the shopping cart contents."""
     cart = request.session.get('cart', {})
@@ -122,7 +122,7 @@ def carrito(request):
     })
 
 
-@login_required(login_url='/usuarios/login/')
+@role_required('Cliente')
 def actualizar_cantidad(request, pk):
     """Update quantity of a cart item. POST only."""
     if request.method != 'POST':
@@ -155,7 +155,7 @@ def actualizar_cantidad(request, pk):
     return redirect('tienda:carrito')
 
 
-@login_required(login_url='/usuarios/login/')
+@role_required('Cliente')
 def eliminar_carrito(request, pk):
     """Remove a product from the cart. POST only."""
     if request.method != 'POST':
@@ -175,7 +175,7 @@ def eliminar_carrito(request, pk):
     return redirect('tienda:carrito')
 
 
-@login_required(login_url='/usuarios/login/')
+@role_required('Cliente')
 def vaciar_carrito(request):
     """Empty the entire cart. POST only."""
     if request.method != 'POST':

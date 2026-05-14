@@ -69,7 +69,7 @@
         </a>
         <a href="{% url 'entregas:dashboard' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
             {% if '/entregas/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
-            <span class="material-symbols-outlined text-[20px] {% if '/entregas/' in request.path %}icon-fill{% endif %}">local_shipping</span>
+            <span class="material-symbols-outlined text-[20px] {% if '/entregas/' in request.path %}icon-fill{% endif %}">inventory</span>
             Entregas
         </a>
         <a href="{% url 'entregas:torre_control' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline

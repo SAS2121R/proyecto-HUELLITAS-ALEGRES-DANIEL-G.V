@@ -48,9 +48,9 @@ def lista_productos(request):
     })
 
 
-@role_required('Veterinario', 'Administrador')
+@role_required('Administrador')
 def create_product(request):
-    """Crear nuevo producto. Requiere rol Vet o Admin."""
+    """Crear nuevo producto. Solo Administrador."""
     form = ProductoForm(request.POST or None, request.FILES or None)
     if request.method == 'POST' and form.is_valid():
         form.save()
@@ -59,9 +59,9 @@ def create_product(request):
     return render(request, 'productos/product_form.html', {'form': form})
 
 
-@role_required('Veterinario', 'Administrador')
+@role_required('Administrador')
 def edit_product(request, pk):
-    """Editar producto existente. Requiere rol Vet o Admin."""
+    """Editar producto existente. Solo Administrador."""
     prod = get_object_or_404(Producto.all_objects, pk=pk)
     form = ProductoForm(request.POST or None, request.FILES or None, instance=prod)
     if request.method == 'POST' and form.is_valid():
@@ -71,9 +71,9 @@ def edit_product(request, pk):
     return render(request, 'productos/product_form.html', {'form': form, 'producto': prod})
 
 
-@role_required('Veterinario', 'Administrador')
+@role_required('Administrador')
 def delete_product(request, pk):
-    """Eliminar suavemente un producto (establece esta_activo=False). Requiere rol Vet o Admin."""
+    """Eliminar suavemente un producto (establece esta_activo=False). Solo Administrador."""
     prod = get_object_or_404(Producto.all_objects, pk=pk)
     if request.method == 'POST':
         prod.esta_activo = False
@@ -83,9 +83,9 @@ def delete_product(request, pk):
     return render(request, 'productos/product_confirm_delete.html', {'producto': prod})
 
 
-@role_required('Veterinario', 'Administrador')
+@role_required('Administrador')
 def entrada_inventario(request):
-    """Entrada manual de stock. Crea MovimientoInventario y actualiza el stock."""
+    """Entrada manual de stock. Solo Administrador."""
     form = MovimientoInventarioForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         mov = form.save(commit=False)

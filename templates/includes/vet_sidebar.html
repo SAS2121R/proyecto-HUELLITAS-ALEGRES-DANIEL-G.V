@@ -18,14 +18,14 @@
             Dashboard
         </a>
         <a href="{% url 'agenda:lista_citas' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
-            {% if '/agenda/' in request.path and 'dashboard' not in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
-            <span class="material-symbols-outlined text-[20px] {% if '/agenda/' in request.path and 'dashboard' not in request.path %}icon-fill{% endif %}">calendar_today</span>
-            Mi Agenda
-        </a>
-        <a href="{% url 'agenda:lista_citas' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
-            {% if '/agenda/' in request.path and 'dashboard' not in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
-            <span class="material-symbols-outlined text-[20px] {% if '/agenda/' in request.path and 'dashboard' not in request.path %}icon-fill{% endif %}">calendar_today</span>
+            {% if '/agenda/' in request.path and 'dashboard' not in request.path and 'disponibilidad' not in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/agenda/' in request.path and 'dashboard' not in request.path and 'disponibilidad' not in request.path %}icon-fill{% endif %}">calendar_today</span>
             Citas
+        </a>
+        <a href="{% url 'agenda:lista_disponibilidad' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/disponibilidad' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/disponibilidad' in request.path %}icon-fill{% endif %}">schedule</span>
+            Disponibilidades
         </a>
     </nav>
 
@@ -46,6 +46,26 @@
             {% if '/servicios/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
             <span class="material-symbols-outlined text-[20px] {% if '/servicios/' in request.path %}icon-fill{% endif %}">stethoscope</span>
             Servicios
+        </a>
+    </nav>
+
+    {# ── Section: Reportes ── #}
+    <p class="font-caption text-caption text-on-surface-variant uppercase tracking-wider px-3 pt-5 pb-1">Reportes</p>
+    <nav class="flex flex-col gap-0.5">
+        <a href="{% url 'reportes:citas' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/reportes/citas' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/reportes/citas' in request.path %}icon-fill{% endif %}">description</span>
+            Reporte Citas
+        </a>
+        <a href="{% url 'reportes:inventario' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/reportes/inventario' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/reportes/inventario' in request.path %}icon-fill{% endif %}">description</span>
+            Reporte Inventario
+        </a>
+        <a href="{% url 'reportes:servicios' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/reportes/servicios' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/reportes/servicios' in request.path %}icon-fill{% endif %}">description</span>
+            Reporte Servicios
         </a>
     </nav>
 
