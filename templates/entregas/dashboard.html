@@ -19,6 +19,21 @@
         <span class="material-symbols-outlined text-[18px]">add</span>
         Nuevo Pedido
     </a>
+    {% elif user.rol.nombre == 'Domiciliario' %}
+    <form method="post" action="{% url 'entregas:toggle_mi_disponibilidad' %}" class="inline">
+        {% csrf_token %}
+        {% if user.is_disponible %}
+        <button type="submit" class="inline-flex items-center gap-2 bg-surface-container-high text-on-surface font-label-md text-label-md px-4 py-2.5 rounded-lg hover:bg-error-container/50 hover:text-on-error-container transition-colors shadow-sm">
+            <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            Estoy Disponible
+        </button>
+        {% else %}
+        <button type="submit" class="inline-flex items-center gap-2 bg-error-container/50 text-on-error-container font-label-md text-label-md px-4 py-2.5 rounded-lg hover:bg-surface-container-high hover:text-on-surface transition-colors shadow-sm">
+            <span class="material-symbols-outlined text-[18px]">pause_circle</span>
+            No Disponible
+        </button>
+        {% endif %}
+    </form>
     {% endif %}
 </div>
 

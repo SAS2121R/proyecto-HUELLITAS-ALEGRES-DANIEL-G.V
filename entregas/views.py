@@ -406,3 +406,23 @@ def toggle_disponibilidad(request, pk):
     estado = 'disponible' if domiciliario.is_disponible else 'no disponible'
     messages.success(request, f'{domiciliario.get_full_name() or domiciliario.email} ahora está {estado}.')
     return redirect('entregas:torre_control')
+
+
+@login_required(login_url='/usuarios/login/')
+def toggle_mi_disponibilidad(request):
+    """Vista para que un Domiciliario cambie SU PROPIA disponibilidad.
+    POST only — redirige de vuelta al dashboard de entregas.
+    Permite que el domiciliario se ponga 'no disponible' cuando está fuera
+    de turno, enfermo, o con la moto en taller, evitando que el sistema
+    le siga asignando pedidos (desbalanceo de carga)."""
+    if request.user.rol.nombre != 'Domiciliario':
+        raise PermissionDenied
+
+    if request.method != 'POST':
+        return redirect('entregas:dashboard')
+
+    request.user.is_disponible = not request.user.is_disponible
+    request.user.save(update_fields=['is_disponible'])
+    estado = 'disponible' if request.user.is_disponible else 'no disponible'
+    messages.success(request, f'Ahora estás {estado} para recibir pedidos.')
+    return redirect('entregas:dashboard')
