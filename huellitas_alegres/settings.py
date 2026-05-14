@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'productos', # aplicacion personalizada para manejar productos de la tienda
     'usuarios', # aplicacion personalizada para manejar autenticacion de usuarios
     'mascotas', # aplicacion para manejar mascotas (pacientes) de la clinica

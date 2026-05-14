@@ -1,12 +1,23 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container py-4">
- <h1>Eliminar producto</h1>
- <p>¿Seguro que quieres eliminar "{{ producto.nombre }}"?</p>
- <form method="post">
-   {% csrf_token %}
-   <button type="submit" class="btn btn-danger">Si, eliminar</button>
-   <a href="{% url 'productos:lista' %}" class="btn btn-secondary">Cancelar</a>
- </form>
+<div class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-8 text-center">
+    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-error-container flex items-center justify-center">
+      <span class="material-symbols-outlined text-3xl text-error">delete_forever</span>
+    </div>
+    <h1 class="font-headline-lg text-headline-lg text-on-surface mb-3">Eliminar producto</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant mb-6">
+      ¿Estás seguro de que querés eliminar <strong class="text-on-surface">"{{ producto.nombre }}"</strong>? Esta acción no se puede deshacer.
+    </p>
+    <form method="post" class="flex justify-center gap-3">
+      {% csrf_token %}
+      <button type="submit" class="inline-flex items-center gap-2 bg-error text-on-error font-label-md text-label-md rounded-lg px-5 py-2.5 hover:opacity-90 transition-opacity">
+        <span class="material-symbols-outlined text-[18px]">delete</span> Sí, eliminar
+      </button>
+      <a href="{% url 'productos:lista' %}" class="inline-flex items-center gap-2 bg-surface-container-high text-on-surface-variant font-label-md text-label-md rounded-lg px-5 py-2.5 hover:bg-surface-container-highest transition-colors">
+        <span class="material-symbols-outlined text-[18px]">close</span> Cancelar
+      </a>
+    </form>
+  </div>
 </div>
 {% endblock %}

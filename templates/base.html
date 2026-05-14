@@ -1,158 +1,213 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}Huellitas Alegres{% endblock title %}</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+{# ── Tailwind CDN ── #}
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+{# ── DESIGN.md Fonts ── #}
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&amp;family=Manrope:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+
+{# ── Tailwind Config: DESIGN.md palette ── #}
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                "colors": {
+                    "primary": "#37563b",
+                    "primary-container": "#4f6f52",
+                    "on-primary": "#ffffff",
+                    "on-primary-container": "#ccf0cc",
+                    "surface": "#f8f9fa",
+                    "surface-container": "#edeeef",
+                    "surface-container-low": "#f3f4f5",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e7e8e9",
+                    "surface-container-highest": "#e1e3e4",
+                    "secondary": "#625e56",
+                    "secondary-container": "#e6dfd5",
+                    "on-secondary-container": "#67625a",
+                    "on-surface": "#191c1d",
+                    "on-surface-variant": "#424841",
+                    "outline": "#737971",
+                    "outline-variant": "#c2c8bf",
+                    "error": "#ba1a1a",
+                    "error-container": "#ffdad6",
+                    "on-error": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#47541d",
+                    "tertiary-container": "#5e6d33",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-container": "#ddeea7",
+                    "background": "#f8f9fa"
+                },
+                "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+                },
+                "fontFamily": {
+                    "display-lg": ["Plus Jakarta Sans"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "body-lg": ["Manrope"],
+                    "body-md": ["Manrope"],
+                    "label-md": ["Manrope"],
+                    "caption": ["Manrope"]
+                },
+                "fontSize": {
+                    "display-lg": ["48px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                    "headline-lg": ["32px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                    "headline-md": ["24px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                    "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                    "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                    "label-md": ["14px", { "lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "600" }],
+                    "caption": ["12px", { "lineHeight": "1.2", "fontWeight": "500" }]
+                }
+            }
+        }
+    }
+</script>
+
 <style>
-/* Reset browser defaults */
-html, body { margin: 0; padding: 0; }
-/* Nav brand */
-.navbar-brand i { font-size: 1.4rem; }
-/* Form control tweaks */
-.form-control:focus { border-color: #667eea; box-shadow: 0 0 0 .2rem rgba(102,126,234,.15); }
-/* Card hover */
-.card-hover:hover { transform: translateY(-3px); transition: transform .2s ease; }
-/* Messages */
-.alert { border-radius: .5rem; }
-/* Product card hover */
-.product-card:hover { transform: translateY(-3px); transition: transform .2s ease; box-shadow: 0 .5rem 1rem rgba(0,0,0,.1) !important; }
-/* Badge */
-.role-badge { font-size: .7rem; vertical-align: middle; }
-/* Dropdown */
-.dropdown-menu { border: none; border-radius: .75rem; }
-.dropdown-item { border-radius: .375rem; padding: .5rem 1rem; margin: .1rem .25rem; }
-.dropdown-item:hover { background-color: #f0f0ff; }
-/* Layout */
-body { min-height: 100vh; display: flex; flex-direction: column; background-color: #f8f9fa; }
-.navbar { position: sticky; top: 0; z-index: 1030; }
-.messages-container { margin-top: 0; }
+    /* Material Symbols default variant settings */
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .icon-fill {
+        font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
 
-/* ── Shared sidebar ── */
-.app-sidebar { min-height: calc(100vh - 56px); padding-top: 1rem; }
-.app-sidebar .nav-link { padding: .6rem 1rem; border-radius: .375rem; margin: .15rem .5rem; transition: all .2s; }
-.app-sidebar .nav-link i { width: 1.5rem; text-align: center; }
-.app-sidebar .sidebar-heading { font-size: .7rem; text-transform: uppercase; letter-spacing: .1rem; padding: .5rem 1rem .3rem; margin-top: .5rem; }
+    /* Sidebar scrollbar hide */
+    .sidebar-scroll::-webkit-scrollbar { display: none; }
+    .sidebar-scroll { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* ── Admin (dark blue) ── */
-.admin-sidebar { background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%); }
-.admin-sidebar .nav-link { color: rgba(255,255,255,.7); }
-.admin-sidebar .nav-link:hover, .admin-sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,.1); }
-.admin-sidebar .nav-link.active { background: rgba(102,126,234,.3); border-left: 3px solid #667eea; }
-.admin-sidebar .sidebar-heading { color: rgba(255,255,255,.4); }
+    /* Body base */
+    html, body { margin: 0; padding: 0; }
 
-/* ── Vet (turquesa) ── */
-.vet-sidebar { background: linear-gradient(180deg, #1a3a4a 0%, #1e5c6e 100%); }
-.vet-sidebar .nav-link { color: rgba(255,255,255,.75); font-size: .9rem; }
-.vet-sidebar .nav-link:hover, .vet-sidebar .nav-link.active { color: #fff; background: rgba(44,159,175,.35); }
-.vet-sidebar .nav-link.active { border-left: 3px solid #2c9faf; }
-.vet-sidebar .sidebar-heading { color: rgba(255,255,255,.45); font-size: .65rem; letter-spacing: .12rem; }
-
-/* ── Cliente (purple) ── */
-.cliente-sidebar { background: linear-gradient(180deg, #2d1b4e 0%, #4a2c6e 100%); }
-.cliente-sidebar .nav-link { color: rgba(255,255,255,.8); }
-.cliente-sidebar .nav-link:hover, .cliente-sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,.12); }
-.cliente-sidebar .nav-link.active { background: rgba(167,139,250,.3); border-left: 3px solid #a78bfa; }
-.cliente-sidebar .sidebar-heading { color: rgba(255,255,255,.45); }
-
-/* ── Domiciliario (dark gray/amber) ── */
-.domiciliario-sidebar { background: linear-gradient(180deg, #2d2d2d 0%, #404040 100%); }
-.domiciliario-sidebar .nav-link { color: rgba(255,255,255,.8); }
-.domiciliario-sidebar .nav-link:hover, .domiciliario-sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,.12); }
-.domiciliario-sidebar .nav-link.active { background: rgba(255,193,7,.25); border-left: 3px solid #ffc107; }
-.domiciliario-sidebar .sidebar-heading { color: rgba(255,255,255,.45); }
-
-@media (max-width: 767.98px) {
-    .app-sidebar { min-height: auto; margin-bottom: 1rem; }
-}
+    /* Card hover effects */
+    .card-hover:hover { transform: translateY(-3px); transition: transform .2s ease; }
+    .product-card:hover { transform: translateY(-3px); transition: transform .2s ease; box-shadow: 0 .5rem 1rem rgba(0,0,0,.1); }
 </style>
+
 {% block extra_css %}{% endblock %}
 </head>
 
-<body>
-<nav class="navbar navbar-expand-lg navbar-dark shadow-sm" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
-  <div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="{% url 'inicio' %}">
-      <i class="bi bi-heart-pulse-fill me-1"></i> HUELLITAS ALEGRES
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarMain">
-      <ul class="navbar-nav me-auto"></ul>
-      <ul class="navbar-nav">
-        {% if user.is_authenticated %}
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-person-circle me-1"></i>
-            <span class="d-lg-inline d-none">{{ user.get_full_name|default:user.email }}</span>
-            <span class="badge bg-secondary role-badge ms-1">{{ user.rol.nombre }}</span>
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="{% url 'usuarios:mi_perfil' %}"><i class="bi bi-person me-2"></i> Mi Perfil</a></li>
-            <li><a class="dropdown-item" href="{% url 'usuarios:cambiar_password' %}"><i class="bi bi-key me-2"></i> Cambiar Contraseña</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="{% url 'usuarios:logout' %}"><i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</a></li>
-          </ul>
-        </li>
-        {% else %}
-        <li class="nav-item"><a href="{% url 'usuarios:auth' %}" class="nav-link"><i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión</a></li>
-        {% endif %}
-      </ul>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col">
+
+{# ─────────────────── NAVBAR ─────────────────── #}
+<nav class="sticky top-0 z-50 bg-surface-container-low border-b border-outline-variant/30 shadow-sm">
+    <div class="max-w-[1440px] mx-auto flex items-center justify-between px-4 md:px-8 py-3">
+        {# Brand #}
+        <a href="{% url 'inicio' %}" class="flex items-center gap-2 text-primary no-underline">
+            <span class="material-symbols-outlined text-[28px] icon-fill">pets</span>
+            <span class="font-headline-md text-headline-md text-primary font-bold tracking-tight hidden sm:inline">HUELLITAS ALEGRES</span>
+        </a>
+
+        {# Right side #}
+        <div class="flex items-center gap-3">
+            {% if user.is_authenticated %}
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" class="flex items-center gap-2 hover:bg-surface-container-high rounded-full p-1 pr-3 transition-all border border-transparent hover:border-outline-variant/30">
+                    {% if user.perfil.foto %}
+                    <img src="{{ user.perfil.foto.url }}" alt="{{ user.get_full_name|default:user.email }}" class="w-8 h-8 rounded-full object-cover border border-outline-variant/30">
+                    {% else %}
+                    <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-label-md">
+                        {{ user.first_name.0|upper }}{% if user.last_name %}{{ user.last_name.0|upper }}{% endif %}
+                    </div>
+                    {% endif %}
+                    <span class="font-label-md text-label-md text-on-surface hidden md:inline">{{ user.get_full_name|default:user.email }}</span>
+                    <span class="text-caption text-secondary bg-surface-container px-2 py-0.5 rounded-full hidden md:inline">{{ user.rol.nombre }}</span>
+                    <span class="material-symbols-outlined text-on-surface-variant text-[20px]">expand_more</span>
+                </button>
+                <div x-show="open" @click.outside="open = false" x-cloak class="absolute right-0 mt-2 w-56 bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant/20 py-2 z-50" style="display: none;">
+                    <a href="{% url 'usuarios:mi_perfil' %}" class="flex items-center gap-3 px-4 py-2.5 text-on-surface hover:bg-surface-container transition-colors font-label-md text-label-md no-underline">
+                        <span class="material-symbols-outlined text-[20px]">person</span> Mi Perfil
+                    </a>
+                    <a href="{% url 'usuarios:cambiar_password' %}" class="flex items-center gap-3 px-4 py-2.5 text-on-surface hover:bg-surface-container transition-colors font-label-md text-label-md no-underline">
+                        <span class="material-symbols-outlined text-[20px]">key</span> Cambiar Contraseña
+                    </a>
+                    <hr class="my-1 border-outline-variant/20">
+                    <a href="{% url 'usuarios:logout' %}" class="flex items-center gap-3 px-4 py-2.5 text-error hover:bg-error-container/30 transition-colors font-label-md text-label-md no-underline">
+                        <span class="material-symbols-outlined text-[20px]">logout</span> Cerrar Sesión
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <a href="{% url 'usuarios:auth' %}" class="bg-primary text-on-primary font-label-md text-label-md px-4 py-2 rounded-lg hover:opacity-90 transition-opacity no-underline flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">login</span> Iniciar Sesión
+            </a>
+            {% endif %}
+        </div>
     </div>
-  </div>
 </nav>
 
+{# ─────────────────── MESSAGES ─────────────────── #}
 {% if messages %}
-<div class="messages-container container-fluid px-3 px-md-4 pt-3">
-  {% for message in messages %}
-  <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-    {{ message }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  </div>
-  {% endfor %}
+<div class="px-4 md:px-8 pt-3 max-w-[1440px] mx-auto w-full">
+    {% for message in messages %}
+    <div class="flex items-center gap-2 px-4 py-3 rounded-lg mb-2 font-label-md text-label-md
+        {% if 'success' in message.tags %}bg-primary-container/30 text-primary border border-primary/20
+        {% elif 'error' in message.tags or 'danger' in message.tags %}bg-error-container/50 text-on-error-container border border-error/30
+        {% elif 'warning' in message.tags %}bg-secondary-container/50 text-on-secondary-container border border-secondary/20
+        {% elif 'info' in message.tags %}bg-surface-container-high text-on-surface-variant border border-outline-variant/30
+        {% else %}bg-surface-container text-on-surface border border-outline-variant/20{% endif %}">
+        <span class="material-symbols-outlined text-[20px]">
+            {% if 'success' in message.tags %}check_circle{% elif 'error' in message.tags or 'danger' in message.tags %}error{% elif 'warning' in message.tags %}warning{% elif 'info' in message.tags %}info{% else %}notifications{% endif %}
+        </span>
+        <span class="flex-1">{{ message }}</span>
+        <button type="button" class="text-on-surface-variant hover:text-on-surface ml-2" onclick="this.parentElement.remove()">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+    </div>
+    {% endfor %}
 </div>
 {% endif %}
 
-<div class="row g-0">
-  {% if user.rol.nombre == 'Administrador' %}
-  <div class="col-md-3 col-lg-2 app-sidebar admin-sidebar">{% include 'includes/admin_sidebar.html' %}</div>
-  <div class="col-md-9 col-lg-10 app-main" style="min-height: calc(100vh - 56px); background-color: #f8f9fa;"><div class="p-3 p-md-4 pt-4">
-  {% elif user.rol.nombre == 'Veterinario' %}
-  <div class="col-md-3 col-lg-2 app-sidebar vet-sidebar">{% include 'includes/vet_sidebar.html' %}</div>
-  <div class="col-md-9 col-lg-10 app-main" style="min-height: calc(100vh - 56px); background-color: #f0f7f9;"><div class="p-3 p-md-4 pt-4">
-  {% elif user.rol.nombre == 'Cliente' %}
-  <div class="col-md-3 col-lg-2 app-sidebar cliente-sidebar">{% include 'includes/cliente_sidebar.html' %}</div>
-  <div class="col-md-9 col-lg-10 app-main" style="min-height: calc(100vh - 56px); background-color: #faf5ff;"><div class="p-3 p-md-4 pt-4">
-  {% elif user.rol.nombre == 'Domiciliario' %}
-  <div class="col-md-3 col-lg-2 app-sidebar domiciliario-sidebar">{% include 'includes/domiciliario_sidebar.html' %}</div>
-  <div class="col-md-9 col-lg-10 app-main" style="min-height: calc(100vh - 56px); background-color: #fff8e1;"><div class="p-3 p-md-4 pt-4">
-  {% else %}
-  <div class="col-12"><div class="container-fluid px-3 px-md-4 pt-3 pb-5">
-  {% endif %}
+{# ─────────────────── MAIN LAYOUT ─────────────────── #}
+<div class="flex flex-1">
+    {% if user.is_authenticated and user.rol.nombre %}
+    {# Sidebar — conditional by role #}
+    <aside class="w-[280px] flex-shrink-0 bg-surface-container-low border-r border-outline-variant/20 hidden md:flex flex-col min-h-[calc(100vh-60px)] sticky top-[60px] sidebar-scroll overflow-y-auto">
+        {% if user.rol.nombre == 'Administrador' %}
+            {% include 'includes/admin_sidebar.html' %}
+        {% elif user.rol.nombre == 'Veterinario' %}
+            {% include 'includes/vet_sidebar.html' %}
+        {% elif user.rol.nombre == 'Cliente' %}
+            {% include 'includes/cliente_sidebar.html' %}
+        {% elif user.rol.nombre == 'Domiciliario' %}
+            {% include 'includes/domiciliario_sidebar.html' %}
+        {% endif %}
+    </aside>
+    {% endif %}
 
-  {% block content %}{% endblock content %}
-
-  {% if user.is_authenticated %}
-  </div></div>
-  {% else %}
-  </div></div>
-  {% endif %}
+    {# Main content area — single block, shared by authenticated and anonymous #}
+    <main class="flex-1 bg-surface min-h-[calc(100vh-60px)]">
+        <div class="p-4 md:p-6 pt-4">
+            {% block content %}{% endblock content %}
+        </div>
+    </main>
 </div>
 
-<footer class="text-white text-center py-3 mt-auto" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
-  <div class="container">
-    <small>&copy; HUELLITAS ALEGRES — Clínica Veterinaria & Tienda</small>
-  </div>
+{# ─────────────────── FOOTER ─────────────────── #}
+<footer class="bg-surface-container-highest border-t border-outline-variant/30 py-4 text-center mt-auto">
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8">
+        <small class="text-on-surface-variant font-caption text-caption">&copy; HUELLITAS ALEGRES — Clínica Veterinaria &amp; Tienda</small>
+    </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{# ── Alpine.js for dropdown toggle ── #}
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+
 {% block scripts %}{% endblock scripts %}
 </body>
-
 </html>

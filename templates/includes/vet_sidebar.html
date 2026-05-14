@@ -1,46 +1,89 @@
-{# Vet sidebar — included from base.html when user is Veterinario #}
-<div class="sidebar-heading">Principal</div>
-<nav class="nav flex-column">
-    <a href="{% url 'agenda:dashboard_vet' %}" class="nav-link {% if '/agenda/dashboard' in request.path %}active{% endif %}">
-        <i class="fas fa-tachometer-alt"></i> Inicio
-    </a>
-    <a href="{% url 'agenda:dashboard_vet' %}#citas" class="nav-link {% if '/agenda/' in request.path and 'dashboard' not in request.path %}active{% endif %}">
-        <i class="fas fa-calendar-check"></i> Mi Agenda
-    </a>
-    <a href="{% url 'agenda:lista_citas' %}" class="nav-link {% if '/agenda/' in request.path and 'dashboard' not in request.path %}active{% endif %}">
-        <i class="fas fa-clock"></i> Citas
-    </a>
-</nav>
+{# ── Vet sidebar — included from base.html when user is Veterinario ── #}
+{# ── Uses DESIGN.md palette via Tailwind + Material Symbols icons ── #}
 
-<div class="sidebar-heading">Clínica</div>
-<nav class="nav flex-column">
-    <a href="{% url 'mascotas:lista' %}" class="nav-link {% if '/mascotas/' in request.path %}active{% endif %}">
-        <i class="fas fa-paw"></i> Pacientes
-    </a>
-    <a href="{% url 'historial:lista' %}" class="nav-link {% if '/historial/' in request.path %}active{% endif %}">
-        <i class="fas fa-file-medical"></i> Historial
-    </a>
-    <a href="{% url 'servicios:lista' %}" class="nav-link {% if '/servicios/' in request.path %}active{% endif %}">
-        <i class="fas fa-stethoscope"></i> Servicios
-    </a>
-</nav>
+<div class="flex flex-col h-full p-4 gap-1">
 
-<div class="sidebar-heading">Acciones</div>
-<nav class="nav flex-column">
-    <a href="{% url 'agenda:crear_disponibilidad' %}" class="nav-link {% if '/disponibilidad/crear' in request.path %}active{% endif %}">
-        <i class="fas fa-plus-circle"></i> Nueva Disponibilidad
-    </a>
-    <a href="{% url 'historial:crear' %}" class="nav-link {% if '/historial/crear' in request.path %}active{% endif %}">
-        <i class="fas fa-notes-medical"></i> Nuevo Historial
-    </a>
-</nav>
+    {# Brand #}
+    <div class="mb-6 px-3">
+        <h1 class="font-headline-md text-headline-md text-primary font-bold tracking-tight">Huellitas Alegres</h1>
+        <p class="font-caption text-caption text-secondary mt-1">Portal Veterinario</p>
+    </div>
 
-<div class="sidebar-heading">Mi Perfil</div>
-<nav class="nav flex-column">
-    <a href="{% url 'usuarios:mi_perfil' %}" class="nav-link {% if '/perfil' in request.path %}active{% endif %}">
-        <i class="fas fa-user-circle"></i> Mi Perfil
-    </a>
-    <a href="{% url 'usuarios:cambiar_password' %}" class="nav-link {% if '/password' in request.path %}active{% endif %}">
-        <i class="fas fa-key"></i> Contraseña
-    </a>
-</nav>
+    {# ── Section: Principal ── #}
+    <p class="font-caption text-caption text-on-surface-variant uppercase tracking-wider px-3 pt-3 pb-1">Principal</p>
+    <nav class="flex flex-col gap-0.5">
+        <a href="{% url 'agenda:dashboard_vet' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/agenda/dashboard' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/agenda/dashboard' in request.path %}icon-fill{% endif %}">dashboard</span>
+            Dashboard
+        </a>
+        <a href="{% url 'agenda:lista_citas' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/agenda/' in request.path and 'dashboard' not in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/agenda/' in request.path and 'dashboard' not in request.path %}icon-fill{% endif %}">calendar_today</span>
+            Mi Agenda
+        </a>
+        <a href="{% url 'agenda:lista_citas' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/agenda/' in request.path and 'dashboard' not in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/agenda/' in request.path and 'dashboard' not in request.path %}icon-fill{% endif %}">calendar_today</span>
+            Citas
+        </a>
+    </nav>
+
+    {# ── Section: Clínica ── #}
+    <p class="font-caption text-caption text-on-surface-variant uppercase tracking-wider px-3 pt-5 pb-1">Clínica</p>
+    <nav class="flex flex-col gap-0.5">
+        <a href="{% url 'mascotas:lista' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/mascotas/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/mascotas/' in request.path %}icon-fill{% endif %}">pets</span>
+            Pacientes
+        </a>
+        <a href="{% url 'historial:lista' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/historial/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/historial/' in request.path %}icon-fill{% endif %}">folder_open</span>
+            Historial
+        </a>
+        <a href="{% url 'servicios:lista' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/servicios/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/servicios/' in request.path %}icon-fill{% endif %}">stethoscope</span>
+            Servicios
+        </a>
+    </nav>
+
+    {# ── Section: Acciones ── #}
+    <p class="font-caption text-caption text-on-surface-variant uppercase tracking-wider px-3 pt-5 pb-1">Acciones</p>
+    <nav class="flex flex-col gap-0.5">
+        <a href="{% url 'agenda:crear_disponibilidad' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/disponibilidad/crear' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/disponibilidad/crear' in request.path %}icon-fill{% endif %}">add_circle</span>
+            Nueva Disponibilidad
+        </a>
+        <a href="{% url 'historial:crear' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/historial/crear' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/historial/crear' in request.path %}icon-fill{% endif %}">clinical_notes</span>
+            Nuevo Historial
+        </a>
+    </nav>
+
+    {# ── Section: Mi Perfil ── #}
+    <p class="font-caption text-caption text-on-surface-variant uppercase tracking-wider px-3 pt-5 pb-1">Mi Perfil</p>
+    <nav class="flex flex-col gap-0.5 flex-1">
+        <a href="{% url 'usuarios:mi_perfil' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/perfil' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/perfil' in request.path %}icon-fill{% endif %}">person</span>
+            Mi Perfil
+        </a>
+        <a href="{% url 'usuarios:cambiar_password' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/password' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/password' in request.path %}icon-fill{% endif %}">key</span>
+            Contraseña
+        </a>
+    </nav>
+
+    {# ── CTA Button ── #}
+    <div class="mt-auto pt-4 pb-2">
+        <a href="{% url 'agenda:crear_disponibilidad' %}" class="flex items-center justify-center gap-2 w-full bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg hover:opacity-90 transition-opacity shadow-sm no-underline">
+            <span class="material-symbols-outlined text-[18px]">add_circle</span>
+            Nueva Disponibilidad
+        </a>
+    </div>
+</div>

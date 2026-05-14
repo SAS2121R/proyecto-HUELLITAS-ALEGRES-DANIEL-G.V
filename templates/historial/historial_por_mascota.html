@@ -1,92 +1,129 @@
 {% extends 'base.html' %}
+
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>📋 Historial de {{ mascota.nombre }}</h1>
-    <div>
-      <a href="{% url 'mascotas:detalle' mascota.pk %}" class="btn btn-secondary">← Volver a {{ mascota.nombre }}</a>
-      <a href="{% url 'historial:lista' %}" class="btn btn-outline-primary">Todos los historiales</a>
+<div class="max-w-4xl mx-auto">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary">clinical_notes</span> Historial de {{ mascota.nombre }}
+        </h1>
+        <div class="flex gap-2">
+            <a href="{% url 'mascotas:detalle' mascota.pk %}" class="inline-flex items-center gap-1.5 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver a {{ mascota.nombre }}
+            </a>
+            <a href="{% url 'historial:lista' %}" class="inline-flex items-center gap-1.5 bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-3 py-2 hover:bg-surface-container-highest transition-colors">
+                <span class="material-symbols-outlined text-[18px]">list</span> Todos los historiales
+            </a>
+        </div>
     </div>
-  </div>
 
-  <!-- Pet info summary -->
-  <div class="card mb-4 border-info">
-    <div class="card-body d-flex align-items-center gap-3">
-      {% if mascota.foto %}
-      <img src="{{ mascota.foto.url }}" alt="{{ mascota.nombre }}" class="rounded-circle" width="50" height="50" style="object-fit: cover;">
-      {% else %}
-      <span style="font-size: 2rem;">🐾</span>
-      {% endif %}
-      <div>
-        <strong>{{ mascota.especie }}</strong> · {{ mascota.sexo }} · {{ mascota.get_edad }}
-        {% if mascota.alergias and mascota.alergias != 'Ninguna' %}
-        <span class="badge bg-danger ms-2">⚠️ Alérgico: {{ mascota.alergias }}</span>
+    {# Pet info summary card #}
+    <div class="bg-surface-container-low rounded-xl p-4 border border-outline-variant/20 mb-6 flex items-center gap-4">
+        {% if mascota.foto %}
+        <img src="{{ mascota.foto.url }}" alt="{{ mascota.nombre }}" class="w-14 h-14 rounded-full object-cover border-2 border-primary-container">
+        {% else %}
+        <div class="w-14 h-14 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-headline-md text-headline-md">
+            {{ mascota.nombre.0|upper }}
+        </div>
         {% endif %}
-      </div>
-    </div>
-  </div>
-
-  {% if historiales %}
-    {% for hc in historiales %}
-    <div class="card mb-3 shadow-sm">
-      <div class="card-header d-flex justify-content-between align-items-center {% if hc.tipo_consulta == 'urgencia' %}bg-danger text-white{% elif hc.tipo_consulta == 'cirugia' %}bg-warning{% elif hc.tipo_consulta == 'vacunacion' %}bg-info text-white{% else %}bg-light{% endif %}">
         <div>
-          <strong>{{ hc.get_tipo_consulta_display }}</strong>
+            <strong class="font-label-md text-label-md text-on-surface">{{ mascota.especie }}</strong> · {{ mascota.sexo }} · {{ mascota.get_edad }}
+            {% if mascota.alergias and mascota.alergias != 'Ninguna' %}
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-error-container/50 text-on-error-container font-caption text-caption ml-2">
+                <span class="material-symbols-outlined text-[12px]">warning</span> Alérgico: {{ mascota.alergias }}
+            </span>
+            {% endif %}
         </div>
-        <small>{{ hc.fecha_consulta|date:"d/m/Y H:i" }}</small>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-8">
-            <p class="mb-1"><strong>Motivo:</strong> {{ hc.motivo_consulta }}</p>
-            <p class="mb-1"><strong>Diagnóstico:</strong> {{ hc.diagnostico }}</p>
-            {% if hc.tratamiento %}
-            <p class="mb-1"><strong>Tratamiento:</strong> {{ hc.tratamiento }}</p>
-            {% endif %}
-            {% if hc.observaciones %}
-            <p class="mb-1 text-muted"><strong>Observaciones:</strong> {{ hc.observaciones }}</p>
-            {% endif %}
-            <small class="text-muted">Veterinario: {{ hc.veterinario.get_full_name|default:hc.veterinario.email }}</small>
-          </div>
-          <div class="col-md-4">
-            {% if hc.peso or hc.temperatura or hc.frecuencia_cardiaca or hc.frecuencia_respiratoria %}
-            <div class="d-flex flex-wrap gap-1">
-              {% if hc.peso %}
-              <span class="badge bg-primary fs-6 p-2">⚖️ {{ hc.peso }} kg</span>
-              {% endif %}
-              {% if hc.temperatura %}
-              <span class="badge bg-warning text-dark fs-6 p-2">🌡️ {{ hc.temperatura }} °C</span>
-              {% endif %}
-              {% if hc.frecuencia_cardiaca %}
-              <span class="badge bg-danger fs-6 p-2">❤️ {{ hc.frecuencia_cardiaca }} lpm</span>
-              {% endif %}
-              {% if hc.frecuencia_respiratoria %}
-              <span class="badge bg-success fs-6 p-2">🫁 {{ hc.frecuencia_respiratoria }} rpm</span>
-              {% endif %}
-            </div>
-            {% endif %}
-            {% if hc.vacuna_aplicada %}
-            <div class="mt-2">
-              <span class="badge bg-success">💉 {{ hc.vacuna_aplicada }}</span>
-              {% if hc.proxima_vacunacion %}
-              <span class="badge bg-outline-success">Próxima: {{ hc.proxima_vacunacion|date:"d/m/Y" }}</span>
-              {% endif %}
-            </div>
-            {% endif %}
-          </div>
-        </div>
-      </div>
-      <div class="card-footer text-end">
-        <a href="{% url 'historial:detalle' hc.pk %}" class="btn btn-sm btn-info text-white">Ver detalle</a>
-        {% if user.rol.nombre == 'Veterinario' and hc.veterinario == user or user.rol.nombre == 'Administrador' %}
-        <a href="{% url 'historial:editar' hc.pk %}" class="btn btn-sm btn-warning">✏️ Editar</a>
-        {% endif %}
-      </div>
     </div>
-    {% endfor %}
+
+    {% if historiales %}
+      {% for hc in historiales %}
+      {# History Card #}
+      <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden mb-4">
+          {# Card Header — type-colored #}
+          <div class="px-4 py-3 flex justify-between items-center
+              {% if hc.tipo_consulta == 'urgencia' %}bg-error text-on-error
+              {% elif hc.tipo_consulta == 'cirugia' %}bg-secondary-container text-on-secondary-container
+              {% elif hc.tipo_consulta == 'vacunacion' %}bg-tertiary-container text-on-tertiary-container
+              {% else %}bg-primary-container text-on-primary-container{% endif %}">
+              <div class="flex items-center gap-2">
+                  <strong>{{ hc.get_tipo_consulta_display }}</strong>
+              </div>
+              <span class="font-caption text-caption opacity-80">{{ hc.fecha_consulta|date:"d/m/Y H:i" }}</span>
+          </div>
+          {# Card Body #}
+          <div class="p-4">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div class="md:col-span-2">
+                      <p class="mb-1"><span class="font-label-md text-label-md text-on-surface">Motivo:</span> <span class="font-body-md text-body-md text-on-surface">{{ hc.motivo_consulta }}</span></p>
+                      <p class="mb-1"><span class="font-label-md text-label-md text-on-surface">Diagnóstico:</span> <span class="font-body-md text-body-md text-on-surface">{{ hc.diagnostico }}</span></p>
+                      {% if hc.tratamiento %}
+                      <p class="mb-1"><span class="font-label-md text-label-md text-on-surface">Tratamiento:</span> <span class="font-body-md text-body-md text-on-surface">{{ hc.tratamiento }}</span></p>
+                      {% endif %}
+                      {% if hc.observaciones %}
+                      <p class="mb-1"><span class="font-label-md text-label-md text-on-surface-variant">Observaciones:</span> <span class="font-body-md text-body-md text-on-surface-variant">{{ hc.observaciones }}</span></p>
+                      {% endif %}
+                      <p class="font-caption text-caption text-on-surface-variant mt-2">
+                          <span class="material-symbols-outlined text-[14px] align-middle">stethoscope</span>
+                          {{ hc.veterinario.get_full_name|default:hc.veterinario.email }}
+                      </p>
+                  </div>
+                  <div>
+                      {% if hc.peso or hc.temperatura or hc.frecuencia_cardiaca or hc.frecuencia_respiratoria %}
+                      <div class="flex flex-wrap gap-2">
+                          {% if hc.peso %}
+                          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-container/30 text-primary font-caption text-caption">
+                              <span class="material-symbols-outlined text-[14px]">monitor_weight</span> {{ hc.peso }} kg
+                          </span>
+                          {% endif %}
+                          {% if hc.temperatura %}
+                          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-container/50 text-on-secondary-container font-caption text-caption">
+                              <span class="material-symbols-outlined text-[14px]">thermostat</span> {{ hc.temperatura }} °C
+                          </span>
+                          {% endif %}
+                          {% if hc.frecuencia_cardiaca %}
+                          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-error-container/50 text-on-error-container font-caption text-caption">
+                              <span class="material-symbols-outlined text-[14px]">favorite</span> {{ hc.frecuencia_cardiaca }} lpm
+                          </span>
+                          {% endif %}
+                          {% if hc.frecuencia_respiratoria %}
+                          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-tertiary-container/30 text-on-tertiary font-caption text-caption">
+                              <span class="material-symbols-outlined text-[14px]">respiratory_rate</span> {{ hc.frecuencia_respiratoria }} rpm
+                          </span>
+                          {% endif %}
+                      </div>
+                      {% endif %}
+                      {% if hc.vacuna_aplicada %}
+                      <div class="mt-2">
+                          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-container/30 text-primary font-caption text-caption">
+                              <span class="material-symbols-outlined text-[14px]">vaccines</span> {{ hc.vacuna_aplicada }}
+                          </span>
+                          {% if hc.proxima_vacunacion %}
+                          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-caption text-caption mt-1">
+                              Próxima: {{ hc.proxima_vacunacion|date:"d/m/Y" }}
+                          </span>
+                          {% endif %}
+                      </div>
+                      {% endif %}
+                  </div>
+              </div>
+          </div>
+          {# Card Footer #}
+          <div class="px-4 py-3 border-t border-outline-variant/10 flex justify-end gap-2">
+              <a href="{% url 'historial:detalle' hc.pk %}" class="inline-flex items-center gap-1 bg-primary text-on-primary font-caption text-caption px-2.5 py-1 rounded-lg hover:opacity-90 transition-opacity">
+                  <span class="material-symbols-outlined text-[14px]">visibility</span> Ver detalle
+              </a>
+              {% if user.rol.nombre == 'Veterinario' and hc.veterinario == user or user.rol.nombre == 'Administrador' %}
+              <a href="{% url 'historial:editar' hc.pk %}" class="inline-flex items-center gap-1 bg-surface-container-high text-on-surface font-caption text-caption px-2.5 py-1 rounded-lg hover:bg-surface-container-highest transition-colors">
+                  <span class="material-symbols-outlined text-[14px]">edit</span> Editar
+              </a>
+              {% endif %}
+          </div>
+      </div>
+      {% endfor %}
   {% else %}
-    <div class="alert alert-info text-center">
-      No hay historiales clínicos registrados para {{ mascota.nombre }}.
+    <div class="flex items-center justify-center gap-3 p-8 bg-surface-container rounded-xl border border-outline-variant/20">
+        <span class="material-symbols-outlined text-on-surface-variant text-[24px]">clinical_notes</span>
+        <p class="font-body-md text-body-md text-on-surface-variant">No hay historiales clínicos registrados para {{ mascota.nombre }}.</p>
     </div>
   {% endif %}
 </div>

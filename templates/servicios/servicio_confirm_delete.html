@@ -1,15 +1,33 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container py-4">
-  <h1 class="mb-4">Desactivar Servicio</h1>
-  <div class="alert alert-warning">
-    <p>¿Está seguro de que desea desactivar el servicio <strong>"{{ servicio.nombre }}"</strong>?</p>
-    <p>El servicio no se eliminará permanentemente, solo se marcará como inactivo.</p>
+<div class="max-w-lg mx-auto">
+  <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3 mb-6">
+    <span class="material-symbols-outlined text-error">warning</span> Desactivar Servicio
+  </h1>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-error/30 overflow-hidden">
+    <div class="bg-error-container/40 border-b border-error/20 px-6 py-4">
+      <p class="text-on-error-container flex items-center gap-2 font-label-md text-label-md">
+        <span class="material-symbols-outlined text-[20px]">error_outline</span>
+        Confirmación requerida
+      </p>
+    </div>
+    <div class="p-6">
+      <p class="font-body-md text-body-md text-on-surface mb-2">¿Está seguro de que desea desactivar el servicio <strong>"{{ servicio.nombre }}"</strong>?</p>
+      <p class="font-caption text-caption text-on-surface-variant mb-6">El servicio no se eliminará permanentemente, solo se marcará como inactivo.</p>
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="flex items-center gap-3">
+          <button type="submit" class="inline-flex items-center gap-2 bg-error text-on-error font-label-md text-label-md rounded-lg px-6 py-2.5 hover:opacity-90 transition-opacity">
+            <span class="material-symbols-outlined text-[18px]">block</span> Confirmar Desactivación
+          </button>
+          <a href="{% url 'servicios:lista' %}" class="inline-flex items-center gap-2 bg-surface-container-high text-on-surface-variant font-label-md text-label-md rounded-lg px-6 py-2.5 hover:bg-surface-container-highest transition-colors no-underline">
+            <span class="material-symbols-outlined text-[18px]">close</span> Cancelar
+          </a>
+        </div>
+      </form>
+    </div>
   </div>
-  <form method="post">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-danger">Confirmar Desactivación</button>
-    <a href="{% url 'servicios:lista' %}" class="btn btn-secondary">Cancelar</a>
-  </form>
 </div>
 {% endblock %}

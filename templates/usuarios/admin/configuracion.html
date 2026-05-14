@@ -2,48 +2,58 @@
 
 {% block title %}Configuración Clínica — Huellitas Alegres{% endblock %}
 
-{% block content %}
-<div class="container py-4" style="max-width: 600px;">
-    <h1 class="mb-4"><i class="bi bi-building"></i> Configuración de la Clínica</h1>
+{% block extra_css %}
+<style>
+    .tw-form input[type="text"],.tw-form input[type="email"],.tw-form input[type="password"],.tw-form input[type="number"],.tw-form input[type="date"],.tw-form input[type="time"],.tw-form input[type="url"],.tw-form input[type="tel"],.tw-form textarea,.tw-form select {
+        width:100%;padding:0.625rem 1rem;background:#f3f4f5;border:1px solid #c2c8bf;border-radius:0.5rem;font-family:'Manrope',sans-serif;font-size:1rem;line-height:1.6;color:#191c1d;transition:border-color 0.2s,box-shadow 0.2s;
+    }
+    .tw-form input:focus,.tw-form textarea:focus,.tw-form select:focus {outline:none;border-color:#37563b;box-shadow:0 0 0 1px #37563b;}
+    .tw-form label {display:block;font-family:'Manrope',sans-serif;font-size:0.875rem;font-weight:600;letter-spacing:0.01em;color:#191c1d;margin-bottom:0.375rem;}
+    .tw-form .helptext {display:block;margin-top:0.25rem;font-size:0.75rem;color:#424841;}
+</style>
+{% endblock %}
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-warning text-dark">
-            <h5 class="mb-0"><i class="bi bi-pencil"></i> Datos de la Clínica</h5>
-        </div>
-        <div class="card-body">
-            <p class="text-muted">Estos datos se usan en los comprobantes PDF y reportes del sistema.</p>
-            <form method="post" novalidate>
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label for="nombre" class="form-label fw-bold">Nombre de la Clínica</label>
-                    <input type="text" name="nombre" id="nombre" class="form-control form-control-lg"
-                           value="{{ config.nombre }}" required>
-                </div>
-                <div class="mb-3">
-                    <label for="nit" class="form-label fw-bold">NIT</label>
-                    <input type="text" name="nit" id="nit" class="form-control"
-                           value="{{ config.nit }}" placeholder="901.234.567-8">
-                </div>
-                <div class="mb-3">
-                    <label for="direccion" class="form-label fw-bold">Dirección</label>
-                    <input type="text" name="direccion" id="direccion" class="form-control"
-                           value="{{ config.direccion }}" placeholder="Calle 10 # 25-30, Bogotá">
-                </div>
-                <div class="mb-3">
-                    <label for="telefono" class="form-label fw-bold">Teléfono</label>
-                    <input type="text" name="telefono" id="telefono" class="form-control"
-                           value="{{ config.telefono }}" placeholder="601-555-0123">
-                </div>
-                <div class="mb-3">
-                    <label for="email" class="form-label fw-bold">Email</label>
-                    <input type="email" name="email" id="email" class="form-control"
-                           value="{{ config.email }}" placeholder="info@huellitasalegres.com">
-                </div>
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-warning"><i class="bi bi-check-circle"></i> Guardar Configuración</button>
-                </div>
-            </form>
-        </div>
+{% block content %}
+<div class="max-w-2xl mx-auto">
+  <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3 mb-6">
+    <span class="material-symbols-outlined text-primary">apartment</span> Configuración de la Clínica
+  </h1>
+
+  <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 overflow-hidden">
+    <div class="bg-secondary-container/40 border-b border-outline-variant/10 px-6 py-3">
+      <p class="font-label-md text-label-md text-on-secondary-container flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px]">edit</span> Datos de la Clínica
+      </p>
     </div>
+    <div class="p-6">
+      <p class="font-body-md text-body-md text-on-surface-variant mb-6">Estos datos se usan en los comprobantes PDF y reportes del sistema.</p>
+      <form method="post" novalidate class="tw-form">
+        {% csrf_token %}
+        <div class="mb-4">
+          <label for="nombre">Nombre de la Clínica</label>
+          <input type="text" name="nombre" id="nombre" value="{{ config.nombre }}" required class="text-lg font-headline-md">
+        </div>
+        <div class="mb-4">
+          <label for="nit">NIT</label>
+          <input type="text" name="nit" id="nit" value="{{ config.nit }}" placeholder="901.234.567-8">
+        </div>
+        <div class="mb-4">
+          <label for="direccion">Dirección</label>
+          <input type="text" name="direccion" id="direccion" value="{{ config.direccion }}" placeholder="Calle 10 # 25-30, Bogotá">
+        </div>
+        <div class="mb-4">
+          <label for="telefono">Teléfono</label>
+          <input type="text" name="telefono" id="telefono" value="{{ config.telefono }}" placeholder="601-555-0123">
+        </div>
+        <div class="mb-6">
+          <label for="email">Email</label>
+          <input type="email" name="email" id="email" value="{{ config.email }}" placeholder="info@huellitasalegres.com">
+        </div>
+        <button type="submit" class="w-full inline-flex items-center justify-center gap-2 bg-secondary-container text-on-secondary-container font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">
+          <span class="material-symbols-outlined text-[18px]">check_circle</span> Guardar Configuración
+        </button>
+      </form>
+    </div>
+  </div>
 </div>
 {% endblock %}

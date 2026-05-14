@@ -3,70 +3,75 @@
 {% block title %}Resumen Diario — Huellitas Alegres{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="bi bi-clipboard-check"></i> Resumen del Día</h1>
-        <a href="{% url 'entregas:dashboard' %}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Volver a Entregas
+<div class="max-w-5xl mx-auto">
+    {# Header #}
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary">clipboard_check</span>
+            Resumen del Día
+        </h1>
+        <a href="{% url 'entregas:dashboard' %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors no-underline">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver a Entregas
         </a>
     </div>
 
-    <!-- Summary stats -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
-            <div class="card bg-success text-white text-center shadow-sm">
-                <div class="card-body">
-                    <h2 class="mb-0">{{ total_entregas }}</h2>
-                    <small>Entregas Hoy</small>
-                </div>
-            </div>
+    {# ─────────────────── STATS GRID ─────────────────── #}
+    <div class="grid grid-cols-2 gap-3 mb-6">
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-4 text-center">
+            <span class="material-symbols-outlined text-[28px] text-tertiary">check_circle</span>
+            <p class="font-headline-lg text-headline-lg text-on-surface mt-1">{{ total_entregas }}</p>
+            <p class="font-caption text-caption text-on-surface-variant">Entregas Hoy</p>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="card bg-info text-white text-center shadow-sm">
-                <div class="card-body">
-                    <h5 class="mb-0">{{ fecha|date:"d/m/Y" }}</h5>
-                    <small>Fecha</small>
-                </div>
-            </div>
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-4 text-center">
+            <span class="material-symbols-outlined text-[28px] text-secondary">calendar_today</span>
+            <p class="font-headline-md text-headline-md text-on-surface mt-1">{{ fecha|date:"d/m/Y" }}</p>
+            <p class="font-caption text-caption text-on-surface-variant">Fecha</p>
         </div>
     </div>
 
+    {# ─────────────────── ENTREGAS TABLE ─────────────────── #}
     {% if pedidos_entregados %}
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th>Pedido</th>
-                    <th>Cliente</th>
-                    <th>Dirección</th>
-                    <th>Teléfono</th>
-                    <th>Hora</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for pedido in pedidos_entregados %}
-                <tr>
-                    <td><a href="{% url 'entregas:detalle' pedido.pk %}" class="text-decoration-none">#{{ pedido.pk }}</a></td>
-                    <td>{{ pedido.cliente.get_full_name }}</td>
-                    <td>{{ pedido.direccion_entrega }}</td>
-                    <td>{{ pedido.telefono_contacto }}</td>
-                    <td>{{ pedido.fecha_entrega|date:"H:i" }}</td>
-                    <td>${{ pedido.total|floatformat:0 }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr class="fw-bold">
-                    <td colspan="5" class="text-end">Total del día:</td>
-                    <td>${{ total_dia|floatformat:0 }}</td>
-                </tr>
-            </tfoot>
-        </table>
+    <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 overflow-hidden flex flex-col">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left font-body-md text-body-md">
+                <thead class="bg-surface-container-low text-on-surface-variant font-label-md text-label-md">
+                    <tr>
+                        <th class="py-3 px-4 font-semibold">Pedido</th>
+                        <th class="py-3 px-4 font-semibold">Cliente</th>
+                        <th class="py-3 px-4 font-semibold">Dirección</th>
+                        <th class="py-3 px-4 font-semibold">Teléfono</th>
+                        <th class="py-3 px-4 font-semibold">Hora</th>
+                        <th class="py-3 px-4 font-semibold text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/10 text-on-surface">
+                    {% for pedido in pedidos_entregados %}
+                    <tr class="hover:bg-surface transition-colors">
+                        <td class="py-3 px-4">
+                            <a href="{% url 'entregas:detalle' pedido.pk %}" class="font-medium text-primary hover:underline">#{{ pedido.pk }}</a>
+                        </td>
+                        <td class="py-3 px-4">{{ pedido.cliente.get_full_name }}</td>
+                        <td class="py-3 px-4">{{ pedido.direccion_entrega }}</td>
+                        <td class="py-3 px-4">{{ pedido.telefono_contacto }}</td>
+                        <td class="py-3 px-4 text-on-surface-variant font-caption text-caption">{{ pedido.fecha_entrega|date:"H:i" }}</td>
+                        <td class="py-3 px-4 text-right font-medium">${{ pedido.total|floatformat:0 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="bg-surface-container-high font-label-md text-label-md text-on-surface">
+                        <td colspan="5" class="py-3 px-4 text-right font-semibold">Total del día:</td>
+                        <td class="py-3 px-4 text-right font-semibold">${{ total_dia|floatformat:0 }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
     </div>
     {% else %}
-    <div class="alert alert-info text-center">
-        <i class="bi bi-inbox"></i> No hay entregas registradas hoy.
+    {# ─────────────────── EMPTY STATE ─────────────────── #}
+    <div class="flex flex-col items-center justify-center gap-4 p-8 bg-surface-container rounded-xl border border-outline-variant/20">
+        <span class="material-symbols-outlined text-on-surface-variant text-[48px]">inbox</span>
+        <p class="font-body-md text-body-md text-on-surface-variant">No hay entregas registradas hoy.</p>
     </div>
     {% endif %}
 </div>

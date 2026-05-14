@@ -1,241 +1,208 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
-{% block title %}Admin Dashboard — Huellitas Alegres{% endblock title %}
-
-{% block extra_css %}
-<style>
-    .metric-card {
-        border: none;
-        border-radius: .75rem;
-        transition: transform .2s, box-shadow .2s;
-    }
-    .metric-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 .5rem 1rem rgba(0,0,0,.1);
-    }
-    .metric-card .card-body {
-        padding: 1.25rem;
-    }
-    .metric-card .metric-value {
-        font-size: 2rem;
-        font-weight: 700;
-        line-height: 1.1;
-    }
-    .metric-card .metric-label {
-        font-size: .8rem;
-        text-transform: uppercase;
-        letter-spacing: .05rem;
-    }
-</style>
-{% endblock %}
+{% block title %}Panel de Administración — Huellitas Alegres{% endblock title %}
 
 {% block content %}
-<!-- Header -->
-<div class="d-flex justify-content-between align-items-center mb-4">
+{# ─────────────────── HEADER ─────────────────── #}
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
     <div>
-        <h1 class="h3 mb-1"><i class="bi bi-speedometer2"></i> Panel de Administración</h1>
-        <p class="text-muted mb-0">Bienvenido/a, {{ user.get_full_name|default:user.email }}</p>
+        <h2 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
+            Bienvenido/a, {{ user.first_name|default:user.username }}
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-container/20 text-primary font-caption text-caption">
+                <span class="material-symbols-outlined text-[14px]">shield</span>
+                Administrador
+            </span>
+        </h2>
+        <p class="font-body-md text-body-md text-on-surface-variant mt-1">Resumen general de la clínica.</p>
     </div>
-    <div>
-        <a href="{% url 'reportes:admin_metricas' %}" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-bar-chart-line"></i> Métricas
+    <div class="flex gap-3">
+        <a href="{% url 'entregas:crear' %}" class="inline-flex items-center gap-2 bg-primary text-on-primary font-label-md text-label-md px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity shadow-sm no-underline">
+            <span class="material-symbols-outlined text-[18px]">add</span>
+            Nuevo Pedido
+        </a>
+        <a href="{% url 'usuarios:admin_users' %}" class="inline-flex items-center gap-2 bg-surface border border-outline-variant text-on-surface font-label-md text-label-md px-4 py-2.5 rounded-lg hover:bg-surface-container transition-colors no-underline">
+            <span class="material-symbols-outlined text-[18px]">people</span>
+            Gestionar Usuarios
         </a>
     </div>
 </div>
 
-<!-- Metrics Row -->
-<div class="row g-3 mb-4">
-    <div class="col-6 col-lg-3">
-        <div class="card metric-card shadow-sm text-white bg-primary">
-            <div class="card-body">
-                <i class="bi bi-people"></i>
-                <div class="metric-value">{{ total_users }}</div>
-                <div class="metric-label">Usuarios</div>
-            </div>
+{# ─────────────────── STATS ROW ─────────────────── #}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    {# Stat 1: Ingresos del Mes #}
+    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 flex flex-col gap-3 relative overflow-hidden">
+        <div class="absolute -right-4 -top-4 w-16 h-16 bg-primary-container/10 rounded-full blur-xl"></div>
+        <div class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
+            <span class="material-symbols-outlined text-primary">trending_up</span>
+            Ingresos del Mes
+        </div>
+        <div class="font-display-lg text-display-lg text-on-surface">${{ ingresos_mes|intcomma }}</div>
+        <div class="font-caption text-caption text-on-surface-variant">Total facturado este mes</div>
+    </div>
+
+    {# Stat 2: Citas Hoy #}
+    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 flex flex-col gap-3 relative overflow-hidden">
+        <div class="absolute -right-4 -top-4 w-16 h-16 bg-tertiary-container/10 rounded-full blur-xl"></div>
+        <div class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
+            <span class="material-symbols-outlined text-tertiary">calendar_clock</span>
+            Citas Hoy
+        </div>
+        <div class="font-display-lg text-display-lg text-on-surface">{{ citas_hoy }}</div>
+        <div class="font-caption text-caption text-on-surface-variant">
+            {% if citas_hoy == 1 %}1 cita programada{% elif citas_hoy > 1 %}{{ citas_hoy }} citas programadas{% else %}Sin citas para hoy{% endif %}
         </div>
     </div>
-    <div class="col-6 col-lg-3">
-        <div class="card metric-card shadow-sm text-white bg-danger">
-            <div class="card-body">
-                <i class="bi bi-emoji-heart-eyes"></i>
-                <div class="metric-value">{{ total_mascotas }}</div>
-                <div class="metric-label">Mascotas</div>
-            </div>
+
+    {# Stat 3: Mascotas Registradas #}
+    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 flex flex-col gap-3 relative overflow-hidden">
+        <div class="absolute -right-4 -top-4 w-16 h-16 bg-secondary-container/20 rounded-full blur-xl"></div>
+        <div class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
+            <span class="material-symbols-outlined text-secondary">pets</span>
+            Mascotas
         </div>
+        <div class="font-display-lg text-display-lg text-on-surface">{{ total_mascotas }}</div>
+        <div class="font-caption text-caption text-on-surface-variant">Pacientes registrados</div>
     </div>
-    <div class="col-6 col-lg-3">
-        <div class="card metric-card shadow-sm text-white bg-success">
-            <div class="card-body">
-                <i class="bi bi-calendar-check"></i>
-                <div class="metric-value">{{ citas_hoy }}</div>
-                <div class="metric-label">Citas Hoy</div>
-            </div>
+
+    {# Stat 4: Usuarios #}
+    <div class="bg-surface-container-lowest rounded-xl p-md shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 flex flex-col gap-3 relative overflow-hidden">
+        <div class="absolute -right-4 -top-4 w-16 h-16 bg-primary-container/10 rounded-full blur-xl"></div>
+        <div class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
+            <span class="material-symbols-outlined text-primary">people</span>
+            Usuarios
         </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="card metric-card shadow-sm text-white bg-warning">
-            <div class="card-body">
-                <i class="bi bi-cash-coin"></i>
-                <div class="metric-value">${{ ingresos_mes|floatformat:0 }}</div>
-                <div class="metric-label">Ingresos Mes</div>
-            </div>
+        <div class="font-display-lg text-display-lg text-on-surface">{{ total_users }}</div>
+        <div class="font-caption text-caption text-on-surface-variant leading-relaxed">
+            {{ total_clientes }} Clientes · {{ total_veterinarios }} Vets · {{ total_domiciliarios }} Domiciliarios
         </div>
     </div>
 </div>
 
-<!-- Role Breakdown + Orders Status -->
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="bi bi-people"></i> Usuarios por Rol</h5>
-            </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-person"></i> Clientes</span>
-                        <span class="badge bg-primary rounded-pill">{{ total_clientes }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-heart-pulse"></i> Veterinarios</span>
-                        <span class="badge bg-success rounded-pill">{{ total_veterinarios }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-truck"></i> Domiciliarios</span>
-                        <span class="badge bg-info rounded-pill">{{ total_domiciliarios }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-shield-check"></i> Administradores</span>
-                        <span class="badge bg-dark rounded-pill">{{ total_admins }}</span>
-                    </li>
-                    {% if inactive_users %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center text-danger">
-                        <span><i class="bi bi-person-x"></i> Inactivos</span>
-                        <span class="badge bg-danger rounded-pill">{{ inactive_users }}</span>
-                    </li>
-                    {% endif %}
-                </ul>
-                <a href="{% url 'usuarios:admin_users' %}" class="btn btn-outline-primary btn-sm mt-2 w-100">
-                    <i class="bi bi-gear"></i> Gestionar Usuarios
-                </a>
-            </div>
+{# ─────────────────── TWO-COLUMN LAYOUT ─────────────────── #}
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    {# ── LEFT: Recent Users (8 cols) ── #}
+    <div class="lg:col-span-8 bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 overflow-hidden flex flex-col">
+        <div class="p-5 border-b border-outline-variant/10 flex justify-between items-center bg-surface/50">
+            <h3 class="font-headline-md text-headline-md text-on-surface">Usuarios Recientes</h3>
+            <a href="{% url 'usuarios:admin_users' %}" class="text-primary hover:text-primary-container font-label-md text-label-md transition-colors flex items-center gap-1 no-underline">
+                Ver Todos <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left font-body-md text-body-md">
+                <thead class="bg-surface-container-low text-on-surface-variant font-label-md text-label-md">
+                    <tr>
+                        <th class="py-3 px-4 font-semibold">Nombre</th>
+                        <th class="py-3 px-4 font-semibold">Email</th>
+                        <th class="py-3 px-4 font-semibold">Rol</th>
+                        <th class="py-3 px-4 font-semibold text-right">Fecha Registro</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/10 text-on-surface">
+                    {% for u in recent_users %}
+                    <tr class="hover:bg-surface transition-colors">
+                        <td class="py-3 px-4">
+                            <div class="flex items-center gap-3">
+                                {% if u.perfil.foto %}
+                                <img src="{{ u.perfil.foto.url }}" alt="{{ u.get_full_name|default:u.email }}" class="w-9 h-9 rounded-full object-cover border border-outline-variant/30">
+                                {% else %}
+                                <div class="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-caption">
+                                    {{ u.first_name.0|upper }}{% if u.last_name %}{{ u.last_name.0|upper }}{% endif %}
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <div class="font-medium text-on-surface">{{ u.get_full_name|default:u.email }}</div>
+                                    <div class="font-caption text-caption text-on-surface-variant">@{{ u.username }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-on-surface-variant">{{ u.email }}</td>
+                        <td class="py-3 px-4">
+                            {% if u.rol.nombre == 'Administrador' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-primary-container/20 text-primary font-caption text-caption">Administrador</span>
+                            {% elif u.rol.nombre == 'Veterinario' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-tertiary-container/30 text-tertiary font-caption text-caption">Veterinario</span>
+                            {% elif u.rol.nombre == 'Domiciliario' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-secondary-container/50 text-on-secondary-container font-caption text-caption">Domiciliario</span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-caption text-caption">Cliente</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-right text-on-surface-variant">{{ u.fecha_registro|date:"d/m/Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="py-12 text-center text-on-surface-variant font-body-md text-body-md">
+                            <span class="material-symbols-outlined text-outline mb-2 block text-[32px]">person_off</span>
+                            No hay usuarios registrados.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0"><i class="bi bi-box-seam"></i> Pedidos</h5>
-            </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-clock text-warning"></i> Pendientes</span>
-                        <span class="badge bg-warning text-dark rounded-pill">{{ pedidos_pendientes }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-truck text-info"></i> En Camino</span>
-                        <span class="badge bg-info rounded-pill">{{ pedidos_en_camino }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-check-circle text-success"></i> Entregados (mes)</span>
-                        <span class="badge bg-success rounded-pill">{{ pedidos_entregados_mes }}</span>
-                    </li>
-                </ul>
-                <a href="{% url 'entregas:dashboard' %}" class="btn btn-outline-warning btn-sm mt-2 w-100">
-                    <i class="bi bi-eye"></i> Ver Pedidos
-                </a>
-                <a href="{% url 'entregas:torre_control' %}" class="btn btn-outline-dark btn-sm mt-1 w-100">
-                    <i class="bi bi-broadcast"></i> Torre de Control
-                </a>
-            </div>
+    {# ── RIGHT: Recent Pedidos (4 cols) ── #}
+    <div class="lg:col-span-4 bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 overflow-hidden flex flex-col">
+        <div class="p-5 border-b border-outline-variant/10 flex justify-between items-center bg-surface/50">
+            <h3 class="font-headline-md text-headline-md text-on-surface">Pedidos Recientes</h3>
+            <a href="{% url 'entregas:dashboard' %}" class="text-primary hover:text-primary-container font-label-md text-label-md transition-colors flex items-center gap-1 no-underline">
+                Ver Todos <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left font-body-md text-body-md">
+                <thead class="bg-surface-container-low text-on-surface-variant font-label-md text-label-md">
+                    <tr>
+                        <th class="py-3 px-4 font-semibold">Cliente</th>
+                        <th class="py-3 px-4 font-semibold">Estado</th>
+                        <th class="py-3 px-4 font-semibold text-right">Fecha</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/10 text-on-surface">
+                    {% for p in recent_pedidos %}
+                    <tr class="hover:bg-surface transition-colors">
+                        <td class="py-3 px-4">
+                            <div class="font-medium text-on-surface truncate max-w-[140px]">{{ p.cliente.get_full_name|default:p.cliente.email }}</div>
+                        </td>
+                        <td class="py-3 px-4">
+                            {% if p.estado == 'pendiente' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-caption text-caption">
+                                <span class="w-1.5 h-1.5 rounded-full bg-secondary mr-1.5"></span>{{ p.get_estado_display }}
+                            </span>
+                            {% elif p.estado == 'en_camino' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-primary-container/30 text-primary font-caption text-caption">
+                                <span class="w-1.5 h-1.5 rounded-full bg-primary mr-1.5"></span>{{ p.get_estado_display }}
+                            </span>
+                            {% elif p.estado == 'entregado' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-tertiary-container/30 text-tertiary font-caption text-caption">
+                                <span class="w-1.5 h-1.5 rounded-full bg-tertiary mr-1.5"></span>{{ p.get_estado_display }}
+                            </span>
+                            {% elif p.estado == 'cancelado' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-error-container/50 text-on-error-container font-caption text-caption">
+                                <span class="w-1.5 h-1.5 rounded-full bg-error mr-1.5"></span>{{ p.get_estado_display }}
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-caption text-caption">{{ p.get_estado_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-right text-on-surface-variant text-caption">{{ p.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="py-12 text-center text-on-surface-variant font-body-md text-body-md">
+                            <span class="material-symbols-outlined text-outline mb-2 block text-[32px]">inventory_2</span>
+                            Sin pedidos recientes.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0"><i class="bi bi-calendar"></i> Citas</h5>
-            </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-calendar-event"></i> Hoy</span>
-                        <span class="badge bg-primary rounded-pill">{{ citas_hoy }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-calendar-month"></i> Este Mes</span>
-                        <span class="badge bg-secondary rounded-pill">{{ citas_mes }}</span>
-                    </li>
-                </ul>
-                <a href="{% url 'agenda:lista_citas' %}" class="btn btn-outline-success btn-sm mt-2 w-100">
-                    <i class="bi bi-calendar"></i> Ver Citas
-                </a>
-                <a href="{% url 'reportes:admin_metricas' %}" class="btn btn-outline-success btn-sm mt-1 w-100">
-                    <i class="bi bi-bar-chart-line"></i> Métricas
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Recent Activity -->
-<div class="row g-3">
-    <div class="col-md-6">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0"><i class="bi bi-person-plus"></i> Usuarios Recientes</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-sm mb-0">
-                        <thead class="table-light">
-                            <tr><th>Nombre</th><th>Rol</th><th>Fecha</th></tr>
-                        </thead>
-                        <tbody>
-                            {% for u in recent_users %}
-                            <tr>
-                                <td>{{ u.get_full_name|default:u.email }}</td>
-                                <td><span class="badge bg-{% if u.rol.nombre == 'Administrador' %}dark{% elif u.rol.nombre == 'Veterinario' %}success{% elif u.rol.nombre == 'Domiciliario' %}info{% else %}primary{% endif %}">{{ u.rol.nombre }}</span></td>
-                                <td>{{ u.fecha_registro|date:"d/m/Y" }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr><td colspan="3" class="text-center text-muted py-3">Sin usuarios</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-6">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0"><i class="bi bi-bag-check"></i> Pedidos Recientes</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-sm mb-0">
-                        <thead class="table-light">
-                            <tr><th>#</th><th>Cliente</th><th>Estado</th><th>Fecha</th></tr>
-                        </thead>
-                        <tbody>
-                            {% for p in recent_pedidos %}
-                            <tr>
-                                <td><a href="{% url 'entregas:detalle' p.pk %}">#{{ p.pk }}</a></td>
-                                <td>{{ p.cliente.get_full_name|default:p.cliente.email }}</td>
-                                <td><span class="badge bg-{% if p.estado == 'pendiente' %}warning text-dark{% elif p.estado == 'en_camino' %}info{% elif p.estado == 'entregado' %}success{% else %}danger{% endif %}">{{ p.get_estado_display }}</span></td>
-                                <td>{{ p.fecha_creacion|date:"d/m/Y H:i" }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr><td colspan="4" class="text-center text-muted py-3">Sin pedidos</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock content %}

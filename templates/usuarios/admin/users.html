@@ -3,89 +3,112 @@
 {% block title %}Gestión de Usuarios — Huellitas Alegres{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="bi bi-people"></i> Gestión de Usuarios</h1>
-        <a href="{% url 'usuarios:admin_user_create' %}" class="btn btn-success"><i class="bi bi-person-plus"></i> Nuevo Usuario</a>
-    </div>
-
-    <!-- Filters -->
-    <form method="get" class="row g-3 mb-3">
-        <div class="col-md-4">
-            <input type="text" name="q" class="form-control" placeholder="Buscar por nombre o email..." value="{{ search|default:'' }}">
-        </div>
-        <div class="col-md-3">
-            <select name="rol" class="form-select">
-                <option value="">Todos los roles</option>
-                {% for rol in roles %}
-                <option value="{{ rol.nombre }}" {% if rol_filter == rol.nombre %}selected{% endif %}>{{ rol.nombre }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-2">
-            <select name="status" class="form-select">
-                <option value="">Todo estado</option>
-                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Activo</option>
-                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactivo</option>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Filtrar</button>
-            <a href="{% url 'usuarios:admin_users' %}" class="btn btn-outline-secondary"><i class="bi bi-x-circle"></i> Limpiar</a>
-        </div>
-    </form>
-
-    <!-- Users Table -->
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th>Nombre</th>
-                    <th>Email</th>
-                    <th>Rol</th>
-                    <th>Teléfono</th>
-                    <th>Estado</th>
-                    <th>Registro</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in users %}
-                <tr class="{% if not u.is_active %}table-secondary{% endif %}">
-                    <td>{{ u.get_full_name|default:u.username }}</td>
-                    <td>{{ u.email }}</td>
-                    <td>
-                        <span class="badge bg-{% if u.rol.nombre == 'Administrador' %}dark{% elif u.rol.nombre == 'Veterinario' %}success{% elif u.rol.nombre == 'Domiciliario' %}info{% else %}primary{% endif %}">
-                            {{ u.rol.nombre }}
-                        </span>
-                    </td>
-                    <td>{{ u.telefono|default:"—" }}</td>
-                    <td>
-                        {% if u.is_active %}
-                        <span class="badge bg-success">Activo</span>
-                        {% else %}
-                        <span class="badge bg-secondary">Inactivo</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ u.fecha_registro|date:"d/m/Y" }}</td>
-                    <td>
-                        <a href="{% url 'usuarios:admin_user_update' u.pk %}" class="btn btn-sm btn-warning" title="Editar"><i class="bi bi-pencil"></i></a>
-                        <a href="{% url 'usuarios:admin_user_set_password' u.pk %}" class="btn btn-sm btn-outline-secondary" title="Cambiar contraseña"><i class="bi bi-key"></i></a>
-                        <form method="post" action="{% url 'usuarios:admin_user_toggle_active' u.pk %}" style="display:inline;">
-                            {% csrf_token %}
-                            {% if u.is_active %}
-                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Desactivar" onclick="return confirm('¿Desactivar a {{ u.email }}?')"><i class="bi bi-person-x"></i></button>
-                            {% else %}
-                            <button type="submit" class="btn btn-sm btn-outline-success" title="Activar" onclick="return confirm('¿Activar a {{ u.email }}?')"><i class="bi bi-person-check"></i></button>
-                            {% endif %}
-                        </form>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="7" class="text-center text-muted">No se encontraron usuarios.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+  <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
+    <span class="material-symbols-outlined text-primary">people</span> Gestión de Usuarios
+  </h1>
+  <a href="{% url 'usuarios:admin_user_create' %}" class="inline-flex items-center gap-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity no-underline">
+    <span class="material-symbols-outlined text-[18px]">person_add</span> Nuevo Usuario
+  </a>
 </div>
+
+<!-- Filters -->
+<form method="get" class="flex flex-col sm:flex-row gap-3 mb-4">
+  <input type="text" name="q" value="{{ search|default:'' }}" placeholder="Buscar por nombre o email..." class="flex-1 px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+  <select name="rol" class="px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+    <option value="">Todos los roles</option>
+    {% for rol in roles %}
+    <option value="{{ rol.nombre }}" {% if rol_filter == rol.nombre %}selected{% endif %}>{{ rol.nombre }}</option>
+    {% endfor %}
+  </select>
+  <select name="status" class="px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+    <option value="">Todo estado</option>
+    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Activo</option>
+    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactivo</option>
+  </select>
+  <div class="flex gap-2">
+    <button type="submit" class="inline-flex items-center gap-1.5 bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">
+      <span class="material-symbols-outlined text-[18px]">search</span> Filtrar
+    </button>
+    <a href="{% url 'usuarios:admin_users' %}" class="inline-flex items-center gap-1.5 bg-surface-container-high text-on-surface-variant font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-surface-container-highest transition-colors no-underline">
+      <span class="material-symbols-outlined text-[18px]">close</span> Limpiar
+    </a>
+  </div>
+</form>
+
+<!-- Users Table -->
+{% if users %}
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead class="border-b border-outline-variant/20">
+        <tr>
+          <th class="px-4 py-3 text-left font-label-md text-label-md text-on-surface-variant">Nombre</th>
+          <th class="px-4 py-3 text-left font-label-md text-label-md text-on-surface-variant">Email</th>
+          <th class="px-4 py-3 text-left font-label-md text-label-md text-on-surface-variant">Rol</th>
+          <th class="px-4 py-3 text-left font-label-md text-label-md text-on-surface-variant">Teléfono</th>
+          <th class="px-4 py-3 text-left font-label-md text-label-md text-on-surface-variant">Estado</th>
+          <th class="px-4 py-3 text-left font-label-md text-label-md text-on-surface-variant">Registro</th>
+          <th class="px-4 py-3 text-left font-label-md text-label-md text-on-surface-variant">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors {% if not u.is_active %}opacity-50{% endif %}">
+          <td class="px-4 py-3 font-body-md text-body-md text-on-surface">{{ u.get_full_name|default:u.username }}</td>
+          <td class="px-4 py-3 font-body-md text-body-md text-on-surface">{{ u.email }}</td>
+          <td class="px-4 py-3">
+            {% if u.rol.nombre == 'Administrador' %}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-container/30 text-primary font-caption text-caption">Admin</span>
+            {% elif u.rol.nombre == 'Veterinario' %}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container/50 text-on-secondary-container font-caption text-caption">Veterinario</span>
+            {% elif u.rol.nombre == 'Domiciliario' %}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-caption text-caption">Domiciliario</span>
+            {% else %}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-container/30 text-on-tertiary font-caption text-caption">{{ u.rol.nombre }}</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 font-body-md text-body-md text-on-surface">{{ u.telefono|default:"—" }}</td>
+          <td class="px-4 py-3">
+            {% if u.is_active %}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-container/30 text-primary font-caption text-caption">Activo</span>
+            {% else %}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-caption text-caption">Inactivo</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 font-body-md text-body-md text-on-surface">{{ u.fecha_registro|date:"d/m/Y" }}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-1.5">
+              <a href="{% url 'usuarios:admin_user_update' u.pk %}" class="flex items-center justify-center w-8 h-8 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary-container/20 transition-colors" title="Editar">
+                <span class="material-symbols-outlined text-[18px]">edit</span>
+              </a>
+              <a href="{% url 'usuarios:admin_user_set_password' u.pk %}" class="flex items-center justify-center w-8 h-8 rounded-lg text-on-surface-variant hover:text-on-secondary-container hover:bg-secondary-container/30 transition-colors" title="Cambiar contraseña">
+                <span class="material-symbols-outlined text-[18px]">key</span>
+              </a>
+              <form method="post" action="{% url 'usuarios:admin_user_toggle_active' u.pk %}" class="inline-flex">
+                {% csrf_token %}
+                {% if u.is_active %}
+                <button type="submit" class="flex items-center justify-center w-8 h-8 rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container/30 transition-colors" title="Desactivar" onclick="return confirm('¿Desactivar a {{ u.email|escapejs }}?')">
+                  <span class="material-symbols-outlined text-[18px]">person_remove</span>
+                </button>
+                {% else %}
+                <button type="submit" class="flex items-center justify-center w-8 h-8 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary-container/30 transition-colors" title="Activar" onclick="return confirm('¿Activar a {{ u.email|escapejs }}?')">
+                  <span class="material-symbols-outlined text-[18px]">person_check</span>
+                </button>
+                {% endif %}
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="flex items-center justify-center gap-3 p-8 bg-surface-container rounded-xl border border-outline-variant/20">
+  <span class="material-symbols-outlined text-on-surface-variant text-[32px]">person_off</span>
+  <p class="font-body-md text-body-md text-on-surface-variant">No se encontraron usuarios.</p>
+</div>
+{% endif %}
 {% endblock %}

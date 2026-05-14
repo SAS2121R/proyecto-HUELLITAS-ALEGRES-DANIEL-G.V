@@ -1,95 +1,130 @@
 {% extends 'base.html' %}
 {% block back_button %}{% include 'includes/back_button.html' %}{% endblock %}
 {% block content %}
-<div class="container py-4">
-  {% if user.rol.nombre == 'Cliente' %}
-  <h1 class="mb-4"><i class="bi bi-calendar-heart"></i> Mis Citas</h1>
-  {% else %}
-  <h1 class="mb-4">Citas</h1>
-  {% endif %}
-
-  <div class="d-flex justify-content-end mb-3 gap-2">
-    {% if user.rol.nombre == 'Cliente' %}
-    <a href="{% url 'agenda:solicitar_cita' %}" class="btn btn-success"><i class="bi bi-calendar-plus"></i> Solicitar Cita</a>
-    {% elif user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
-    <a href="{% url 'agenda:crear_cita' %}" class="btn btn-success">Nueva Cita</a>
-    {% endif %}
+<div class="max-w-6xl mx-auto">
+  {# Page Header #}
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div>
+      {% if user.rol.nombre == 'Cliente' %}
+      <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary">calendar_month</span> Mis Citas
+      </h1>
+      {% else %}
+      <h1 class="font-headline-lg text-headline-lg text-on-surface">Citas</h1>
+      {% endif %}
+    </div>
+    <div class="flex gap-2">
+      {% if user.rol.nombre == 'Cliente' %}
+      <a href="{% url 'agenda:solicitar_cita' %}" class="inline-flex items-center gap-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">
+        <span class="material-symbols-outlined text-[18px]">calendar_add_on</span> Solicitar Cita
+      </a>
+      {% elif user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+      <a href="{% url 'agenda:crear_cita' %}" class="inline-flex items-center gap-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">
+        <span class="material-symbols-outlined text-[18px]">add</span> Nueva Cita
+      </a>
+      {% endif %}
+    </div>
   </div>
+
   {% if page_obj %}
-    <div class="table-responsive">
-      <table class="table table-hover align-middle">
-        <thead class="table-dark">
-          <tr>
-            <th>Mascota</th>
-            <th>Veterinario</th>
-            <th>Fecha</th>
-            <th>Hora</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for cita in page_obj %}
-          <tr>
-            <td>{{ cita.mascota }}</td>
-            <td>{{ cita.veterinario }}</td>
-            <td>{{ cita.disponibilidad.fecha }}</td>
-            <td>{{ cita.disponibilidad.hora_inicio|time:"H:i" }} - {{ cita.disponibilidad.hora_fin|time:"H:i" }}</td>
-            <td>
-              {% if cita.estado == 'Programada' %}
-              <span class="badge bg-warning text-dark">{{ cita.get_estado_display }}</span>
-              {% elif cita.estado == 'Atendida' %}
-              <span class="badge bg-success">{{ cita.get_estado_display }}</span>
-              {% else %}
-              <span class="badge bg-danger">{{ cita.get_estado_display }}</span>
-              {% endif %}
-            </td>
-<td>
-                <a href="{% url 'mascotas:detalle' cita.mascota.pk %}" class="btn btn-sm btn-outline-info" title="Ver Mascota">👁️</a>
+    {# Table #}
+    <div class="bg-surface-container-lowest rounded-xl custom-shadow border border-outline-variant/10 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-outline-variant/30 text-on-surface-variant font-label-md text-label-md">
+              <th class="px-4 py-3">Mascota</th>
+              <th class="px-4 py-3">Veterinario</th>
+              <th class="px-4 py-3">Fecha</th>
+              <th class="px-4 py-3">Hora</th>
+              <th class="px-4 py-3">Estado</th>
+              <th class="px-4 py-3">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="font-body-md text-body-md text-on-surface">
+            {% for cita in page_obj %}
+            <tr class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors">
+              <td class="px-4 py-3">{{ cita.mascota }}</td>
+              <td class="px-4 py-3">{{ cita.veterinario }}</td>
+              <td class="px-4 py-3">{{ cita.disponibilidad.fecha }}</td>
+              <td class="px-4 py-3">{{ cita.disponibilidad.hora_inicio|time:"H:i" }} - {{ cita.disponibilidad.hora_fin|time:"H:i" }}</td>
+              <td class="px-4 py-3">
                 {% if cita.estado == 'Programada' %}
-                  {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
-                  <a href="{% url 'historial:atender_cita' cita.pk %}" class="btn btn-sm btn-success" title="Atender cita y crear historial">🩺 Atender</a>
-                  <a href="{% url 'agenda:editar_cita' cita.pk %}" class="btn btn-sm btn-warning">Editar</a>
-                  {% endif %}
-                {% if user.rol.nombre == 'Cliente' or user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
-                <a href="{% url 'agenda:cancelar_cita' cita.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de cancelar esta cita?')">Cancelar</a>
-                {% endif %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container/50 text-on-secondary-container font-caption text-caption">
+                  <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>{{ cita.get_estado_display }}
+                </span>
+                {% elif cita.estado == 'Atendida' %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-container/30 text-primary font-caption text-caption">
+                  <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>{{ cita.get_estado_display }}
+                </span>
                 {% else %}
-                {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
-                <span class="text-muted" title="No se puede editar una cita {{ cita.get_estado_display }}">Editar</span>
-                {% endif %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error-container/50 text-on-error-container font-caption text-caption">
+                  <span class="w-1.5 h-1.5 rounded-full bg-error"></span>{{ cita.get_estado_display }}
+                </span>
                 {% endif %}
               </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <a href="{% url 'mascotas:detalle' cita.mascota.pk %}" class="inline-flex items-center gap-1 bg-surface-container-high text-on-surface font-caption text-caption px-2.5 py-1 rounded-lg hover:bg-surface-container-highest transition-colors" title="Ver Mascota">
+                    <span class="material-symbols-outlined text-[16px]">visibility</span>
+                  </a>
+                  {% if cita.estado == 'Programada' %}
+                    {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+                    <a href="{% url 'historial:atender_cita' cita.pk %}" class="inline-flex items-center gap-1 bg-primary text-on-primary font-caption text-caption px-2.5 py-1 rounded-lg hover:opacity-90 transition-opacity" title="Atender cita y crear historial">
+                      <span class="material-symbols-outlined text-[16px]">stethoscope</span> Atender
+                    </a>
+                    <a href="{% url 'agenda:editar_cita' cita.pk %}" class="inline-flex items-center gap-1 bg-surface-container-high text-on-surface font-caption text-caption px-2.5 py-1 rounded-lg hover:bg-surface-container-highest transition-colors">Editar</a>
+                    {% endif %}
+                    {% if user.rol.nombre == 'Cliente' or user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+                    <a href="{% url 'agenda:cancelar_cita' cita.pk %}" class="inline-flex items-center gap-1 bg-error-container/50 text-error font-caption text-caption px-2.5 py-1 rounded-lg hover:bg-error-container transition-colors" onclick="return confirm('¿Estás seguro de cancelar esta cita?')">Cancelar</a>
+                    {% endif %}
+                  {% else %}
+                    {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+                    <span class="text-on-surface-variant font-caption text-caption" title="No se puede editar una cita {{ cita.get_estado_display }}">Editar</span>
+                    {% endif %}
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
-    <!-- Paginación -->
-    <nav aria-label="Page navigation">
-      <ul class="pagination justify-content-center">
-        {% if page_obj.has_previous %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo; Anterior</a></li>
-        {% else %}
-        <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
+
+    {# Pagination #}
+    <nav class="flex items-center justify-center gap-2 mt-6 flex-wrap" aria-label="Paginación">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}" class="inline-flex items-center gap-1 px-3 py-2 bg-surface-container-lowest border border-outline-variant/30 rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-high transition-colors">
+        <span class="material-symbols-outlined text-[18px]">chevron_left</span> Anterior
+      </a>
+      {% else %}
+      <span class="inline-flex items-center gap-1 px-3 py-2 bg-surface-container text-on-surface-variant rounded-lg font-label-md text-label-md cursor-default">
+        <span class="material-symbols-outlined text-[18px]">chevron_left</span> Anterior
+      </span>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="inline-flex items-center justify-center w-10 h-10 bg-primary text-on-primary rounded-lg font-label-md text-label-md">{{ num }}</span>
+        {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+        <a href="?page={{ num }}" class="inline-flex items-center justify-center w-10 h-10 bg-surface-container-lowest border border-outline-variant/30 rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-high transition-colors">{{ num }}</a>
         {% endif %}
-        {% for num in page_obj.paginator.page_range %}
-          {% if page_obj.number == num %}
-          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-          {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
-          <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-          {% endif %}
-        {% endfor %}
-        {% if page_obj.has_next %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente &raquo;</a></li>
-        {% else %}
-        <li class="page-item disabled"><span class="page-link">Siguiente &raquo;</span></li>
-        {% endif %}
-      </ul>
+      {% endfor %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" class="inline-flex items-center gap-1 px-3 py-2 bg-surface-container-lowest border border-outline-variant/30 rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-high transition-colors">
+        Siguiente <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+      </a>
+      {% else %}
+      <span class="inline-flex items-center gap-1 px-3 py-2 bg-surface-container text-on-surface-variant rounded-lg font-label-md text-label-md cursor-default">
+        Siguiente <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+      </span>
+      {% endif %}
     </nav>
   {% else %}
-    <div class="alert alert-info text-center">
-      No hay citas registradas.
+    {# Empty state #}
+    <div class="flex items-center justify-center gap-3 p-8 bg-surface-container rounded-xl border border-outline-variant/20">
+      <span class="material-symbols-outlined text-on-surface-variant text-[24px]">info</span>
+      <p class="font-body-md text-body-md text-on-surface-variant">No hay citas registradas.</p>
     </div>
   {% endif %}
 </div>

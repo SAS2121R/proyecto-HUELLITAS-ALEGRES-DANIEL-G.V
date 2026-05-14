@@ -1,187 +1,238 @@
 {% extends 'base.html' %}
+
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>📋 Detalle Historial Clínico</h1>
-    <a href="{% url 'historial:lista' %}" class="btn btn-secondary">← Volver al listado</a>
-  </div>
-
-  <!-- Header Card -->
-  <div class="card mb-4 shadow">
-    <div class="card-header d-flex justify-content-between align-items-center {% if historial.tipo_consulta == 'urgencia' %}bg-danger text-white{% elif historial.tipo_consulta == 'cirugia' %}bg-warning{% elif historial.tipo_consulta == 'vacunacion' %}bg-info text-white{% else %}bg-primary text-white{% endif %}">
-      <h5 class="mb-0">
-        {{ historial.mascota.nombre }} — {{ historial.get_tipo_consulta_display }}
-      </h5>
-      <span>{{ historial.fecha_consulta|date:"d/m/Y H:i" }}</span>
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary">clinical_notes</span> Detalle Historial Clínico
+        </h1>
+        <a href="{% url 'historial:lista' %}" class="inline-flex items-center gap-1.5 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver al listado
+        </a>
     </div>
-    <div class="card-body">
-      <!-- Patient & Vet Info -->
-      <div class="row mb-3">
-        <div class="col-md-6">
-          <table class="table table-sm table-borderless">
-            <tr><th class="text-muted" style="width: 140px;">Paciente</th><td><a href="{% url 'historial:por_mascota' mascota_pk=historial.mascota.pk %}">{{ historial.mascota.nombre }}</a> <span class="text-muted">({{ historial.mascota.especie }})</span></td></tr>
-            <tr><th class="text-muted">Veterinario</th><td>{{ historial.veterinario.get_full_name|default:historial.veterinario.email }}</td></tr>
-            <tr><th class="text-muted">Tipo consulta</th><td>{{ historial.get_tipo_consulta_display }}</td></tr>
-            {% if historial.cita %}
-            <tr><th class="text-muted">Cita asociada</th><td>Sí (#{{ historial.cita.pk }})</td></tr>
+
+    {# Header Card with type-based color #}
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden mb-6">
+        <div class="px-5 py-4 flex justify-between items-center
+            {% if historial.tipo_consulta == 'urgencia' %}bg-error text-on-error
+            {% elif historial.tipo_consulta == 'cirugia' %}bg-secondary-container text-on-secondary-container
+            {% elif historial.tipo_consulta == 'vacunacion' %}bg-tertiary-container text-on-tertiary-container
+            {% else %}bg-primary-container text-on-primary-container{% endif %}">
+            <h2 class="font-headline-md text-headline-md flex items-center gap-2">
+                {% if historial.tipo_consulta == 'urgencia' %}
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">emergency</span>
+                {% elif historial.tipo_consulta == 'cirugia' %}
+                <span class="material-symbols-outlined">medical_services</span>
+                {% elif historial.tipo_consulta == 'vacunacion' %}
+                <span class="material-symbols-outlined">vaccines</span>
+                {% else %}
+                <span class="material-symbols-outlined">stethoscope</span>
+                {% endif %}
+                {{ historial.mascota.nombre }} — {{ historial.get_tipo_consulta_display }}
+            </h2>
+            <span class="font-caption text-caption opacity-80">{{ historial.fecha_consulta|date:"d/m/Y H:i" }}</span>
+        </div>
+        <div class="p-5">
+            {# Patient & Vet Info #}
+            <div class="mb-4">
+                <table class="w-full text-left">
+                    <tr class="border-b border-outline-variant/10">
+                        <td class="py-2 pr-4 font-label-md text-label-md text-on-surface-variant w-40">Paciente</td>
+                        <td class="py-2 font-body-md text-body-md text-on-surface">
+                            <a href="{% url 'historial:por_mascota' mascota_pk=historial.mascota.pk %}" class="text-primary hover:underline">{{ historial.mascota.nombre }}</a>
+                            <span class="text-on-surface-variant font-body-md text-body-md">({{ historial.mascota.especie }})</span>
+                        </td>
+                    </tr>
+                    <tr class="border-b border-outline-variant/10">
+                        <td class="py-2 pr-4 font-label-md text-label-md text-on-surface-variant">Veterinario</td>
+                        <td class="py-2 font-body-md text-body-md text-on-surface">{{ historial.veterinario.get_full_name|default:historial.veterinario.email }}</td>
+                    </tr>
+                    <tr class="border-b border-outline-variant/10">
+                        <td class="py-2 pr-4 font-label-md text-label-md text-on-surface-variant">Tipo consulta</td>
+                        <td class="py-2 font-body-md text-body-md text-on-surface">{{ historial.get_tipo_consulta_display }}</td>
+                    </tr>
+                    {% if historial.cita %}
+                    <tr>
+                        <td class="py-2 pr-4 font-label-md text-label-md text-on-surface-variant">Cita asociada</td>
+                        <td class="py-2 font-body-md text-body-md text-on-surface">Sí (#{{ historial.cita.pk }})</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+
+            <hr class="border-outline-variant/20 my-4">
+
+            {# Clinical Data #}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <h3 class="font-label-md text-label-md text-primary mb-1 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[16px]">stethoscope</span> Motivo de consulta
+                    </h3>
+                    <p class="font-body-md text-body-md text-on-surface">{{ historial.motivo_consulta }}</p>
+                </div>
+                <div>
+                    <h3 class="font-label-md text-label-md text-error mb-1 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[16px]">bug_report</span> Diagnóstico
+                    </h3>
+                    <p class="font-body-md text-body-md text-on-surface">{{ historial.diagnostico }}</p>
+                </div>
+            </div>
+
+            {% if historial.tratamiento %}
+            <div class="mb-4">
+                <h3 class="font-label-md text-label-md text-tertiary mb-1 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">medication</span> Tratamiento
+                </h3>
+                <p class="font-body-md text-body-md text-on-surface">{{ historial.tratamiento }}</p>
+            </div>
             {% endif %}
-          </table>
-        </div>
-      </div>
 
-      <hr>
-
-      <!-- Clinical Data -->
-      <div class="row mb-3">
-        <div class="col-md-6">
-          <h6 class="text-primary">Motivo de consulta</h6>
-          <p>{{ historial.motivo_consulta }}</p>
-        </div>
-        <div class="col-md-6">
-          <h6 class="text-danger">Diagnóstico</h6>
-          <p>{{ historial.diagnostico }}</p>
-        </div>
-      </div>
-
-      {% if historial.tratamiento %}
-      <div class="row mb-3">
-        <div class="col-12">
-          <h6 class="text-success">💊 Tratamiento</h6>
-          <p>{{ historial.tratamiento }}</p>
-        </div>
-      </div>
-      {% endif %}
-
-      {% if historial.observaciones %}
-      <div class="row mb-3">
-        <div class="col-12">
-          <h6 class="text-muted">📝 Observaciones</h6>
-          <p class="text-muted">{{ historial.observaciones }}</p>
-        </div>
-      </div>
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- Vital Signs Cards -->
-  {% if historial.peso or historial.temperatura or historial.frecuencia_cardiaca or historial.frecuencia_respiratoria %}
-  <h5 class="mb-3">🩺 Signos Vitales</h5>
-  <div class="row mb-4">
-    {% if historial.peso %}
-    <div class="col-md-3 col-6 mb-2">
-      <div class="card text-white bg-primary shadow-sm h-100" style="border-radius: 12px;">
-        <div class="card-body text-center">
-          <div style="font-size: 1.5rem;">⚖️</div>
-          <small>Peso</small>
-          <h4 class="mb-0">{{ historial.peso }} <small>kg</small></h4>
-        </div>
-      </div>
-    </div>
-    {% endif %}
-    {% if historial.temperatura %}
-    <div class="col-md-3 col-6 mb-2">
-      <div class="card text-white bg-warning shadow-sm h-100" style="border-radius: 12px;">
-        <div class="card-body text-center">
-          <div style="font-size: 1.5rem;">🌡️</div>
-          <small>Temperatura</small>
-          <h4 class="mb-0">{{ historial.temperatura }} <small>°C</small></h4>
-        </div>
-      </div>
-    </div>
-    {% endif %}
-    {% if historial.frecuencia_cardiaca %}
-    <div class="col-md-3 col-6 mb-2">
-      <div class="card text-white bg-danger shadow-sm h-100" style="border-radius: 12px;">
-        <div class="card-body text-center">
-          <div style="font-size: 1.5rem;">❤️</div>
-          <small>Frec. Cardíaca</small>
-          <h4 class="mb-0">{{ historial.frecuencia_cardiaca }} <small>lpm</small></h4>
-        </div>
-      </div>
-    </div>
-    {% endif %}
-    {% if historial.frecuencia_respiratoria %}
-    <div class="col-md-3 col-6 mb-2">
-      <div class="card text-white bg-success shadow-sm h-100" style="border-radius: 12px;">
-        <div class="card-body text-center">
-          <div style="font-size: 1.5rem;">🫁</div>
-          <small>Frec. Respiratoria</small>
-          <h4 class="mb-0">{{ historial.frecuencia_respiratoria }} <small>rpm</small></h4>
-        </div>
-      </div>
-    </div>
-    {% endif %}
-  </div>
-  {% endif %}
-
-  <!-- Vaccine Info -->
-  {% if historial.vacuna_aplicada %}
-  <div class="alert alert-success d-flex align-items-center shadow-sm" style="border-radius: 12px;">
-    <span style="font-size: 1.5rem;" class="me-2">💉</span>
-    <div>
-      <strong>Vacuna aplicada:</strong> {{ historial.vacuna_aplicada }}
-      {% if historial.proxima_vacunacion %}
-      — <strong>Próxima vacunación:</strong> {{ historial.proxima_vacunacion|date:"d/m/Y" }}
-      {% endif %}
-    </div>
-  </div>
-  {% endif %}
-
-  <!-- Attached Files Section -->
-  <h5 class="mb-3 mt-4">📎 Archivos Adjuntos</h5>
-
-  {% if user.rol.nombre == 'Veterinario' and historial.veterinario == user or user.rol.nombre == 'Administrador' %}
-  <a href="{% url 'historial:subir_adjunto' historial.pk %}" class="btn btn-outline-primary btn-sm mb-3">
-    + Subir Archivo
-  </a>
-  {% endif %}
-
-  {% if historial.adjuntos.all %}
-  <div class="table-responsive">
-    <table class="table table-hover align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>Tipo</th>
-          <th>Archivo</th>
-          <th>Descripción</th>
-          <th>Subido por</th>
-          <th>Fecha</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for adjunto in historial.adjuntos.all %}
-        <tr>
-          <td>
-            {% if adjunto.tipo == 'radiografia' %}<span class="badge bg-info">Radiografía</span>
-            {% elif adjunto.tipo == 'laboratorio' %}<span class="badge bg-success">Laboratorio</span>
-            {% elif adjunto.tipo == 'foto' %}<span class="badge bg-warning text-dark">Fotografía</span>
-            {% else %}<span class="badge bg-secondary">Otro</span>{% endif %}
-          </td>
-          <td><a href="{{ adjunto.archivo.url }}" target="_blank">{{ adjunto.archivo.name|cut:"adjuntos/" }}</a></td>
-          <td>{{ adjunto.descripcion|default:"—" }}</td>
-          <td>{{ adjunto.subido_por.email|default:"—" }}</td>
-          <td>{{ adjunto.fecha_subida|date:"d/m/Y H:i" }}</td>
-          <td>
-            {% if user.rol.nombre == 'Veterinario' and adjunto.subido_por == user or user.rol.nombre == 'Administrador' %}
-            <a href="{% url 'historial:eliminar_adjunto' adjunto.pk %}" class="btn btn-sm btn-outline-danger">Eliminar</a>
+            {% if historial.observaciones %}
+            <div class="mb-4">
+                <h3 class="font-label-md text-label-md text-on-surface-variant mb-1 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">edit_note</span> Observaciones
+                </h3>
+                <p class="font-body-md text-body-md text-on-surface-variant">{{ historial.observaciones }}</p>
+            </div>
             {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <div class="alert alert-light text-center">No hay archivos adjuntos para este historial.</div>
-  {% endif %}
+        </div>
+    </div>
 
-  <!-- Actions -->
-  <div class="d-flex gap-2 flex-wrap">
+    {# Vital Signs Cards #}
+    {% if historial.peso or historial.temperatura or historial.frecuencia_cardiaca or historial.frecuencia_respiratoria %}
+    <h2 class="font-headline-md text-headline-md text-on-surface mb-3 flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary">monitor_heart</span> Signos Vitales
+    </h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {% if historial.peso %}
+        <div class="bg-primary-container/20 rounded-xl p-4 text-center">
+            <span class="material-symbols-outlined text-primary text-[28px]">monitor_weight</span>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Peso</p>
+            <p class="font-headline-md text-headline-md text-on-surface">{{ historial.peso }} <span class="font-caption text-caption text-on-surface-variant">kg</span></p>
+        </div>
+        {% endif %}
+        {% if historial.temperatura %}
+        <div class="bg-secondary-container/30 rounded-xl p-4 text-center">
+            <span class="material-symbols-outlined text-secondary text-[28px]">thermostat</span>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Temperatura</p>
+            <p class="font-headline-md text-headline-md text-on-surface">{{ historial.temperatura }} <span class="font-caption text-caption text-on-surface-variant">°C</span></p>
+        </div>
+        {% endif %}
+        {% if historial.frecuencia_cardiaca %}
+        <div class="bg-error-container/30 rounded-xl p-4 text-center">
+            <span class="material-symbols-outlined text-error text-[28px]">favorite</span>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Frec. Cardíaca</p>
+            <p class="font-headline-md text-headline-md text-on-surface">{{ historial.frecuencia_cardiaca }} <span class="font-caption text-caption text-on-surface-variant">lpm</span></p>
+        </div>
+        {% endif %}
+        {% if historial.frecuencia_respiratoria %}
+        <div class="bg-tertiary-container/30 rounded-xl p-4 text-center">
+            <span class="material-symbols-outlined text-tertiary text-[28px]">respiratory_rate</span>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Frec. Respiratoria</p>
+            <p class="font-headline-md text-headline-md text-on-surface">{{ historial.frecuencia_respiratoria }} <span class="font-caption text-caption text-on-surface-variant">rpm</span></p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {# Vaccine Info #}
+    {% if historial.vacuna_aplicada %}
+    <div class="flex items-center gap-3 p-4 bg-primary-container/20 rounded-xl border border-primary/20 mb-6">
+        <span class="material-symbols-outlined text-primary text-[24px]" style="font-variation-settings: 'FILL' 1;">vaccines</span>
+        <div>
+            <strong class="text-on-surface font-label-md text-label-md">Vacuna aplicada:</strong>
+            <span class="font-body-md text-body-md text-on-surface">{{ historial.vacuna_aplicada }}</span>
+            {% if historial.proxima_vacunacion %}
+            — <strong class="text-on-surface font-label-md text-label-md">Próxima vacunación:</strong>
+            <span class="font-body-md text-body-md text-on-surface">{{ historial.proxima_vacunacion|date:"d/m/Y" }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# Attached Files #}
+    <h2 class="font-headline-md text-headline-md text-on-surface mb-3 flex items-center gap-2">
+        <span class="material-symbols-outlined text-on-surface-variant">attach_file</span> Archivos Adjuntos
+    </h2>
+
     {% if user.rol.nombre == 'Veterinario' and historial.veterinario == user or user.rol.nombre == 'Administrador' %}
-    <a href="{% url 'historial:editar' historial.pk %}" class="btn btn-warning">✏️ Editar</a>
+    <a href="{% url 'historial:subir_adjunto' historial.pk %}" class="inline-flex items-center gap-2 bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-4 py-2 hover:bg-surface-container-highest transition-colors mb-4">
+        <span class="material-symbols-outlined text-[18px]">upload</span> Subir Archivo
+    </a>
     {% endif %}
-    <a href="{% url 'historial:por_mascota' mascota_pk=historial.mascota.pk %}" class="btn btn-outline-secondary">📋 Historial de {{ historial.mascota.nombre }}</a>
-  </div>
+
+    {% if historial.adjuntos.all %}
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-outline-variant/30 text-on-surface-variant font-label-md text-label-md">
+                        <th class="px-4 py-3">Tipo</th>
+                        <th class="px-4 py-3">Archivo</th>
+                        <th class="px-4 py-3">Descripción</th>
+                        <th class="px-4 py-3">Subido por</th>
+                        <th class="px-4 py-3">Fecha</th>
+                        <th class="px-4 py-3">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="font-body-md text-body-md text-on-surface">
+                    {% for adjunto in historial.adjuntos.all %}
+                    <tr class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors">
+                        <td class="px-4 py-3">
+                            {% if adjunto.tipo == 'radiografia' %}
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container/50 text-on-secondary-container font-caption text-caption">
+                                <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Radiografía
+                            </span>
+                            {% elif adjunto.tipo == 'laboratorio' %}
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-container/30 text-primary font-caption text-caption">
+                                <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>Laboratorio
+                            </span>
+                            {% elif adjunto.tipo == 'foto' %}
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-container/30 text-on-tertiary font-caption text-caption">
+                                <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>Fotografía
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-caption text-caption">
+                                <span class="w-1.5 h-1.5 rounded-full bg-on-surface-variant"></span>Otro
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <a href="{{ adjunto.archivo.url }}" target="_blank" class="text-primary hover:underline">{{ adjunto.archivo.name|cut:"adjuntos/" }}</a>
+                        </td>
+                        <td class="px-4 py-3">{{ adjunto.descripcion|default:"—" }}</td>
+                        <td class="px-4 py-3">{{ adjunto.subido_por.email|default:"—" }}</td>
+                        <td class="px-4 py-3 font-caption text-caption text-on-surface-variant">{{ adjunto.fecha_subida|date:"d/m/Y H:i" }}</td>
+                        <td class="px-4 py-3">
+                            {% if user.rol.nombre == 'Veterinario' and adjunto.subido_por == user or user.rol.nombre == 'Administrador' %}
+                            <a href="{% url 'historial:eliminar_adjunto' adjunto.pk %}" class="inline-flex items-center gap-1 bg-error-container/50 text-error font-caption text-caption px-2.5 py-1 rounded-lg hover:bg-error-container transition-colors">
+                                <span class="material-symbols-outlined text-[14px]">delete</span> Eliminar
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="flex items-center justify-center gap-3 p-6 bg-surface-container rounded-xl border border-outline-variant/20">
+        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">info</span>
+        <p class="font-body-md text-body-md text-on-surface-variant">No hay archivos adjuntos para este historial.</p>
+    </div>
+    {% endif %}
+
+    {# Actions #}
+    <div class="flex flex-wrap gap-3 mt-6">
+        {% if user.rol.nombre == 'Veterinario' and historial.veterinario == user or user.rol.nombre == 'Administrador' %}
+        <a href="{% url 'historial:editar' historial.pk %}" class="inline-flex items-center gap-2 bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-4 py-2 hover:bg-surface-container-highest transition-colors">
+            <span class="material-symbols-outlined text-[18px]">edit</span> Editar
+        </a>
+        {% endif %}
+        <a href="{% url 'historial:por_mascota' mascota_pk=historial.mascota.pk %}" class="inline-flex items-center gap-2 bg-surface-container text-on-surface-variant font-label-md text-label-md rounded-lg px-4 py-2 hover:bg-surface-container-high transition-colors">
+            <span class="material-symbols-outlined text-[18px]">pets</span> Historial de {{ historial.mascota.nombre }}
+        </a>
+    </div>
 </div>
 {% endblock %}

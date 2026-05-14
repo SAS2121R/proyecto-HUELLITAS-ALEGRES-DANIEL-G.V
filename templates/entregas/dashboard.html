@@ -1,109 +1,194 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}Entregas — Huellitas Alegres{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <h1 class="mb-4"><i class="bi bi-truck"></i> Mis Entregas</h1>
-
-    <!-- Admin action bar -->
+{# ─────────────────── HEADER ─────────────────── #}
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+    <div>
+        <h2 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary">local_shipping</span>
+            Entregas
+        </h2>
+        <p class="font-body-md text-body-md text-on-surface-variant mt-1">
+            {% if estado_filter %}Filtrando por: {{ estado_filter }}{% else %}Todos los pedidos{% endif %}
+        </p>
+    </div>
     {% if user.rol.nombre == 'Administrador' %}
-    <div class="d-flex gap-2 mb-3">
-        <a href="{% url 'entregas:crear' %}" class="btn btn-success btn-lg">
-            <i class="bi bi-plus-circle"></i> Nuevo Pedido
-        </a>
-    </div>
+    <a href="{% url 'entregas:crear' %}" class="inline-flex items-center gap-2 bg-primary text-on-primary font-label-md text-label-md px-4 py-2.5 rounded-lg hover:opacity-90 transition-opacity shadow-sm no-underline">
+        <span class="material-symbols-outlined text-[18px]">add</span>
+        Nuevo Pedido
+    </a>
     {% endif %}
+</div>
 
-    <!-- Filter bar -->
-    <div class="d-flex flex-wrap gap-2 mb-4">
-        <a href="{% url 'entregas:dashboard' %}" class="btn btn-outline-secondary {% if not estado_filter %}active{% endif %}">
-            <i class="bi bi-list-ul"></i> Todas
-        </a>
-        <a href="{% url 'entregas:resumen' %}" class="btn btn-outline-success">
-            <i class="bi bi-clipboard-check"></i> Resumen del Día
-        </a>
-        {% for value, label in estados %}
-        <a href="?estado={{ value }}" class="btn btn-outline-secondary {% if estado_filter == value %}active{% endif %}">
-            {% if value == 'pendiente' %}<i class="bi bi-clock"></i>
-            {% elif value == 'en_camino' %}<i class="bi bi-scooter"></i>
-            {% elif value == 'entregado' %}<i class="bi bi-box-seam"></i>
-            {% elif value == 'cancelado' %}<i class="bi bi-x-circle"></i>{% endif %}
-            {{ label }}
-        </a>
-        {% endfor %}
-    </div>
+{# ─────────────────── FILTER BAR ─────────────────── #}
+<div class="flex flex-wrap items-center gap-2 mb-6">
+    {# All / No filter #}
+    <a href="{% url 'entregas:dashboard' %}"
+       class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg font-label-md text-label-md transition-colors no-underline
+              {% if not estado_filter %}bg-primary text-on-primary{% else %}bg-surface-container text-on-surface-variant hover:bg-surface-container-high{% endif %}">
+        <span class="material-symbols-outlined text-[18px]">list_alt</span>
+        Todas
+    </a>
 
-    {% if page_obj %}
-    <!-- Mobile-first cards -->
-    <div class="row g-3">
-        {% for pedido in page_obj %}
-        <div class="col-12 col-md-6 col-lg-4">
-            <div class="card h-100 shadow-sm border-{% if pedido.estado == 'pendiente' %}warning{% elif pedido.estado == 'en_camino' %}info{% elif pedido.estado == 'entregado' %}success{% else %}danger{% endif %}">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="card-title mb-0">Pedido #{{ pedido.pk }}</h5>
-                        <span class="badge bg-{% if pedido.estado == 'pendiente' %}warning text-dark{% elif pedido.estado == 'en_camino' %}info{% elif pedido.estado == 'entregado' %}success{% else %}danger{% endif %}">
-                            {{ pedido.get_estado_display }}
+    {# Resumen del Día link #}
+    <a href="{% url 'entregas:resumen' %}"
+       class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg font-label-md text-label-md transition-colors no-underline bg-surface-container text-on-surface-variant hover:bg-surface-container-high">
+        <span class="material-symbols-outlined text-[18px]">clipboard_check</span>
+        Resumen del Día
+    </a>
+
+    {# Estado filters #}
+    {% for value, label in estados %}
+    <a href="?estado={{ value }}"
+       class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg font-label-md text-label-md transition-colors no-underline
+              {% if estado_filter == value %}bg-primary text-on-primary{% else %}bg-surface-container text-on-surface-variant hover:bg-surface-container-high{% endif %}">
+        {% if value == 'pendiente' %}
+        <span class="material-symbols-outlined text-[18px]">schedule</span>
+        {% elif value == 'en_camino' %}
+        <span class="material-symbols-outlined text-[18px]">electric_scooter</span>
+        {% elif value == 'entregado' %}
+        <span class="material-symbols-outlined text-[18px]">check_circle</span>
+        {% elif value == 'cancelado' %}
+        <span class="material-symbols-outlined text-[18px]">cancel</span>
+        {% endif %}
+        {{ label }}
+    </a>
+    {% endfor %}
+</div>
+
+{# ─────────────────── PEDIDO TABLE ─────────────────── #}
+{% if page_obj %}
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 overflow-hidden flex flex-col">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left font-body-md text-body-md">
+            <thead class="bg-surface-container-low text-on-surface-variant font-label-md text-label-md">
+                <tr>
+                    <th class="py-3 px-4 font-semibold">#</th>
+                    <th class="py-3 px-4 font-semibold">Cliente</th>
+                    {% if user.rol.nombre == 'Administrador' %}
+                    <th class="py-3 px-4 font-semibold">Domiciliario</th>
+                    {% endif %}
+                    <th class="py-3 px-4 font-semibold">Estado</th>
+                    <th class="py-3 px-4 font-semibold">Fecha</th>
+                    <th class="py-3 px-4 font-semibold text-right">Acción</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/10 text-on-surface">
+                {% for pedido in page_obj %}
+                <tr class="hover:bg-surface transition-colors">
+                    <td class="py-3 px-4 font-medium text-primary">#{{ pedido.pk }}</td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-caption">
+                                {{ pedido.cliente.first_name.0|upper }}{% if pedido.cliente.last_name %}{{ pedido.cliente.last_name.0|upper }}{% endif %}
+                            </div>
+                            <div>
+                                <div class="font-medium text-on-surface">{{ pedido.cliente.get_full_name|default:pedido.cliente.email }}</div>
+                                <div class="font-caption text-caption text-on-surface-variant">{{ pedido.direccion_entrega|truncatechars:25 }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    {% if user.rol.nombre == 'Administrador' %}
+                    <td class="py-3 px-4">
+                        {% if pedido.domiciliario %}
+                        {{ pedido.domiciliario.get_full_name|default:pedido.domiciliario.email }}
+                        {% else %}
+                        <span class="text-on-surface-variant font-caption text-caption">Sin asignar</span>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                    <td class="py-3 px-4">
+                        {% if pedido.estado == 'pendiente' %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-caption text-caption">
+                            <span class="w-1.5 h-1.5 rounded-full bg-secondary mr-1.5"></span>{{ pedido.get_estado_display }}
                         </span>
-                    </div>
-                    <p class="card-text mb-1"><i class="bi bi-geo-alt-fill"></i> {{ pedido.direccion_entrega }}</p>
-                    <p class="card-text mb-1"><i class="bi bi-telephone"></i> {{ pedido.telefono_contacto }}</p>
-                    <p class="card-text mb-1"><i class="bi bi-person"></i> {{ pedido.cliente.get_full_name }}</p>
-                    {% if pedido.notas %}
-                    <p class="card-text text-muted small mb-1"><i class="bi bi-chat-left-text"></i> {{ pedido.notas|truncatechars:60 }}</p>
-                    {% endif %}
-                    <p class="card-text small text-muted"><i class="bi bi-clock"></i> {{ pedido.fecha_creacion|date:"d/m/Y H:i" }}</p>
-                </div>
-                <div class="card-footer bg-transparent">
-                    <a href="{% url 'entregas:detalle' pedido.pk %}" class="btn btn-primary w-100 mb-2">
-                        <i class="bi bi-arrow-right-circle"></i> Ver Detalle
-                    </a>
-                    {% if user.rol.nombre == 'Domiciliario' or user.rol.nombre == 'Administrador' %}
-                    {% if pedido.estado == 'pendiente' %}
-                    <form method="post" action="{% url 'entregas:cambiar_estado' pedido.pk %}" class="d-inline w-100">
-                        {% csrf_token %}
-                        <button type="submit" name="nuevo_estado" value="en_camino" class="btn btn-info w-100">
-                            <i class="bi bi-scooter"></i> Iniciar Entrega
-                        </button>
-                    </form>
-                    {% elif pedido.estado == 'en_camino' %}
-                    <a href="{% url 'entregas:detalle' pedido.pk %}" class="btn btn-success w-100">
-                        <i class="bi bi-box-seam"></i> Confirmar Entrega
-                    </a>
-                    {% endif %}
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        {% endfor %}
+                        {% elif pedido.estado == 'en_camino' %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-primary-container/30 text-primary font-caption text-caption">
+                            <span class="w-1.5 h-1.5 rounded-full bg-primary mr-1.5"></span>{{ pedido.get_estado_display }}
+                        </span>
+                        {% elif pedido.estado == 'entregado' %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-tertiary-container/30 text-tertiary font-caption text-caption">
+                            <span class="w-1.5 h-1.5 rounded-full bg-tertiary mr-1.5"></span>{{ pedido.get_estado_display }}
+                        </span>
+                        {% elif pedido.estado == 'cancelado' %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-error-container/50 text-on-error-container font-caption text-caption">
+                            <span class="w-1.5 h-1.5 rounded-full bg-error mr-1.5"></span>{{ pedido.get_estado_display }}
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-caption text-caption">{{ pedido.get_estado_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3 px-4 text-on-surface-variant font-caption text-caption">{{ pedido.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                    <td class="py-3 px-4 text-right">
+                        <a href="{% url 'entregas:detalle' pedido.pk %}"
+                           class="inline-flex items-center gap-1.5 bg-surface border border-outline-variant text-on-surface-variant font-label-md text-label-md px-3 py-1.5 rounded-lg hover:bg-surface-container-high transition-colors no-underline">
+                            Ver <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
-    <!-- Pagination -->
-    {% if page_obj.has_other_pages %}
-    <nav aria-label="Paginación" class="mt-4">
-        <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}">&laquo;</a></li>
-            {% endif %}
-            {% for num in page_obj.paginator.page_range %}
+    {# ─────────────────── PAGINATION ─────────────────── #}
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="p-4 border-t border-outline-variant/10 flex justify-center gap-2 flex-wrap">
+        {# Previous #}
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}"
+           class="inline-flex items-center px-3 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-md text-label-md transition-colors no-underline">
+            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+        </a>
+        {% else %}
+        <span class="inline-flex items-center px-3 py-2 rounded-lg bg-surface-container-low text-outline font-label-md text-label-md opacity-50">
+            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+        </span>
+        {% endif %}
+
+        {# Page Numbers #}
+        {% for num in page_obj.paginator.page_range %}
             {% if page_obj.number == num %}
-            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-            {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
-            <li class="page-item"><a class="page-link" href="?page={{ num }}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}">{{ num }}</a></li>
+            <span class="inline-flex items-center px-3.5 py-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md">{{ num }}</span>
+            {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+            <a href="?page={{ num }}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}"
+               class="inline-flex items-center px-3.5 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-md text-label-md transition-colors no-underline">{{ num }}</a>
             {% endif %}
-            {% endfor %}
-            {% if page_obj.has_next %}
-            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}">&raquo;</a></li>
-            {% endif %}
-        </ul>
-    </nav>
-    {% endif %}
-    {% else %}
-    <div class="alert alert-info text-center">
-        <i class="bi bi-inbox"></i> No hay pedidos asignados.
+        {% endfor %}
+
+        {# Next #}
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}"
+           class="inline-flex items-center px-3 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-md text-label-md transition-colors no-underline">
+            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+        </a>
+        {% else %}
+        <span class="inline-flex items-center px-3 py-2 rounded-lg bg-surface-container-low text-outline font-label-md text-label-md opacity-50">
+            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+        </span>
+        {% endif %}
     </div>
     {% endif %}
 </div>
+
+{% else %}
+{# ── Empty State ── #}
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 p-lg text-center">
+    <span class="material-symbols-outlined text-outline text-[48px] mb-3 block">inventory_2</span>
+    <h3 class="font-headline-md text-headline-md text-on-surface mb-2">No hay pedidos</h3>
+    <p class="font-body-md text-body-md text-on-surface-variant mb-4">
+        {% if estado_filter %}
+        No hay pedidos con estado "{{ estado_filter }}".
+        {% else %}
+        No hay pedidos registrados en el sistema.
+        {% endif %}
+    </p>
+    <a href="{% url 'entregas:dashboard' %}" class="inline-flex items-center gap-2 bg-surface border border-outline-variant text-on-surface font-label-md text-label-md px-4 py-2.5 rounded-lg hover:bg-surface-container transition-colors no-underline">
+        <span class="material-symbols-outlined text-[18px]">refresh</span>
+        Ver Todas
+    </a>
+</div>
+{% endif %}
 {% endblock %}

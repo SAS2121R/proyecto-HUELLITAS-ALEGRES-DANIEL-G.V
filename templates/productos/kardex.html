@@ -1,105 +1,142 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Kardex: {{ producto.nombre }}</h1>
-    <a href="{% url 'productos:lista' %}" class="btn btn-outline-secondary">Volver</a>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
+      <span class="material-symbols-outlined text-primary">history</span> Kardex: {{ producto.nombre }}
+    </h1>
+    <a href="{% url 'productos:lista' %}" class="inline-flex items-center gap-2 bg-surface-container-high text-on-surface-variant font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-surface-container-highest transition-colors">
+      <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver
+    </a>
   </div>
 
-  <div class="row mb-4">
-    <div class="col-md-3">
-      <div class="card text-white {% if producto.estado_stock == 'verde' %}bg-success{% elif producto.estado_stock == 'amarillo' %}bg-warning{% else %}bg-danger{% endif %}">
-        <div class="card-body text-center">
-          <h5>Stock Actual</h5>
-          <h2>{{ producto.cantidad_stock }}</h2>
-          <small>Mínimo: {{ producto.stock_minimo }}</small>
-        </div>
+  <!-- Info Cards Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <!-- Stock Card (color-coded) -->
+    <div class="rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden
+      {% if producto.estado_stock == 'verde' %}bg-primary-container/20 border-primary/20{% elif producto.estado_stock == 'amarillo' %}bg-tertiary-container/20 border-tertiary/20{% else %}bg-error-container/30 border-error/20{% endif %}">
+      <div class="p-5 text-center">
+        <p class="font-label-md text-label-md text-on-surface-variant mb-1">Stock Actual</p>
+        <p class="font-headline-md text-headline-md
+          {% if producto.estado_stock == 'verde' %}text-primary{% elif producto.estado_stock == 'amarillo' %}text-tertiary{% else %}text-error{% endif %}">
+          {{ producto.cantidad_stock }}
+        </p>
+        <p class="font-caption text-caption text-on-surface-variant">Mínimo: {{ producto.stock_minimo }}</p>
       </div>
     </div>
-    <div class="col-md-3">
-      <div class="card">
-        <div class="card-body">
-          <h6>Categoría</h6>
-          <p>{{ producto.get_categoria_display }}</p>
-        </div>
-      </div>
+
+    <!-- Categoría -->
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-5">
+      <p class="font-caption text-caption text-on-surface-variant uppercase tracking-wide mb-1">Categoría</p>
+      <p class="font-body-md text-body-md text-on-surface">{{ producto.get_categoria_display }}</p>
     </div>
-    <div class="col-md-3">
-      <div class="card">
-        <div class="card-body">
-          <h6>Proveedor</h6>
-          <p>{{ producto.proveedor.nombre|default:"—" }}</p>
-        </div>
-      </div>
+
+    <!-- Proveedor -->
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-5">
+      <p class="font-caption text-caption text-on-surface-variant uppercase tracking-wide mb-1">Proveedor</p>
+      <p class="font-body-md text-body-md text-on-surface">{{ producto.proveedor.nombre|default:"—" }}</p>
     </div>
-    <div class="col-md-3">
-      <div class="card">
-        <div class="card-body">
-          <h6>Precio</h6>
-          <p>${{ producto.precio }}</p>
-        </div>
-      </div>
+
+    <!-- Precio -->
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-5">
+      <p class="font-caption text-caption text-on-surface-variant uppercase tracking-wide mb-1">Precio</p>
+      <p class="font-headline-md text-headline-md text-on-surface">${{ producto.precio }}</p>
     </div>
   </div>
 
-  <h3>Movimientos</h3>
+  <!-- Movimientos Section -->
+  <h2 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2 mb-4">
+    <span class="material-symbols-outlined text-primary">receipt_long</span> Movimientos
+  </h2>
+
   {% if page_obj %}
-    <div class="table-responsive">
-      <table class="table table-hover align-middle">
-        <thead class="table-dark">
-          <tr>
-            <th>Fecha</th>
-            <th>Tipo</th>
-            <th>Cantidad</th>
-            <th>Usuario</th>
-            <th>Motivo</th>
-            <th>Relacionado</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for mov in page_obj %}
-          <tr>
-            <td>{{ mov.fecha|date:"d/m/Y H:i" }}</td>
-            <td>
-              {% if mov.tipo_movimiento == 'entrada' %}
-              <span class="badge bg-success">Entrada</span>
-              {% elif mov.tipo_movimiento == 'salida' %}
-              <span class="badge bg-danger">Salida</span>
-              {% else %}
-              <span class="badge bg-warning text-dark">Ajuste</span>
-              {% endif %}
-            </td>
-            <td>{{ mov.cantidad }}</td>
-            <td>{{ mov.usuario|default:"—" }}</td>
-            <td>{{ mov.motivo|default:"—" }}</td>
-            <td>
-              {% if mov.historial_clinico %}
-              <a href="{% url 'historial:detalle' mov.historial_clinico.pk %}">HC #{{ mov.historial_clinico.pk }}</a>
-              {% else %}
-              —
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <!-- Table -->
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="bg-surface-container">
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-left">Fecha</th>
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-left">Tipo</th>
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-center">Cantidad</th>
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-left">Usuario</th>
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-left">Motivo</th>
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-left">Relacionado</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/20">
+            {% for mov in page_obj %}
+            <tr class="hover:bg-surface-container-low/50 transition-colors">
+              <td class="px-4 py-3 font-body-md text-body-md text-on-surface whitespace-nowrap">{{ mov.fecha|date:"d/m/Y H:i" }}</td>
+              <td class="px-4 py-3">
+                {% if mov.tipo_movimiento == 'entrada' %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-container/30 text-on-primary-container font-caption text-caption">
+                  <span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Entrada
+                </span>
+                {% elif mov.tipo_movimiento == 'salida' %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error-container/50 text-on-error-container font-caption text-caption">
+                  <span class="w-1.5 h-1.5 rounded-full bg-error"></span> Salida
+                </span>
+                {% else %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-container/30 text-on-tertiary-container font-caption text-caption">
+                  <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Ajuste
+                </span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3 font-body-md text-body-md text-on-surface text-center">{{ mov.cantidad }}</td>
+              <td class="px-4 py-3 font-body-md text-body-md text-on-surface-variant">{{ mov.usuario|default:"—" }}</td>
+              <td class="px-4 py-3 font-body-md text-body-md text-on-surface-variant">{{ mov.motivo|default:"—" }}</td>
+              <td class="px-4 py-3 font-body-md text-body-md">
+                {% if mov.historial_clinico %}
+                <a href="{% url 'historial:detalle' mov.historial_clinico.pk %}" class="text-primary hover:underline">
+                  HC #{{ mov.historial_clinico.pk }}
+                </a>
+                {% else %}
+                <span class="text-on-surface-variant/50">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
-    <nav aria-label="Page navigation">
-      <ul class="pagination justify-content-center">
-        {% if page_obj.has_previous %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo; Anterior</a></li>
-        {% else %}
-        <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
-        {% endif %}
-        {% if page_obj.has_next %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente &raquo;</a></li>
-        {% else %}
-        <li class="page-item disabled"><span class="page-link">Siguiente &raquo;</span></li>
-        {% endif %}
-      </ul>
+
+    <!-- Pagination -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="flex items-center justify-center gap-1 mt-6" aria-label="Paginación">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}"
+         class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant/20 text-on-surface-variant font-label-md text-label-md hover:bg-surface-container transition-colors">
+        <span class="material-symbols-outlined text-[18px]">chevron_left</span> Anterior
+      </a>
+      {% else %}
+      <span class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant/10 text-on-surface-variant/40 font-label-md text-label-md cursor-not-allowed">
+        <span class="material-symbols-outlined text-[18px]">chevron_left</span> Anterior
+      </span>
+      {% endif %}
+
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}"
+         class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant/20 text-on-surface-variant font-label-md text-label-md hover:bg-surface-container transition-colors">
+        Siguiente <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+      </a>
+      {% else %}
+      <span class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant/10 text-on-surface-variant/40 font-label-md text-label-md cursor-not-allowed">
+        Siguiente <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+      </span>
+      {% endif %}
     </nav>
+    {% endif %}
+
   {% else %}
-    <div class="alert alert-info">No hay movimientos registrados para este producto.</div>
+    <!-- Empty State -->
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-12 text-center">
+      <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 mb-3">receipt_long</span>
+      <h3 class="font-headline-md text-headline-md text-on-surface-variant mb-2">Sin movimientos</h3>
+      <p class="font-body-md text-body-md text-on-surface-variant/60">No hay movimientos registrados para este producto.</p>
+    </div>
   {% endif %}
 </div>
 {% endblock %}

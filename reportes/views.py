@@ -219,6 +219,7 @@ def _get_metricas_context(request):
 
 
 @login_required
+@role_required('Administrador')
 def admin_metricas_pdf(request):
     """Exporta el panel de métricas como PDF."""
     context = _get_metricas_context(request)
@@ -226,6 +227,7 @@ def admin_metricas_pdf(request):
 
 
 @login_required
+@role_required('Administrador')
 def admin_metricas_excel(request):
     """Exporta el panel de métricas como archivo Excel."""
     from openpyxl import Workbook

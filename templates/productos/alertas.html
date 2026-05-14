@@ -1,51 +1,73 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Alertas de Stock</h1>
-    <a href="{% url 'productos:lista' %}" class="btn btn-outline-secondary">Volver a Productos</a>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
+      <span class="material-symbols-outlined text-error">warning</span> Alertas de Stock
+    </h1>
+    <a href="{% url 'productos:lista' %}" class="inline-flex items-center gap-2 bg-surface-container-high text-on-surface-variant font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-surface-container-highest transition-colors">
+      <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver a Productos
+    </a>
   </div>
 
   {% if alert_products %}
-    <div class="table-responsive">
-      <table class="table table-hover align-middle">
-        <thead class="table-dark">
-          <tr>
-            <th>Producto</th>
-            <th>Categoría</th>
-            <th>Stock Actual</th>
-            <th>Stock Mínimo</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for p in alert_products %}
-          <tr class="{% if p.estado_stock == 'rojo' %}table-danger{% else %}table-warning{% endif %}">
-            <td>{{ p.nombre }}</td>
-            <td>{{ p.get_categoria_display }}</td>
-            <td>{{ p.cantidad_stock }}</td>
-            <td>{{ p.stock_minimo }}</td>
-            <td>
-              {% if p.estado_stock == 'rojo' %}
-              <span class="badge bg-danger">Sin Stock</span>
-              {% else %}
-              <span class="badge bg-warning text-dark">Stock Bajo</span>
-              {% endif %}
-            </td>
-            <td>
-              <a href="{% url 'productos:kardex' p.pk %}" class="btn btn-sm btn-info">Kardex</a>
-              <a href="{% url 'productos:entrada' %}" class="btn btn-sm btn-success">Registrar Entrada</a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <!-- Table -->
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="bg-surface-container">
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-left">Producto</th>
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-left">Categoría</th>
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-center">Stock Actual</th>
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-center">Stock Mínimo</th>
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-center">Estado</th>
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/20">
+            {% for p in alert_products %}
+            <tr class="{% if p.estado_stock == 'rojo' %}bg-error-container/15{% else %}bg-tertiary-container/10{% endif %} hover:bg-surface-container-low/50 transition-colors">
+              <td class="px-4 py-3 font-body-md text-body-md text-on-surface font-semibold">{{ p.nombre }}</td>
+              <td class="px-4 py-3 font-body-md text-body-md text-on-surface-variant">{{ p.get_categoria_display }}</td>
+              <td class="px-4 py-3 font-body-md text-body-md text-on-surface text-center font-semibold">{{ p.cantidad_stock }}</td>
+              <td class="px-4 py-3 font-body-md text-body-md text-on-surface text-center">{{ p.stock_minimo }}</td>
+              <td class="px-4 py-3 text-center">
+                {% if p.estado_stock == 'rojo' %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error-container/50 text-on-error-container font-caption text-caption">
+                  <span class="w-1.5 h-1.5 rounded-full bg-error"></span> Sin Stock
+                </span>
+                {% else %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-container/30 text-on-tertiary-container font-caption text-caption">
+                  <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Stock Bajo
+                </span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex justify-center gap-1.5">
+                  <a href="{% url 'productos:kardex' p.pk %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary-container text-on-secondary-container font-caption text-caption hover:opacity-90 transition-opacity">
+                    <span class="material-symbols-outlined text-[16px]">history</span> Kardex
+                  </a>
+                  <a href="{% url 'productos:entrada' %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-on-primary font-caption text-caption hover:opacity-90 transition-opacity">
+                    <span class="material-symbols-outlined text-[16px]">add_circle</span> Entrada
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   {% else %}
-    <div class="alert alert-success text-center">
-      <h4 class="alert-heading">¡Todo en orden!</h4>
-      <p>No hay productos con alertas de stock.</p>
+    <!-- Success/Empty State -->
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-12 text-center">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary-container/30 flex items-center justify-center">
+        <span class="material-symbols-outlined text-3xl text-primary">check_circle</span>
+      </div>
+      <h3 class="font-headline-md text-headline-md text-on-surface mb-2">¡Todo en orden!</h3>
+      <p class="font-body-md text-body-md text-on-surface-variant/60">No hay productos con alertas de stock.</p>
     </div>
   {% endif %}
 </div>

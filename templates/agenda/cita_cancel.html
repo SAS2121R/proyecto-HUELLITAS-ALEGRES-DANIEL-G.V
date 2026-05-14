@@ -1,40 +1,43 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card border-danger">
-                <div class="card-header bg-danger text-white">
-                    <h4 class="mb-0">Cancelar Cita</h4>
-                </div>
-                <div class="card-body">
-                    <p>¿Está seguro de que desea cancelar la siguiente cita?</p>
-                    <ul>
-                        <li><strong>Mascota:</strong> {{ cita.mascota }}</li>
-                        <li><strong>Veterinario:</strong> {{ cita.disponibilidad.veterinario }}</li>
-                        <li><strong>Fecha:</strong> {{ cita.disponibilidad.fecha }}</li>
-                        <li><strong>Hora:</strong> {{ cita.disponibilidad.hora_inicio|time:"H:i" }} - {{ cita.disponibilidad.hora_fin|time:"H:i" }}</li>
-                        <li><strong>Estado actual:</strong> {{ cita.get_estado_display }}</li>
-                    </ul>
-                    {% if messages %}
-                    {% for message in messages %}
-                    <div class="alert alert-danger">{{ message }}</div>
-                    {% endfor %}
-                    {% endif %}
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="motivo_cancelacion" class="form-label">Motivo de cancelación <span class="text-danger">*</span></label>
-                            <textarea name="motivo_cancelacion" class="form-control" rows="3" required placeholder="Indique el motivo de cancelación..."></textarea>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'agenda:lista_citas' %}" class="btn btn-secondary">Volver</a>
-                            <button type="submit" class="btn btn-danger">Confirmar Cancelación</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+<div class="max-w-2xl mx-auto">
+  <div class="bg-surface-container-lowest rounded-xl border border-error/30 overflow-hidden custom-shadow">
+    <div class="bg-error px-4 py-3">
+      <h2 class="font-headline-md text-headline-md text-on-error flex items-center gap-2">
+        <span class="material-symbols-outlined">warning</span> Cancelar Cita
+      </h2>
     </div>
+    <div class="p-6">
+      <p class="font-body-md text-body-md text-on-surface mb-4">¿Está seguro de que desea cancelar la siguiente cita?</p>
+      <ul class="space-y-2 mb-6 font-body-md text-body-md text-on-surface">
+        <li><strong>Mascota:</strong> {{ cita.mascota }}</li>
+        <li><strong>Veterinario:</strong> {{ cita.disponibilidad.veterinario }}</li>
+        <li><strong>Fecha:</strong> {{ cita.disponibilidad.fecha }}</li>
+        <li><strong>Hora:</strong> {{ cita.disponibilidad.hora_inicio|time:"H:i" }} - {{ cita.disponibilidad.hora_fin|time:"H:i" }}</li>
+        <li><strong>Estado actual:</strong> {{ cita.get_estado_display }}</li>
+      </ul>
+
+      {% if messages %}
+      {% for message in messages %}
+      <div class="flex items-center gap-3 p-4 bg-error-container/50 rounded-xl border border-error/30 font-body-md text-body-md text-on-error-container mb-4">
+        <span class="material-symbols-outlined text-error flex-shrink-0">error</span>
+        <p>{{ message }}</p>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-4">
+          <label for="motivo_cancelacion" class="block font-label-md text-label-md text-on-surface mb-1.5">Motivo de cancelación <span class="text-error">*</span></label>
+          <textarea name="motivo_cancelacion" class="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-error focus:ring-1 focus:ring-error transition-all resize-y" rows="3" required placeholder="Indique el motivo de cancelación..."></textarea>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <a href="{% url 'agenda:lista_citas' %}" class="flex-1 text-center bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-surface-container-highest transition-colors">Volver</a>
+          <button type="submit" class="flex-1 bg-error text-on-error font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">Confirmar Cancelación</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 {% endblock %}

@@ -1,61 +1,106 @@
-{# Admin sidebar — included from base.html when user is Administrador #}
-<div class="sidebar-heading">Principal</div>
-<nav class="nav flex-column">
-    <a href="{% url 'usuarios:admin_dashboard' %}" class="nav-link {% if '/admin' in request.path and '/usuarios' in request.path %}active{% endif %}">
-        <i class="bi bi-speedometer2"></i> Dashboard
-    </a>
-    <a href="{% url 'usuarios:admin_users' %}" class="nav-link {% if '/usuarios' in request.path and 'admin' in request.path and 'dashboard' not in request.path and 'configuracion' not in request.path %}active{% endif %}">
-        <i class="bi bi-people"></i> Usuarios
-    </a>
-    <a href="{% url 'usuarios:admin_configuracion' %}" class="nav-link {% if '/configuracion' in request.path %}active{% endif %}">
-        <i class="bi bi-building"></i> Configuración
-    </a>
-</nav>
+{# ── Admin sidebar — included from base.html when user is Administrador ── #}
+{# ── Uses DESIGN.md palette via Tailwind + Material Symbols icons ── #}
 
-<div class="sidebar-heading">Gestión</div>
-<nav class="nav flex-column">
-    <a href="{% url 'mascotas:lista' %}" class="nav-link {% if '/mascotas/' in request.path %}active{% endif %}">
-        <i class="bi bi-emoji-heart-eyes"></i> Mascotas
-    </a>
-    <a href="{% url 'agenda:lista_citas' %}" class="nav-link {% if '/agenda/' in request.path %}active{% endif %}">
-        <i class="bi bi-calendar"></i> Citas
-    </a>
-    <a href="{% url 'historial:lista' %}" class="nav-link {% if '/historial/' in request.path %}active{% endif %}">
-        <i class="bi bi-clipboard2-pulse"></i> Historial
-    </a>
-    <a href="{% url 'servicios:lista' %}" class="nav-link {% if '/servicios/' in request.path %}active{% endif %}">
-        <i class="bi bi-heart-pulse"></i> Servicios
-    </a>
-</nav>
+<div class="flex flex-col h-full p-4 gap-1">
 
-<div class="sidebar-heading">Inventario & Entregas</div>
-<nav class="nav flex-column">
-    <a href="{% url 'productos:lista' %}" class="nav-link {% if '/productos/' in request.path %}active{% endif %}">
-        <i class="bi bi-box-seam"></i> Inventario
-    </a>
-    <a href="{% url 'proveedores:lista' %}" class="nav-link {% if '/proveedores/' in request.path %}active{% endif %}">
-        <i class="bi bi-shop-window"></i> Proveedores
-    </a>
-    <a href="{% url 'entregas:dashboard' %}" class="nav-link {% if '/entregas/' in request.path %}active{% endif %}">
-        <i class="bi bi-truck"></i> Entregas
-    </a>
-    <a href="{% url 'entregas:torre_control' %}" class="nav-link {% if '/torre' in request.path %}active{% endif %}">
-        <i class="bi bi-broadcast"></i> Torre de Control
-    </a>
-</nav>
+    {# Brand #}
+    <div class="mb-6 px-3">
+        <h1 class="font-headline-md text-headline-md text-primary font-bold tracking-tight">Huellitas Alegres</h1>
+        <p class="font-caption text-caption text-secondary mt-1">Portal Administrativo</p>
+    </div>
 
-<div class="sidebar-heading">Reportes</div>
-<nav class="nav flex-column">
-    <a href="{% url 'reportes:admin_metricas' %}" class="nav-link {% if '/metricas' in request.path %}active{% endif %}">
-        <i class="bi bi-bar-chart-line"></i> Métricas
-    </a>
-    <a href="{% url 'reportes:citas' %}" class="nav-link {% if '/reportes/citas' in request.path %}active{% endif %}">
-        <i class="bi bi-file-earmark-text"></i> Reporte Citas
-    </a>
-    <a href="{% url 'reportes:inventario' %}" class="nav-link {% if '/reportes/inventario' in request.path %}active{% endif %}">
-        <i class="bi bi-file-earmark-bar-graph"></i> Reporte Inventario
-    </a>
-    <a href="{% url 'reportes:servicios' %}" class="nav-link {% if '/reportes/servicios' in request.path %}active{% endif %}">
-        <i class="bi bi-file-earmark-medical"></i> Reporte Servicios
-    </a>
-</nav>
+    {# ── Section: Principal ── #}
+    <p class="font-caption text-caption text-on-surface-variant uppercase tracking-wider px-3 pt-3 pb-1">Principal</p>
+    <nav class="flex flex-col gap-0.5">
+        <a href="{% url 'usuarios:admin_dashboard' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/admin' in request.path and '/usuarios' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/admin' in request.path and '/usuarios' in request.path %}icon-fill{% endif %}">dashboard</span>
+            Dashboard
+        </a>
+        <a href="{% url 'usuarios:admin_users' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/usuarios' in request.path and 'admin' in request.path and 'dashboard' not in request.path and 'configuracion' not in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/usuarios/' in request.path and 'admin' in request.path and 'dashboard' not in request.path and 'configuracion' not in request.path %}icon-fill{% endif %}">people</span>
+            Usuarios
+        </a>
+        <a href="{% url 'usuarios:admin_configuracion' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/configuracion' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/configuracion' in request.path %}icon-fill{% endif %}">settings</span>
+            Configuración
+        </a>
+    </nav>
+
+    {# ── Section: Gestión ── #}
+    <p class="font-caption text-caption text-on-surface-variant uppercase tracking-wider px-3 pt-5 pb-1">Gestión</p>
+    <nav class="flex flex-col gap-0.5">
+        <a href="{% url 'mascotas:lista' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/mascotas/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/mascotas/' in request.path %}icon-fill{% endif %}">pets</span>
+            Mascotas
+        </a>
+        <a href="{% url 'agenda:lista_citas' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/agenda/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/agenda/' in request.path %}icon-fill{% endif %}">calendar_today</span>
+            Citas
+        </a>
+        <a href="{% url 'historial:lista' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/historial/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/historial/' in request.path %}icon-fill{% endif %}">clipboard2_pulse</span>
+            Historial
+        </a>
+        <a href="{% url 'servicios:lista' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/servicios/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/servicios/' in request.path %}icon-fill{% endif %}">monitor_heart</span>
+            Servicios
+        </a>
+    </nav>
+
+    {# ── Section: Inventario & Entregas ── #}
+    <p class="font-caption text-caption text-on-surface-variant uppercase tracking-wider px-3 pt-5 pb-1">Inventario &amp; Entregas</p>
+    <nav class="flex flex-col gap-0.5">
+        <a href="{% url 'productos:lista' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/productos/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/productos/' in request.path %}icon-fill{% endif %}">inventory_2</span>
+            Inventario
+        </a>
+        <a href="{% url 'proveedores:lista' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/proveedores/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/proveedores/' in request.path %}icon-fill{% endif %}">local_shipping</span>
+            Proveedores
+        </a>
+        <a href="{% url 'entregas:dashboard' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/entregas/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/entregas/' in request.path %}icon-fill{% endif %}">local_shipping</span>
+            Entregas
+        </a>
+        <a href="{% url 'entregas:torre_control' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/torre' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/torre' in request.path %}icon-fill{% endif %}">broadcast</span>
+            Torre de Control
+        </a>
+    </nav>
+
+    {# ── Section: Reportes ── #}
+    <p class="font-caption text-caption text-on-surface-variant uppercase tracking-wider px-3 pt-5 pb-1">Reportes</p>
+    <nav class="flex flex-col gap-0.5 flex-1">
+        <a href="{% url 'reportes:admin_metricas' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/metricas' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/metricas' in request.path %}icon-fill{% endif %}">bar_chart</span>
+            Métricas
+        </a>
+        <a href="{% url 'reportes:citas' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/reportes/citas' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/reportes/citas' in request.path %}icon-fill{% endif %}">description</span>
+            Reporte Citas
+        </a>
+        <a href="{% url 'reportes:inventario' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/reportes/inventario' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/reportes/inventario' in request.path %}icon-fill{% endif %}">description</span>
+            Reporte Inventario
+        </a>
+        <a href="{% url 'reportes:servicios' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/reportes/servicios' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/reportes/servicios' in request.path %}icon-fill{% endif %}">description</span>
+            Reporte Servicios
+        </a>
+    </nav>
+</div>

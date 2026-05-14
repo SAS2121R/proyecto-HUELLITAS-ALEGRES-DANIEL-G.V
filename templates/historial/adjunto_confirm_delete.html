@@ -1,23 +1,28 @@
 {% extends 'base.html' %}
-{% block content %}
-<div class="container py-4">
-  <div class="card border-danger">
-    <div class="card-header bg-danger text-white">
-      <h4 class="mb-0">Confirmar Eliminación de Archivo</h4>
-    </div>
-    <div class="card-body">
-      <p>¿Está seguro de que desea eliminar el archivo <strong>"{{ adjunto.archivo.name.split|last }}"</strong>?</p>
-      <p class="text-muted">Tipo: {{ adjunto.get_tipo_display }} | Subido: {{ adjunto.fecha_subida|date:"d/m/Y H:i" }}</p>
-      {% if adjunto.descripcion %}
-      <p><strong>Descripción:</strong> {{ adjunto.descripcion }}</p>
-      {% endif %}
 
-      <form method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-danger">Sí, eliminar archivo</button>
-        <a href="{% url 'historial:detalle' adjunto.historial_clinico_id %}" class="btn btn-outline-secondary">Cancelar</a>
-      </form>
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <div class="bg-surface-container-lowest rounded-xl border border-error/30 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+        <div class="bg-error px-6 py-4">
+            <h2 class="font-headline-md text-headline-md text-on-error flex items-center gap-2">
+                <span class="material-symbols-outlined">warning</span> Confirmar Eliminación de Archivo
+            </h2>
+        </div>
+        <div class="p-6">
+            <p class="font-body-md text-body-md text-on-surface mb-4">¿Está seguro de que desea eliminar el archivo <strong>"{{ adjunto.archivo.name.split|last }}"</strong>?</p>
+            <p class="font-caption text-caption text-on-surface-variant mb-6">Tipo: {{ adjunto.get_tipo_display }} | Subido: {{ adjunto.fecha_subida|date:"d/m/Y H:i" }}</p>
+            {% if adjunto.descripcion %}
+            <p class="font-body-md text-body-md text-on-surface mb-6"><strong>Descripción:</strong> {{ adjunto.descripcion }}</p>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="flex gap-3">
+                    <a href="{% url 'historial:detalle' adjunto.historial_clinico_id %}" class="flex-1 text-center bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-lg py-sm hover:bg-surface-container-highest transition-colors">Cancelar</a>
+                    <button type="submit" class="flex-1 bg-error text-on-error font-label-md text-label-md rounded-lg px-lg py-sm hover:opacity-90 transition-opacity">Sí, eliminar archivo</button>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
 </div>
 {% endblock %}

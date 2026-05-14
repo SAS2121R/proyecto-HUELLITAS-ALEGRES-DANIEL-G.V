@@ -1,80 +1,104 @@
 {% extends 'base.html' %}
 {% block back_button %}{% include 'includes/back_button.html' %}{% endblock %}
 {% block content %}
-<div class="container py-4">
-  <h1 class="mb-4">Disponibilidades</h1>
-  <div class="d-flex justify-content-end mb-3">
+<div class="max-w-6xl mx-auto">
+  {# Page Header #}
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div>
+      <h1 class="font-headline-lg text-headline-lg text-on-surface">Disponibilidades</h1>
+    </div>
     {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
-    <a href="{% url 'agenda:crear_disponibilidad' %}" class="btn btn-success">Nueva Disponibilidad</a>
+    <a href="{% url 'agenda:crear_disponibilidad' %}" class="inline-flex items-center gap-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">
+      <span class="material-symbols-outlined text-[18px]">add</span> Nueva Disponibilidad
+    </a>
     {% endif %}
   </div>
+
   {% if page_obj %}
-    <div class="table-responsive">
-      <table class="table table-hover align-middle">
-        <thead class="table-dark">
-          <tr>
-            {% if user.rol.nombre == 'Administrador' %}
-            <th>Veterinario</th>
-            {% endif %}
-            <th>Fecha</th>
-            <th>Hora Inicio</th>
-            <th>Hora Fin</th>
-            <th>Activa</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for d in page_obj %}
-          <tr>
-            {% if user.rol.nombre == 'Administrador' %}
-            <td>{{ d.veterinario }}</td>
-            {% endif %}
-            <td>{{ d.fecha }}</td>
-            <td>{{ d.hora_inicio|time:"H:i" }}</td>
-            <td>{{ d.hora_fin|time:"H:i" }}</td>
-            <td>
-              {% if d.activa %}
-              <span class="badge bg-success">Sí</span>
-              {% else %}
-              <span class="badge bg-danger">No</span>
+    {# Table #}
+    <div class="bg-surface-container-lowest rounded-xl custom-shadow border border-outline-variant/10 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-outline-variant/30 text-on-surface-variant font-label-md text-label-md">
+              {% if user.rol.nombre == 'Administrador' %}
+              <th class="px-4 py-3">Veterinario</th>
               {% endif %}
-            </td>
-            <td>
-              <a href="{% url 'agenda:editar_disponibilidad' d.pk %}" class="btn btn-sm btn-warning">Editar</a>
-              {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
-              <a href="{% url 'agenda:eliminar_disponibilidad' d.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+              <th class="px-4 py-3">Fecha</th>
+              <th class="px-4 py-3">Hora Inicio</th>
+              <th class="px-4 py-3">Hora Fin</th>
+              <th class="px-4 py-3">Activa</th>
+              <th class="px-4 py-3">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="font-body-md text-body-md text-on-surface">
+            {% for d in page_obj %}
+            <tr class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors">
+              {% if user.rol.nombre == 'Administrador' %}
+              <td class="px-4 py-3">{{ d.veterinario }}</td>
               {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+              <td class="px-4 py-3">{{ d.fecha }}</td>
+              <td class="px-4 py-3">{{ d.hora_inicio|time:"H:i" }}</td>
+              <td class="px-4 py-3">{{ d.hora_fin|time:"H:i" }}</td>
+              <td class="px-4 py-3">
+                {% if d.activa %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-container/30 text-primary font-caption text-caption">
+                  <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>Sí
+                </span>
+                {% else %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error-container/50 text-on-error-container font-caption text-caption">
+                  <span class="w-1.5 h-1.5 rounded-full bg-error"></span>No
+                </span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                  <a href="{% url 'agenda:editar_disponibilidad' d.pk %}" class="inline-flex items-center gap-1 bg-surface-container-high text-on-surface font-caption text-caption px-2.5 py-1 rounded-lg hover:bg-surface-container-highest transition-colors">Editar</a>
+                  {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+                  <a href="{% url 'agenda:eliminar_disponibilidad' d.pk %}" class="inline-flex items-center gap-1 bg-error-container/50 text-error font-caption text-caption px-2.5 py-1 rounded-lg hover:bg-error-container transition-colors">Eliminar</a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
-    <!-- Paginación -->
-    <nav aria-label="Page navigation">
-      <ul class="pagination justify-content-center">
-        {% if page_obj.has_previous %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo; Anterior</a></li>
-        {% else %}
-        <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
+
+    {# Pagination #}
+    <nav class="flex items-center justify-center gap-2 mt-6 flex-wrap" aria-label="Paginación">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}" class="inline-flex items-center gap-1 px-3 py-2 bg-surface-container-lowest border border-outline-variant/30 rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-high transition-colors">
+        <span class="material-symbols-outlined text-[18px]">chevron_left</span> Anterior
+      </a>
+      {% else %}
+      <span class="inline-flex items-center gap-1 px-3 py-2 bg-surface-container text-on-surface-variant rounded-lg font-label-md text-label-md cursor-default">
+        <span class="material-symbols-outlined text-[18px]">chevron_left</span> Anterior
+      </span>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="inline-flex items-center justify-center w-10 h-10 bg-primary text-on-primary rounded-lg font-label-md text-label-md">{{ num }}</span>
+        {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+        <a href="?page={{ num }}" class="inline-flex items-center justify-center w-10 h-10 bg-surface-container-lowest border border-outline-variant/30 rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-high transition-colors">{{ num }}</a>
         {% endif %}
-        {% for num in page_obj.paginator.page_range %}
-          {% if page_obj.number == num %}
-          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-          {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
-          <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-          {% endif %}
-        {% endfor %}
-        {% if page_obj.has_next %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente &raquo;</a></li>
-        {% else %}
-        <li class="page-item disabled"><span class="page-link">Siguiente &raquo;</span></li>
-        {% endif %}
-      </ul>
+      {% endfor %}
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" class="inline-flex items-center gap-1 px-3 py-2 bg-surface-container-lowest border border-outline-variant/30 rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-high transition-colors">
+        Siguiente <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+      </a>
+      {% else %}
+      <span class="inline-flex items-center gap-1 px-3 py-2 bg-surface-container text-on-surface-variant rounded-lg font-label-md text-label-md cursor-default">
+        Siguiente <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+      </span>
+      {% endif %}
     </nav>
   {% else %}
-    <div class="alert alert-info text-center">
-      No hay disponibilidades registradas.
+    {# Empty state #}
+    <div class="flex items-center justify-center gap-3 p-8 bg-surface-container rounded-xl border border-outline-variant/20">
+      <span class="material-symbols-outlined text-on-surface-variant text-[24px]">info</span>
+      <p class="font-body-md text-body-md text-on-surface-variant">No hay disponibilidades registradas.</p>
     </div>
   {% endif %}
 </div>

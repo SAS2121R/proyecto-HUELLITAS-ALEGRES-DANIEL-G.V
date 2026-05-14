@@ -1,29 +1,56 @@
-{# Cliente sidebar — included from base.html when user is Cliente #}
-<div class="sidebar-heading">Mi Cuenta</div>
-<nav class="nav flex-column">
-    <a href="{% url 'tienda:catalogo' %}" class="nav-link {% if '/tienda/' in request.path %}active{% endif %}">
-        <i class="bi bi-shop"></i> Tienda
-    </a>
-    <a href="{% url 'mascotas:lista' %}" class="nav-link {% if '/mascotas/' in request.path %}active{% endif %}">
-        <i class="bi bi-emoji-heart-eyes"></i> Mis Mascotas
-    </a>
-    <a href="{% url 'agenda:lista_citas' %}" class="nav-link {% if '/agenda/' in request.path %}active{% endif %}">
-        <i class="bi bi-calendar"></i> Mis Citas
-    </a>
-    <a href="{% url 'historial:lista' %}" class="nav-link {% if '/historial/' in request.path %}active{% endif %}">
-        <i class="bi bi-clipboard2-pulse"></i> Mi Historial
-    </a>
-    <a href="{% url 'entregas:mis_pedidos' %}" class="nav-link {% if '/mis-pedidos' in request.path %}active{% endif %}">
-        <i class="bi bi-bag-check"></i> Mis Pedidos
-    </a>
-</nav>
+{# ── Cliente sidebar — included from base.html when user is Cliente ── #}
+{# ── Uses DESIGN.md palette via Tailwind + Material Symbols icons ── #}
 
-<div class="sidebar-heading">Mi Perfil</div>
-<nav class="nav flex-column">
-    <a href="{% url 'usuarios:mi_perfil' %}" class="nav-link {% if '/perfil' in request.path %}active{% endif %}">
-        <i class="bi bi-person"></i> Mi Perfil
-    </a>
-    <a href="{% url 'usuarios:cambiar_password' %}" class="nav-link {% if '/password' in request.path %}active{% endif %}">
-        <i class="bi bi-key"></i> Contraseña
-    </a>
-</nav>
+<div class="flex flex-col h-full p-4 gap-1">
+
+    {# Brand #}
+    <div class="mb-6 px-3">
+        <h1 class="font-headline-md text-headline-md text-primary font-bold tracking-tight">Huellitas Alegres</h1>
+        <p class="font-caption text-caption text-secondary mt-1">Portal Cliente</p>
+    </div>
+
+    {# ── Section: Mi Cuenta ── #}
+    <p class="font-caption text-caption text-on-surface-variant uppercase tracking-wider px-3 pt-3 pb-1">Mi Cuenta</p>
+    <nav class="flex flex-col gap-0.5">
+        <a href="{% url 'tienda:catalogo' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/tienda/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/tienda/' in request.path %}icon-fill{% endif %}">store</span>
+            Tienda
+        </a>
+        <a href="{% url 'mascotas:lista' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/mascotas/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/mascotas/' in request.path %}icon-fill{% endif %}">pets</span>
+            Mis Mascotas
+        </a>
+        <a href="{% url 'agenda:lista_citas' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/agenda/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/agenda/' in request.path %}icon-fill{% endif %}">calendar_today</span>
+            Mis Citas
+        </a>
+        <a href="{% url 'historial:lista' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/historial/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/historial/' in request.path %}icon-fill{% endif %}">clipboard2_pulse</span>
+            Mi Historial
+        </a>
+        <a href="{% url 'entregas:mis_pedidos' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/mis-pedidos' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/mis-pedidos' in request.path %}icon-fill{% endif %}">shopping_bag</span>
+            Mis Pedidos
+        </a>
+    </nav>
+
+    {# ── Section: Mi Perfil ── #}
+    <p class="font-caption text-caption text-on-surface-variant uppercase tracking-wider px-3 pt-5 pb-1">Mi Perfil</p>
+    <nav class="flex flex-col gap-0.5 flex-1">
+        <a href="{% url 'usuarios:mi_perfil' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/perfil' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/perfil' in request.path %}icon-fill{% endif %}">person</span>
+            Mi Perfil
+        </a>
+        <a href="{% url 'usuarios:cambiar_password' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/password' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/password' in request.path %}icon-fill{% endif %}">key</span>
+            Contraseña
+        </a>
+    </nav>
+</div>

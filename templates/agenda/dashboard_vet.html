@@ -1,200 +1,298 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}{% if user.rol.nombre == 'Veterinario' %}Mi Agenda{% else %}Agenda General{% endif %} — Huellitas Alegres{% endblock title %}
-
-{% block extra_css %}
-<style>
-    .agenda-card {
-        border: none;
-        border-radius: .75rem;
-        overflow: hidden;
-    }
-    .agenda-card .card-header {
-        border-radius: .75rem .75rem 0 0;
-        font-weight: 600;
-    }
-</style>
-{% endblock %}
+{% block title %}Portal Veterinario — Huellitas Alegres{% endblock %}
 
 {% block content %}
-<!-- Header -->
-<div class="d-flex justify-content-between align-items-center mb-4">
+{# ─────────────────── HEADER ─────────────────── #}
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-6">
     <div>
-        <h1 class="h3 mb-1" style="color: #1a5c6e;">
-            {% if user.rol.nombre == 'Veterinario' %}
-                <i class="fas fa-calendar-check me-2"></i>Mi Agenda
-            {% else %}
-                <i class="fas fa-calendar-alt me-2"></i>Agenda General
-            {% endif %}
-        </h1>
-        <p class="text-muted mb-0">
-            {% if user.rol.nombre == 'Veterinario' %}
-                Dr/a. {{ user.first_name|default:user.username }}
-            {% else %}
-                Vista administrativa completa
-            {% endif %}
-        </p>
+        <h2 class="font-headline-lg text-headline-lg text-on-surface">
+            Buenos días, Dr/a. {{ user.first_name|default:user.username }}
+        </h2>
+        <p class="font-body-md text-body-md text-on-surface-variant">Resumen de actividades para hoy.</p>
     </div>
-    <div>
-        <a href="{% url 'agenda:crear_disponibilidad' %}" class="btn btn-sm" style="background-color: #2c9faf; color: #fff; border-radius: 2rem;">
-            <i class="fas fa-plus me-1"></i> Nueva Disponibilidad
+    <div class="flex gap-3">
+        <a href="{% url 'agenda:lista_citas' %}" class="inline-flex items-center gap-2 bg-surface border border-outline-variant text-on-surface font-label-md text-label-md px-4 py-2 rounded-lg hover:bg-surface-container transition-colors no-underline">
+            <span class="material-symbols-outlined text-[18px]">filter_list</span>
+            Ver Citas
+        </a>
+        <a href="{% url 'agenda:crear_disponibilidad' %}" class="inline-flex items-center gap-2 bg-primary text-on-primary font-label-md text-label-md px-4 py-2 rounded-lg hover:opacity-90 transition-opacity shadow-sm no-underline">
+            <span class="material-symbols-outlined text-[18px]">add</span>
+            Nueva Disponibilidad
         </a>
     </div>
 </div>
 
-<!-- Disponibilidades y Citas -->
-<div class="row g-3">
-    <div class="col-lg-6 mb-3">
-        <div class="card agenda-card shadow-sm">
-            <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #2c9faf 0%, #1e8a9e 100%);">
-                <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Disponibilidades</h5>
-                <a href="{% url 'agenda:crear_disponibilidad' %}" class="btn btn-sm btn-light" style="border-radius: 2rem;">
-                    <i class="fas fa-plus"></i> Nueva
-                </a>
-            </div>
-            <div class="card-body">
-                {% if page_obj_disp %}
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                {% if user.rol.nombre == 'Administrador' %}
-                                <th>Veterinario</th>
-                                {% endif %}
-                                <th>Fecha</th>
-                                <th>Hora</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for d in page_obj_disp %}
-                            <tr>
-                                {% if user.rol.nombre == 'Administrador' %}
-                                <td>{{ d.veterinario }}</td>
-                                {% endif %}
-                                <td>{{ d.fecha|date:"d/m/Y" }}</td>
-                                <td>{{ d.hora_inicio|time:"H:i" }}–{{ d.hora_fin|time:"H:i" }}</td>
-                                <td>
-                                    {% if d.activa %}
-                                        {% if d.esta_ocupada %}
-                                        <span class="badge bg-warning text-dark"><i class="fas fa-exclamation-circle me-1"></i>Ocupada</span>
-                                        {% else %}
-                                        <span class="badge" style="background-color: #2c9faf;"><i class="fas fa-check-circle me-1"></i>Libre</span>
-                                        {% endif %}
-                                    {% else %}
-                                    <span class="badge bg-secondary"><i class="fas fa-minus-circle me-1"></i>Inactiva</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <a href="{% url 'agenda:editar_disponibilidad' d.pk %}" class="btn btn-sm btn-outline-warning" title="Editar">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="{% url 'agenda:eliminar_disponibilidad' d.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% if page_obj_disp.paginator.num_pages > 1 %}
-                <nav aria-label="Disponibilidades pagination" class="mt-3">
-                    <ul class="pagination pagination-sm justify-content-center mb-0">
-                        {% if page_obj_disp.has_previous %}
-                        <li class="page-item"><a class="page-link" href="?disp_page={{ page_obj_disp.previous_page_number }}&cita_page={{ page_obj_citas.number }}">&#8592;</a></li>
-                        {% else %}
-                        <li class="page-item disabled"><span class="page-link">&#8592;</span></li>
-                        {% endif %}
-                        {% for num in page_obj_disp.paginator.page_range %}
-                          {% if page_obj_disp.number == num %}
-                          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                          {% elif num >= page_obj_disp.number|add:-2 and num <= page_obj_disp.number|add:2 %}
-                          <li class="page-item"><a class="page-link" href="?disp_page={{ num }}&cita_page={{ page_obj_citas.number }}">{{ num }}</a></li>
-                          {% endif %}
-                        {% endfor %}
-                        {% if page_obj_disp.has_next %}
-                        <li class="page-item"><a class="page-link" href="?disp_page={{ page_obj_disp.next_page_number }}&cita_page={{ page_obj_citas.number }}">&#8594;</a></li>
-                        {% else %}
-                        <li class="page-item disabled"><span class="page-link">&#8594;</span></li>
-                        {% endif %}
-                    </ul>
-                </nav>
-                {% endif %}
-                {% else %}
-                <p class="text-muted text-center mb-0"><i class="fas fa-calendar-times me-1"></i>No hay disponibilidades registradas.</p>
-                {% endif %}
-            </div>
+{# ─────────────────── STATS ROW ─────────────────── #}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    {# Stat 1: Citas Hoy #}
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 flex flex-col gap-2 relative overflow-hidden">
+        <div class="absolute -right-4 -top-4 w-16 h-16 bg-primary-container/20 rounded-full blur-xl"></div>
+        <div class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
+            <span class="material-symbols-outlined text-primary">calendar_clock</span>
+            Citas Hoy
+        </div>
+        <div class="font-display-lg text-display-lg text-on-surface">{{ page_obj_citas.paginator.count|default:"0" }}</div>
+        <div class="font-caption text-caption text-secondary">
+            {% if page_obj_citas %}
+                {% with total=page_obj_citas.paginator.count %}
+                    {% if total == 1 %}1 cita registrada{% else %}{{ total }} citas totales{% endif %}
+                {% endwith %}
+            {% else %}
+                Sin citas registradas
+            {% endif %}
         </div>
     </div>
 
-    <div class="col-lg-6 mb-3">
-        <div class="card agenda-card shadow-sm">
-            <div class="card-header text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);">
-                <h5 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Citas</h5>
-                <a href="{% url 'agenda:lista_citas' %}" class="btn btn-sm btn-light" style="border-radius: 2rem;">
-                    <i class="fas fa-list"></i> Ver todas
-                </a>
+    {# Stat 2: Tratamientos Activos #}
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 flex flex-col gap-2 relative overflow-hidden">
+        <div class="absolute -right-4 -top-4 w-16 h-16 bg-tertiary-container/20 rounded-full blur-xl"></div>
+        <div class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
+            <span class="material-symbols-outlined text-tertiary">medical_services</span>
+            Tratamientos Activos
+        </div>
+        <div class="font-display-lg text-display-lg text-on-surface">{{ page_obj_citas.paginator.count|default:"0" }}</div>
+        <div class="font-caption text-caption text-secondary">Pacientes en seguimiento</div>
+    </div>
+
+    {# Stat 3: Perfil #}
+    <div class="bg-surface-container-lowest rounded-xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 flex flex-col gap-2 relative overflow-hidden">
+        <div class="absolute -right-4 -top-4 w-16 h-16 bg-secondary-container/30 rounded-full blur-xl"></div>
+        <div class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
+            <span class="material-symbols-outlined text-secondary">person</span>
+            Veterinario
+        </div>
+        <div class="flex items-center gap-3 mt-1">
+            {% if user.perfil.foto %}
+            <img src="{{ user.perfil.foto.url }}" alt="{{ user.get_full_name|default:user.email }}" class="w-10 h-10 rounded-full object-cover border border-outline-variant/30">
+            {% else %}
+            <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-label-md">
+                {{ user.first_name.0|upper }}{% if user.last_name %}{{ user.last_name.0|upper }}{% endif %}
             </div>
-            <div class="card-body">
-                {% if page_obj_citas %}
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Paciente</th>
-                                <th>Fecha</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for cita in page_obj_citas %}
-                            <tr>
-                                <td><i class="fas fa-paw me-1" style="color: #2c9faf;"></i> {{ cita.mascota }}</td>
-                                <td>{{ cita.disponibilidad.fecha|date:"d/m/Y" }}</td>
-                                <td>
-                                    {% if cita.estado == 'Programada' %}
-                                    <span class="badge" style="background-color: #2c9faf;"><i class="fas fa-clock me-1"></i>Programada</span>
-                                    {% elif cita.estado == 'Atendida' %}
-                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Atendida</span>
-                                    {% elif cita.estado == 'Cancelada' %}
-                                    <span class="badge bg-danger"><i class="fas fa-times me-1"></i>Cancelada</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% if page_obj_citas.paginator.num_pages > 1 %}
-                <nav aria-label="Citas pagination" class="mt-3">
-                    <ul class="pagination pagination-sm justify-content-center mb-0">
-                        {% if page_obj_citas.has_previous %}
-                        <li class="page-item"><a class="page-link" href="?disp_page={{ page_obj_disp.number }}&cita_page={{ page_obj_citas.previous_page_number }}">&#8592;</a></li>
-                        {% else %}
-                        <li class="page-item disabled"><span class="page-link">&#8592;</span></li>
-                        {% endif %}
-                        {% for num in page_obj_citas.paginator.page_range %}
-                          {% if page_obj_citas.number == num %}
-                          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                          {% elif num >= page_obj_citas.number|add:-2 and num <= page_obj_citas.number|add:2 %}
-                          <li class="page-item"><a class="page-link" href="?disp_page={{ page_obj_disp.number }}&cita_page={{ num }}">{{ num }}</a></li>
-                          {% endif %}
-                        {% endfor %}
-                        {% if page_obj_citas.has_next %}
-                        <li class="page-item"><a class="page-link" href="?disp_page={{ page_obj_disp.number }}&cita_page={{ page_obj_citas.next_page_number }}">&#8594;</a></li>
-                        {% else %}
-                        <li class="page-item disabled"><span class="page-link">&#8594;</span></li>
-                        {% endif %}
-                    </ul>
-                </nav>
-                {% endif %}
-                {% else %}
-                <p class="text-muted text-center mb-0"><i class="fas fa-calendar-check me-1"></i>No hay citas registradas.</p>
-                {% endif %}
+            {% endif %}
+            <div>
+                <div class="font-label-md text-label-md text-on-surface">{{ user.get_full_name|default:user.email }}</div>
+                <div class="font-caption text-caption text-secondary">{{ user.rol.nombre }}</div>
             </div>
         </div>
     </div>
+</div>
+
+{# ─────────────────── 2-COLUMN LAYOUT ─────────────────── #}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    {# ── LEFT: AGENDA TABLE ── #}
+    <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 overflow-hidden flex flex-col">
+        <div class="p-5 border-b border-outline-variant/10 flex justify-between items-center bg-surface/50">
+            <h3 class="font-headline-md text-headline-md text-on-surface">Agenda del Día</h3>
+            <a href="{% url 'agenda:lista_citas' %}" class="text-primary hover:text-primary-container font-label-md text-label-md transition-colors flex items-center gap-1 no-underline">
+                Ver Calendario Completo <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left font-body-md text-body-md">
+                <thead class="bg-surface-container-low text-on-surface-variant font-label-md text-label-md">
+                    <tr>
+                        <th class="py-3 px-4 font-semibold">Hora</th>
+                        <th class="py-3 px-4 font-semibold">Paciente</th>
+                        <th class="py-3 px-4 font-semibold">Motivo</th>
+                        <th class="py-3 px-4 font-semibold">Estado</th>
+                        <th class="py-3 px-4 font-semibold text-right">Acción</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/10 text-on-surface">
+                    {% if page_obj_citas %}
+                    {% for cita in page_obj_citas %}
+                    <tr class="hover:bg-surface transition-colors group {% if cita.estado == 'Cancelada' %}opacity-60{% endif %}">
+                        <td class="py-3 px-4 font-medium {% if cita.estado == 'Atendida' %}text-secondary{% else %}text-primary{% endif %}">
+                            {{ cita.disponibilidad.hora_inicio|time:"H:i" }}
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-sm">
+                                    {{ cita.mascota|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <div class="font-medium">{{ cita.mascota }}</div>
+                                    <div class="text-sm text-on-surface-variant">{{ cita.disponibilidad.fecha|date:"d/m/Y" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4">
+                            {% if cita.estado == 'Programada' %}
+                                Consulta Programada
+                            {% elif cita.estado == 'Atendida' %}
+                                Consulta Realizada
+                            {% elif cita.estado == 'Cancelada' %}
+                                Cita Cancelada
+                            {% else %}
+                                {{ cita.estado }}
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4">
+                            {% if cita.estado == 'Programada' %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-caption text-caption">
+                                <span class="w-1.5 h-1.5 rounded-full bg-primary mr-1.5"></span>Programada
+                            </span>
+                            {% elif cita.estado == 'Atendida' %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full bg-primary-container/30 text-primary font-caption text-caption">
+                                <span class="w-1.5 h-1.5 rounded-full bg-primary mr-1.5"></span>Atendida
+                            </span>
+                            {% elif cita.estado == 'Cancelada' %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full bg-error-container/50 text-error font-caption text-caption">
+                                <span class="w-1.5 h-1.5 rounded-full bg-error mr-1.5"></span>Cancelada
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-caption text-caption">{{ cita.estado }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            {% if cita.estado == 'Programada' %}
+                            <a href="{% url 'historial:crear' %}" class="bg-primary text-on-primary font-label-md text-label-md px-3 py-1.5 rounded-lg hover:bg-primary/90 transition-colors shadow-sm opacity-0 group-hover:opacity-100 transition-opacity inline-block no-underline">
+                                Iniciar Consulta
+                            </a>
+                            {% elif cita.estado == 'Atendida' %}
+                            <a href="{% url 'historial:lista' %}" class="text-secondary font-label-md text-label-md px-3 py-1.5 rounded-lg hover:bg-surface-container transition-colors inline-block no-underline">
+                                Ver Resumen
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="py-12 text-center text-on-surface-variant font-body-md text-body-md">
+                            <span class="material-symbols-outlined text-outline mb-2 block text-[32px]">event_busy</span>
+                            No hay citas registradas.
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        {# ── Pagination for Citas ── #}
+        {% if page_obj_citas and page_obj_citas.paginator.num_pages > 1 %}
+        <div class="p-4 border-t border-outline-variant/10 flex justify-center gap-2">
+            {% if page_obj_citas.has_previous %}
+            <a href="?disp_page={{ page_obj_disp.number }}&cita_page={{ page_obj_citas.previous_page_number }}" class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-md text-label-md transition-colors no-underline">
+                <span class="material-symbols-outlined text-[16px] align-middle">chevron_left</span>
+            </a>
+            {% else %}
+            <span class="px-3 py-1.5 rounded-lg bg-surface-container-low text-outline font-label-md text-label-md opacity-50">
+                <span class="material-symbols-outlined text-[16px] align-middle">chevron_left</span>
+            </span>
+            {% endif %}
+
+            {% for num in page_obj_citas.paginator.page_range %}
+                {% if page_obj_citas.number == num %}
+                <span class="px-3 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md">{{ num }}</span>
+                {% elif num >= page_obj_citas.number|add:"-2" and num <= page_obj_citas.number|add:"2" %}
+                <a href="?disp_page={{ page_obj_disp.number }}&cita_page={{ num }}" class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-md text-label-md transition-colors no-underline">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj_citas.has_next %}
+            <a href="?disp_page={{ page_obj_disp.number }}&cita_page={{ page_obj_citas.next_page_number }}" class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-md text-label-md transition-colors no-underline">
+                <span class="material-symbols-outlined text-[16px] align-middle">chevron_right</span>
+            </a>
+            {% else %}
+            <span class="px-3 py-1.5 rounded-lg bg-surface-container-low text-outline font-label-md text-label-md opacity-50">
+                <span class="material-symbols-outlined text-[16px] align-middle">chevron_right</span>
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── RIGHT: DISPONIBILIDADES TABLE ── #}
+    <div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 overflow-hidden flex flex-col">
+        <div class="p-5 border-b border-outline-variant/10 flex justify-between items-center bg-surface/50">
+            <h3 class="font-headline-md text-headline-md text-on-surface">Mis Disponibilidades</h3>
+            <a href="{% url 'agenda:crear_disponibilidad' %}" class="text-primary hover:text-primary-container font-label-md text-label-md transition-colors flex items-center gap-1 no-underline">
+                <span class="material-symbols-outlined text-[18px]">add</span> Nueva
+            </a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left font-body-md text-body-md">
+                <thead class="bg-surface-container-low text-on-surface-variant font-label-md text-label-md">
+                    <tr>
+                        <th class="py-3 px-4 font-semibold">Fecha</th>
+                        <th class="py-3 px-4 font-semibold">Hora</th>
+                        <th class="py-3 px-4 font-semibold">Estado</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-outline-variant/10 text-on-surface">
+                    {% if page_obj_disp %}
+                    {% for d in page_obj_disp %}
+                    <tr class="hover:bg-surface transition-colors">
+                        <td class="py-3 px-4 font-medium text-on-surface">{{ d.fecha|date:"d/m/Y" }}</td>
+                        <td class="py-3 px-4 text-on-surface-variant">{{ d.hora_inicio|time:"H:i" }}&ndash;{{ d.hora_fin|time:"H:i" }}</td>
+                        <td class="py-3 px-4">
+                            {% if d.activa %}
+                                {% if d.esta_ocupada %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-caption text-caption">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-secondary mr-1.5"></span>Ocupada
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full bg-primary-container/30 text-primary font-caption text-caption">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-primary mr-1.5"></span>Libre
+                                </span>
+                                {% endif %}
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full bg-surface-container-high text-outline font-caption text-caption">
+                                <span class="w-1.5 h-1.5 rounded-full bg-outline mr-1.5"></span>Inactiva
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="py-12 text-center text-on-surface-variant font-body-md text-body-md">
+                            <span class="material-symbols-outlined text-outline mb-2 block text-[32px]">calendar_today</span>
+                            No hay disponibilidades registradas.
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        {# ── Pagination for Disponibilidades ── #}
+        {% if page_obj_disp and page_obj_disp.paginator.num_pages > 1 %}
+        <div class="p-4 border-t border-outline-variant/10 flex justify-center gap-2">
+            {% if page_obj_disp.has_previous %}
+            <a href="?disp_page={{ page_obj_disp.previous_page_number }}&cita_page={{ page_obj_citas.number }}" class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-md text-label-md transition-colors no-underline">
+                <span class="material-symbols-outlined text-[16px] align-middle">chevron_left</span>
+            </a>
+            {% else %}
+            <span class="px-3 py-1.5 rounded-lg bg-surface-container-low text-outline font-label-md text-label-md opacity-50">
+                <span class="material-symbols-outlined text-[16px] align-middle">chevron_left</span>
+            </span>
+            {% endif %}
+
+            {% for num in page_obj_disp.paginator.page_range %}
+                {% if page_obj_disp.number == num %}
+                <span class="px-3 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md">{{ num }}</span>
+                {% elif num >= page_obj_disp.number|add:"-2" and num <= page_obj_disp.number|add:"2" %}
+                <a href="?disp_page={{ num }}&cita_page={{ page_obj_citas.number }}" class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-md text-label-md transition-colors no-underline">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj_disp.has_next %}
+            <a href="?disp_page={{ page_obj_disp.next_page_number }}&cita_page={{ page_obj_citas.number }}" class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant font-label-md text-label-md transition-colors no-underline">
+                <span class="material-symbols-outlined text-[16px] align-middle">chevron_right</span>
+            </a>
+            {% else %}
+            <span class="px-3 py-1.5 rounded-lg bg-surface-container-low text-outline font-label-md text-label-md opacity-50">
+                <span class="material-symbols-outlined text-[16px] align-middle">chevron_right</span>
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
 </div>
 {% endblock content %}

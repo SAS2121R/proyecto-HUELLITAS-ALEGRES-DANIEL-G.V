@@ -1,130 +1,207 @@
 {% extends 'base.html' %}
 {% block back_button %}{% include 'includes/back_button.html' %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tw-form input[type="text"],
+    .tw-form input[type="email"],
+    .tw-form input[type="password"],
+    .tw-form input[type="number"],
+    .tw-form input[type="date"],
+    .tw-form input[type="time"],
+    .tw-form input[type="url"],
+    .tw-form input[type="tel"],
+    .tw-form textarea,
+    .tw-form select {
+        width: 100%; padding: 0.625rem 1rem; background: #f3f4f5; border: 1px solid #c2c8bf;
+        border-radius: 0.5rem; font-family: 'Manrope', sans-serif; font-size: 1rem;
+        line-height: 1.6; color: #191c1d; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .tw-form input:focus, .tw-form textarea:focus, .tw-form select:focus {
+        outline: none; border-color: #37563b; box-shadow: 0 0 0 1px #37563b;
+    }
+    .tw-form input[type="checkbox"] { width: 1.125rem; height: 1.125rem; accent-color: #37563b; }
+    .tw-form label { display: block; font-family: 'Manrope', sans-serif; font-size: 0.875rem; font-weight: 600; letter-spacing: 0.01em; color: #191c1d; margin-bottom: 0.375rem; }
+    .tw-form .helptext { display: block; margin-top: 0.25rem; font-size: 0.75rem; color: #424841; }
+    .tw-form .errorlist { list-style: none; padding: 0; margin: 0.25rem 0 0; }
+    .tw-form .errorlist li { font-size: 0.75rem; color: #ba1a1a; font-weight: 500; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-  <h1 class="mb-4">🩺 Atender Cita</h1>
+<div class="max-w-2xl mx-auto">
+    <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3 mb-6">
+        <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">stethoscope</span> Atender Cita
+    </h1>
 
-  <!-- Cita Info Card -->
-  <div class="card mb-4 border-info shadow-sm">
-    <div class="card-header bg-info text-white">
-      <h6 class="mb-0">Datos de la cita</h6>
-    </div>
-    <div class="card-body">
-      <div class="row">
-        <div class="col-md-6">
-          <table class="table table-sm table-borderless mb-0">
-            <tr><th style="width: 130px;">Mascota</th><td>{{ cita.mascota.nombre }}</td></tr>
-            <tr><th>Propietario</th><td>{{ cita.mascota.propietario.get_full_name|default:cita.mascota.propietario.username }}</td></tr>
-            {% if cita.mascota.alergias and cita.mascota.alergias != 'Ninguna' %}
-            <tr><th>Alergias</th><td class="text-danger fw-bold">⚠️ {{ cita.mascota.alergias }}</td></tr>
-            {% endif %}
-          </table>
+    {# Cita Info Card #}
+    <div class="bg-surface-container-lowest rounded-xl border border-primary/20 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden mb-6">
+        <div class="bg-primary-container px-5 py-3">
+            <h2 class="font-label-md text-label-md text-on-primary-container flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">calendar_month</span> Datos de la cita
+            </h2>
         </div>
-        <div class="col-md-6">
-          <table class="table table-sm table-borderless mb-0">
-            <tr><th style="width: 130px;">Fecha</th><td>{{ cita.disponibilidad.fecha|date:"d/m/Y" }}</td></tr>
-            <tr><th>Hora</th><td>{{ cita.disponibilidad.hora_inicio }}</td></tr>
-            <tr><th>Motivo</th><td>{{ cita.motivo }}</td></tr>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Allergy Alert -->
-  {% if cita.mascota.alergias and cita.mascota.alergias != 'Ninguna' %}
-  <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
-    <span class="me-2" style="font-size: 1.5rem;">⚠️</span>
-    <div><strong>¡ALERTA MÉDICA!</strong> Este paciente es alérgico a: <strong>{{ cita.mascota.alergias }}</strong></div>
-  </div>
-  {% endif %}
-
-  <!-- Form -->
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <form method="post" novalidate>
-        {% csrf_token %}
-
-        <!-- Datos de la consulta -->
-        <fieldset class="mb-4">
-          <legend class="h6 text-primary border-bottom pb-2 mb-3">📋 Datos de la consulta</legend>
-          {% for field in form %}
-            {% if field.name == 'tipo_consulta' or field.name == 'motivo_consulta' or field.name == 'diagnostico' %}
-            <div class="mb-3">
-              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-              {{ field }}
-              {% if field.errors %}
-              <div class="invalid-feedback d-block">
-                {% for error in field.errors %}{{ error }}{% endfor %}
-              </div>
-              {% endif %}
-            </div>
-            {% endif %}
-          {% endfor %}
-        </fieldset>
-
-        <!-- Tratamiento -->
-        <fieldset class="mb-4">
-          <legend class="h6 text-success border-bottom pb-2 mb-3">💊 Tratamiento</legend>
-          {% for field in form %}
-            {% if field.name == 'tratamiento' or field.name == 'observaciones' %}
-            <div class="mb-3">
-              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-              {{ field }}
-              {% if field.errors %}
-              <div class="invalid-feedback d-block">
-                {% for error in field.errors %}{{ error }}{% endfor %}
-              </div>
-              {% endif %}
-            </div>
-            {% endif %}
-          {% endfor %}
-        </fieldset>
-
-        <!-- Signos Vitales -->
-        <fieldset class="mb-4">
-          <legend class="h6 text-danger border-bottom pb-2 mb-3">🩺 Signos Vitales</legend>
-          <div class="row">
-            {% for field in form %}
-              {% if field.name == 'peso' or field.name == 'temperatura' or field.name == 'frecuencia_cardiaca' or field.name == 'frecuencia_respiratoria' %}
-              <div class="col-md-6 mb-3">
-                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}
-                <div class="invalid-feedback d-block">
-                  {% for error in field.errors %}{{ error }}{% endfor %}
+        <div class="p-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <table class="w-full text-left">
+                        <tr class="border-b border-outline-variant/10">
+                            <td class="py-2 pr-4 font-label-md text-label-md text-on-surface-variant w-32">Mascota</td>
+                            <td class="py-2 font-body-md text-body-md text-on-surface">{{ cita.mascota.nombre }}</td>
+                        </tr>
+                        <tr class="border-b border-outline-variant/10">
+                            <td class="py-2 pr-4 font-label-md text-label-md text-on-surface-variant">Propietario</td>
+                            <td class="py-2 font-body-md text-body-md text-on-surface">{{ cita.mascota.propietario.get_full_name|default:cita.mascota.propietario.username }}</td>
+                        </tr>
+                        {% if cita.mascota.alergias and cita.mascota.alergias != 'Ninguna' %}
+                        <tr>
+                            <td class="py-2 pr-4 font-label-md text-label-md text-error">Alergias</td>
+                            <td class="py-2 font-body-md text-body-md text-error font-semibold flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[16px]">warning</span> {{ cita.mascota.alergias }}
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </table>
                 </div>
-                {% endif %}
-              </div>
-              {% endif %}
-            {% endfor %}
-          </div>
-        </fieldset>
-
-        <!-- Vacunación -->
-        <fieldset class="mb-4">
-          <legend class="h6 text-info border-bottom pb-2 mb-3">💉 Vacunación</legend>
-          {% for field in form %}
-            {% if field.name == 'vacuna_aplicada' or field.name == 'proxima_vacunacion' %}
-            <div class="mb-3">
-              <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-              {{ field }}
-              {% if field.errors %}
-              <div class="invalid-feedback d-block">
-                {% for error in field.errors %}{{ error }}{% endfor %}
-              </div>
-              {% endif %}
+                <div>
+                    <table class="w-full text-left">
+                        <tr class="border-b border-outline-variant/10">
+                            <td class="py-2 pr-4 font-label-md text-label-md text-on-surface-variant w-32">Fecha</td>
+                            <td class="py-2 font-body-md text-body-md text-on-surface">{{ cita.disponibilidad.fecha|date:"d/m/Y" }}</td>
+                        </tr>
+                        <tr class="border-b border-outline-variant/10">
+                            <td class="py-2 pr-4 font-label-md text-label-md text-on-surface-variant">Hora</td>
+                            <td class="py-2 font-body-md text-body-md text-on-surface">{{ cita.disponibilidad.hora_inicio }}</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 pr-4 font-label-md text-label-md text-on-surface-variant">Motivo</td>
+                            <td class="py-2 font-body-md text-body-md text-on-surface">{{ cita.motivo }}</td>
+                        </tr>
+                    </table>
+                </div>
             </div>
-            {% endif %}
-          {% endfor %}
-        </fieldset>
-
-        <div class="d-grid gap-2">
-          <button type="submit" class="btn btn-success">✅ Guardar Historial y Atender Cita</button>
-          <a href="{% url 'agenda:lista_citas' %}" class="btn btn-secondary">Cancelar</a>
         </div>
-      </form>
     </div>
-  </div>
+
+    {# Allergy Alert #}
+    {% if cita.mascota.alergias and cita.mascota.alergias != 'Ninguna' %}
+    <div class="flex items-center gap-3 p-4 bg-error-container/50 rounded-xl border border-error/30 mb-6">
+        <span class="material-symbols-outlined text-error text-[24px]" style="font-variation-settings: 'FILL' 1;">warning</span>
+        <div>
+            <strong class="text-on-error-container">¡ALERTA MÉDICA!</strong>
+            <p class="text-on-error-container font-body-md text-body-md">Este paciente es alérgico a: <strong>{{ cita.mascota.alergias }}</strong></p>
+        </div>
+    </div>
+    {% endif %}
+
+    {# Form #}
+    <div class="tw-form">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {# Datos de la consulta #}
+            <div class="mb-6">
+                <h2 class="font-headline-md text-headline-md text-on-surface mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">clinical_notes</span>
+                    Datos de la consulta
+                </h2>
+                {% for field in form %}
+                    {% if field.name == 'tipo_consulta' or field.name == 'motivo_consulta' or field.name == 'diagnostico' %}
+                    <div class="mb-4">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="mt-1">
+                            {% for error in field.errors %}
+                            <p class="text-error font-caption text-caption">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            {# Tratamiento #}
+            <div class="mb-6">
+                <h2 class="font-headline-md text-headline-md text-on-surface mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-tertiary">medication</span>
+                    Tratamiento
+                </h2>
+                {% for field in form %}
+                    {% if field.name == 'tratamiento' or field.name == 'observaciones' %}
+                    <div class="mb-4">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="mt-1">
+                            {% for error in field.errors %}
+                            <p class="text-error font-caption text-caption">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            {# Signos Vitales #}
+            <div class="mb-6">
+                <h2 class="font-headline-md text-headline-md text-on-surface mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-error">monitor_heart</span>
+                    Signos Vitales
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for field in form %}
+                        {% if field.name == 'peso' or field.name == 'temperatura' or field.name == 'frecuencia_cardiaca' or field.name == 'frecuencia_respiratoria' %}
+                        <div>
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                            <div class="mt-1">
+                                {% for error in field.errors %}
+                                <p class="text-error font-caption text-caption">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            {# Vacunación #}
+            <div class="mb-6">
+                <h2 class="font-headline-md text-headline-md text-on-surface mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">vaccines</span>
+                    Vacunación
+                </h2>
+                {% for field in form %}
+                    {% if field.name == 'vacuna_aplicada' or field.name == 'proxima_vacunacion' %}
+                    <div class="mb-4">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="mt-1">
+                            {% for error in field.errors %}
+                            <p class="text-error font-caption text-caption">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 mt-6">
+                <button type="submit" class="bg-primary text-on-primary font-label-md text-label-md rounded-lg px-lg py-sm hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">check_circle</span> Guardar Historial y Atender Cita
+                </button>
+                <a href="{% url 'agenda:lista_citas' %}" class="bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-lg py-sm hover:bg-surface-container-highest transition-colors inline-flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">close</span> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

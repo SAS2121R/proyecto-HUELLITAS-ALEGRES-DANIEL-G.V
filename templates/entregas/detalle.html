@@ -4,246 +4,327 @@
 {% block title %}Pedido #{{ pedido.pk }} — Huellitas Alegres{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <a href="{% url 'entregas:dashboard' %}" class="btn btn-outline-secondary mb-3">
-        <i class="bi bi-arrow-left"></i> Volver a Entregas
-    </a>
-    {% if user.rol.nombre == 'Administrador' %}
-    <a href="{% url 'entregas:editar' pedido.pk %}" class="btn btn-outline-warning mb-3 ms-2">
-        <i class="bi bi-pencil"></i> Editar Pedido
-    </a>
-    {% endif %}
-    {% if user.rol.nombre == 'Cliente' %}
-    <a href="{% url 'entregas:mis_pedidos' %}" class="btn btn-outline-secondary mb-3">
-        <i class="bi bi-arrow-left"></i> Volver a Mis Pedidos
-    </a>
-    {% endif %}
+<div class="max-w-4xl mx-auto" x-data="{ cancelModal: false, entregadoModal: false }">
+    {# Back navigation #}
+    <div class="flex flex-wrap items-center gap-3 mb-6">
+        <a href="{% url 'entregas:dashboard' %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors no-underline">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver a Entregas
+        </a>
+        {% if user.rol.nombre == 'Administrador' %}
+        <a href="{% url 'entregas:editar' pedido.pk %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-secondary-container/50 text-on-secondary-container font-label-md text-label-md hover:bg-secondary-container/70 transition-colors no-underline">
+            <span class="material-symbols-outlined text-[18px]">edit</span> Editar Pedido
+        </a>
+        {% endif %}
+        {% if user.rol.nombre == 'Cliente' %}
+        <a href="{% url 'entregas:mis_pedidos' %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors no-underline">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver a Mis Pedidos
+        </a>
+        {% endif %}
+    </div>
 
-    <!-- Pedido Info Card -->
-    <div class="card shadow-sm mb-4 border-{% if pedido.estado == 'pendiente' %}warning{% elif pedido.estado == 'en_camino' %}info{% elif pedido.estado == 'entregado' %}success{% else %}danger{% endif %}">
-        <div class="card-header bg-{% if pedido.estado == 'pendiente' %}warning{% elif pedido.estado == 'en_camino' %}info{% elif pedido.estado == 'entregado' %}success{% else %}danger{% endif %} text-white">
-            <div class="d-flex justify-content-between align-items-center">
-                <h4 class="mb-0">Pedido #{{ pedido.pk }}</h4>
-                <span class="badge bg-light text-dark fs-6">{{ pedido.get_estado_display }}</span>
-            </div>
+    {# ─────────────────── PEDIDO INFO CARD ─────────────────── #}
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden mb-6
+        {% if pedido.estado == 'pendiente' %}border-t-4 border-t-secondary-container{% elif pedido.estado == 'en_camino' %}border-t-4 border-t-primary{% elif pedido.estado == 'entregado' %}border-t-4 border-t-tertiary{% else %}border-t-4 border-t-error{% endif %}">
+        <div class="px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3
+            {% if pedido.estado == 'pendiente' %}bg-secondary-container/40{% elif pedido.estado == 'en_camino' %}bg-primary-container/20{% elif pedido.estado == 'entregado' %}bg-tertiary-container/30{% else %}bg-error-container/30{% endif %}">
+            <h3 class="font-headline-md text-headline-md text-on-surface">Pedido #{{ pedido.pk }}</h3>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-label-md text-label-md
+                {% if pedido.estado == 'pendiente' %}bg-secondary-container text-on-secondary-container
+                {% elif pedido.estado == 'en_camino' %}bg-primary-container text-on-primary-container
+                {% elif pedido.estado == 'entregado' %}bg-tertiary-container text-on-tertiary-container
+                {% else %}bg-error-container text-on-error-container{% endif %}">
+                <span class="material-symbols-outlined text-[18px]">
+                    {% if pedido.estado == 'pendiente' %}schedule
+                    {% elif pedido.estado == 'en_camino' %}electric_scooter
+                    {% elif pedido.estado == 'entregado' %}check_circle
+                    {% else %}cancel{% endif %}
+                </span>
+                {{ pedido.get_estado_display }}
+            </span>
         </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <p><strong><i class="bi bi-person"></i> Cliente:</strong> {{ pedido.cliente.get_full_name }}</p>
-                    <p><strong><i class="bi bi-geo-alt-fill"></i> Dirección:</strong> {{ pedido.direccion_entrega }}</p>
-                    <p><strong><i class="bi bi-telephone"></i> Teléfono:</strong> {{ pedido.telefono_contacto }}</p>
+
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">person</span>
+                        <div>
+                            <p class="font-caption text-caption text-on-surface-variant">Cliente</p>
+                            <p class="font-body-md text-body-md text-on-surface">{{ pedido.cliente.get_full_name }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">location_on</span>
+                        <div>
+                            <p class="font-caption text-caption text-on-surface-variant">Dirección</p>
+                            <p class="font-body-md text-body-md text-on-surface">{{ pedido.direccion_entrega }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">call</span>
+                        <div>
+                            <p class="font-caption text-caption text-on-surface-variant">Teléfono</p>
+                            <p class="font-body-md text-body-md text-on-surface">{{ pedido.telefono_contacto }}</p>
+                        </div>
+                    </div>
                     {% if pedido.notas %}
-                    <p><strong><i class="bi bi-chat-left-text"></i> Instrucciones:</strong> {{ pedido.notas }}</p>
+                    <div class="flex items-start gap-3">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[20px] mt-0.5">chat</span>
+                        <div>
+                            <p class="font-caption text-caption text-on-surface-variant">Instrucciones</p>
+                            <p class="font-body-md text-body-md text-on-surface">{{ pedido.notas }}</p>
+                        </div>
+                    </div>
                     {% endif %}
                 </div>
-                <div class="col-md-6">
-                    <p><strong><i class="bi bi-truck"></i> Domiciliario:</strong> {{ pedido.domiciliario.get_full_name }}</p>
-                    <p><strong><i class="bi bi-calendar"></i> Fecha creación:</strong> {{ pedido.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">local_shipping</span>
+                        <div>
+                            <p class="font-caption text-caption text-on-surface-variant">Domiciliario</p>
+                            <p class="font-body-md text-body-md text-on-surface">{{ pedido.domiciliario.get_full_name }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">calendar_today</span>
+                        <div>
+                            <p class="font-caption text-caption text-on-surface-variant">Fecha creación</p>
+                            <p class="font-body-md text-body-md text-on-surface">{{ pedido.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
                     {% if pedido.fecha_entrega %}
-                    <p><strong><i class="bi bi-check-circle"></i> Fecha entrega:</strong> {{ pedido.fecha_entrega|date:"d/m/Y H:i" }}</p>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">check_circle</span>
+                        <div>
+                            <p class="font-caption text-caption text-on-surface-variant">Fecha entrega</p>
+                            <p class="font-body-md text-body-md text-on-surface">{{ pedido.fecha_entrega|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
                     {% endif %}
                     {% if pedido.total %}
-                    <p><strong><i class="bi bi-currency-dollar"></i> Total:</strong> ${{ pedido.total|floatformat:0 }}</p>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">payments</span>
+                        <div>
+                            <p class="font-caption text-caption text-on-surface-variant">Total</p>
+                            <p class="font-headline-md text-headline-md text-on-surface">${{ pedido.total|floatformat:0 }}</p>
+                        </div>
+                    </div>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Products list -->
+            {# ─────────────────── PRODUCTS TABLE ─────────────────── #}
             {% if pedido.items.all %}
-            <h5 class="mt-3"><i class="bi bi-box"></i> Productos</h5>
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead class="table-light">
+            <h4 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2 mt-6 mb-3">
+                <span class="material-symbols-outlined text-primary">inventory_2</span> Productos
+            </h4>
+            <div class="bg-surface-container-low rounded-xl border border-outline-variant/10 overflow-hidden">
+                <table class="w-full text-left font-body-md text-body-md">
+                    <thead class="bg-surface-container-high text-on-surface-variant font-label-md text-label-md">
                         <tr>
-                            <th>Producto</th>
-                            <th>Cantidad</th>
-                            <th>Precio</th>
-                            <th>Subtotal</th>
+                            <th class="py-2.5 px-4 font-semibold">Producto</th>
+                            <th class="py-2.5 px-4 font-semibold">Cantidad</th>
+                            <th class="py-2.5 px-4 font-semibold">Precio</th>
+                            <th class="py-2.5 px-4 font-semibold text-right">Subtotal</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-outline-variant/10">
                         {% for item in pedido.items.all %}
-                        <tr>
-                            <td>{{ item.producto.nombre }}</td>
-                            <td>{{ item.cantidad }}</td>
-                            <td>${{ item.producto.precio|floatformat:0 }}</td>
-                            <td>${{ item.subtotal|floatformat:0 }}</td>
+                        <tr class="hover:bg-surface transition-colors">
+                            <td class="py-2.5 px-4">{{ item.producto.nombre }}</td>
+                            <td class="py-2.5 px-4">{{ item.cantidad }}</td>
+                            <td class="py-2.5 px-4">${{ item.producto.precio|floatformat:0 }}</td>
+                            <td class="py-2.5 px-4 text-right font-medium">${{ item.subtotal|floatformat:0 }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                     <tfoot>
-                        <tr class="fw-bold">
-                            <td colspan="3" class="text-end">Total:</td>
-                            <td>${{ pedido.total|floatformat:0 }}</td>
+                        <tr class="bg-surface-container-high font-label-md text-label-md text-on-surface">
+                            <td colspan="3" class="py-3 px-4 text-right font-semibold">Total:</td>
+                            <td class="py-3 px-4 text-right font-semibold">${{ pedido.total|floatformat:0 }}</td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
             {% endif %}
 
-            <!-- Evidence -->
+            {# ─────────────────── EVIDENCE IMAGES ─────────────────── #}
             {% if pedido.foto_evidencia %}
-            <h5 class="mt-3"><i class="bi bi-camera"></i> Foto de Evidencia</h5>
-            <img src="{{ pedido.foto_evidencia.url }}" alt="Evidencia de entrega" class="img-fluid rounded" style="max-width: 300px;">
+            <h4 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2 mt-6 mb-3">
+                <span class="material-symbols-outlined text-primary">photo_camera</span> Foto de Evidencia
+            </h4>
+            <img src="{{ pedido.foto_evidencia.url }}" alt="Evidencia de entrega" class="rounded-xl border border-outline-variant/20 shadow-sm max-w-xs">
             {% endif %}
             {% if pedido.firma_imagen %}
-            <h5 class="mt-3"><i class="bi bi-pen"></i> Firma del Cliente</h5>
-            <img src="{{ pedido.firma_imagen.url }}" alt="Firma del cliente" class="img-fluid rounded" style="max-width: 300px;">
+            <h4 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2 mt-6 mb-3">
+                <span class="material-symbols-outlined text-primary">draw</span> Firma del Cliente
+            </h4>
+            <img src="{{ pedido.firma_imagen.url }}" alt="Firma del cliente" class="rounded-xl border border-outline-variant/20 shadow-sm max-w-xs">
             {% endif %}
 
-            <!-- Incident info -->
+            {# ─────────────────── INCIDENT INFO ─────────────────── #}
             {% if pedido.incidente_notas %}
-            <div class="alert alert-warning mt-3">
-                <h6 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Incidente</h6>
-                <p>{{ pedido.incidente_notas }}</p>
-                {% if pedido.incidente_fecha %}
-                <small class="text-muted">Registrado: {{ pedido.incidente_fecha|date:"d/m/Y H:i" }}</small>
-                {% endif %}
+            <div class="flex items-start gap-3 p-4 bg-error-container/20 border border-error/20 rounded-xl mt-6">
+                <span class="material-symbols-outlined text-error text-[24px] flex-shrink-0 mt-0.5">warning</span>
+                <div>
+                    <h5 class="font-label-md text-label-md text-on-error-container mb-1">Incidente Registrado</h5>
+                    <p class="font-body-md text-body-md text-on-surface">{{ pedido.incidente_notas }}</p>
+                    {% if pedido.incidente_fecha %}
+                    <p class="font-caption text-caption text-on-surface-variant mt-1">Registrado: {{ pedido.incidente_fecha|date:"d/m/Y H:i" }}</p>
+                    {% endif %}
+                </div>
             </div>
             {% endif %}
         </div>
     </div>
 
-    <!-- Action Buttons — Separate forms per action to avoid required field blocking -->
+    {# ─────────────────── ACTION BUTTONS ─────────────────── #}
     {% if estado_form %}
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <h5 class="card-title"><i class="bi bi-arrow-right-circle"></i> Cambiar Estado</h5>
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden mb-6">
+        <div class="bg-surface-container-low px-6 py-4 border-b border-outline-variant/10">
+            <h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">arrow_circle_right</span>
+                Cambiar Estado
+            </h3>
+        </div>
+        <div class="p-6">
 
             {% if pedido.estado == 'pendiente' %}
-            <!-- Form: Iniciar Entrega -->
-            <form method="post" action="{% url 'entregas:cambiar_estado' pedido.pk %}">
-                {% csrf_token %}
-                <div class="d-grid gap-3 d-md-flex justify-content-md-center mb-3">
-                    <button type="submit" name="nuevo_estado" value="en_camino" class="btn btn-info btn-lg px-5">
-                        <i class="bi bi-scooter"></i> Iniciar Entrega
+            {# Buttons: Iniciar Entrega + Cancelar #}
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <form method="post" action="{% url 'entregas:cambiar_estado' pedido.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" name="nuevo_estado" value="en_camino"
+                            class="inline-flex items-center gap-2 bg-primary text-on-primary font-label-md text-label-md px-8 py-3.5 rounded-lg hover:opacity-90 transition-opacity shadow-sm">
+                        <span class="material-symbols-outlined text-[20px]">electric_scooter</span> Iniciar Entrega
                     </button>
-                    <button type="button" class="btn btn-outline-danger btn-lg px-5" data-bs-toggle="modal" data-bs-target="#cancelModal">
-                        <i class="bi bi-x-circle"></i> Cancelar
-                    </button>
-                </div>
-            </form>
-
-            <!-- Modal: Cancelación (pendiente) — separate form -->
-            <div class="modal fade" id="cancelModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header bg-danger text-white">
-                            <h5 class="modal-title"><i class="bi bi-x-circle"></i> Reportar Incidente / Cancelar</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
-                        <form method="post" action="{% url 'entregas:cambiar_estado' pedido.pk %}">
-                            {% csrf_token %}
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label for="incidente_notas_input" class="form-label fw-bold">Motivo del incidente *</label>
-                                    <textarea name="incidente_notas" id="incidente_notas_input" class="form-control" rows="4" required placeholder="Describa qué pasó..."></textarea>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Volver</button>
-                                <button type="submit" name="nuevo_estado" value="cancelado" class="btn btn-danger btn-lg">
-                                    <i class="bi bi-x-circle"></i> Confirmar Cancelación
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                </form>
+                <button type="button" @click="cancelModal = true"
+                        class="inline-flex items-center gap-2 border border-error/40 text-error font-label-md text-label-md px-8 py-3.5 rounded-lg hover:bg-error-container/30 transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">cancel</span> Cancelar
+                </button>
             </div>
 
             {% elif pedido.estado == 'en_camino' %}
-            <!-- Buttons: Marcar Entregado + Reportar Incidente -->
-            <div class="d-grid gap-3 d-md-flex justify-content-md-center mb-3">
-                <button type="button" class="btn btn-success btn-lg px-5" data-bs-toggle="modal" data-bs-target="#entregadoModal">
-                    <i class="bi bi-box-seam"></i> Marcar Entregado
+            {# Buttons: Marcar Entregado + Reportar Incidente #}
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button type="button" @click="entregadoModal = true"
+                        class="inline-flex items-center gap-2 bg-tertiary text-on-tertiary font-label-md text-label-md px-8 py-3.5 rounded-lg hover:opacity-90 transition-opacity shadow-sm">
+                    <span class="material-symbols-outlined text-[20px]">package_2</span> Marcar Entregado
                 </button>
-                <button type="button" class="btn btn-outline-danger btn-lg px-5" data-bs-toggle="modal" data-bs-target="#cancelModal">
-                    <i class="bi bi-x-circle"></i> Reportar Incidente
+                <button type="button" @click="cancelModal = true"
+                        class="inline-flex items-center gap-2 border border-error/40 text-error font-label-md text-label-md px-8 py-3.5 rounded-lg hover:bg-error-container/30 transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">warning</span> Reportar Incidente
                 </button>
-            </div>
-
-            <!-- Modal: Entregado — separate form with enctype for files -->
-            <div class="modal fade" id="entregadoModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header bg-success text-white">
-                            <h5 class="modal-title"><i class="bi bi-box-seam"></i> Confirmar Entrega</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
-                        <form method="post" action="{% url 'entregas:cambiar_estado' pedido.pk %}" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label for="id_foto_evidencia" class="form-label fw-bold"><i class="bi bi-camera"></i> Foto de Evidencia *</label>
-                                    <input type="file" name="foto_evidencia" id="id_foto_evidencia" class="form-control form-control-lg" accept="image/*" required>
-                                    <div class="form-text">Tome una foto del paquete entregado. Máximo 5MB. Obligatorio.</div>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="id_firma_imagen" class="form-label fw-bold"><i class="bi bi-pen"></i> Firma del Cliente *</label>
-                                    <input type="file" name="firma_imagen" id="id_firma_imagen" class="form-control form-control-lg" accept="image/*" required>
-                                    <div class="form-text">Imagen de la firma del cliente. Máximo 5MB. Obligatorio.</div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="submit" name="nuevo_estado" value="entregado" class="btn btn-success btn-lg">
-                                    <i class="bi bi-check-circle"></i> Confirmar Entrega
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal: Cancelación (en_camino) — separate form -->
-            <div class="modal fade" id="cancelModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header bg-danger text-white">
-                            <h5 class="modal-title"><i class="bi bi-x-circle"></i> Reportar Incidente / Cancelar</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
-                        <form method="post" action="{% url 'entregas:cambiar_estado' pedido.pk %}">
-                            {% csrf_token %}
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label for="incidente_notas_input" class="form-label fw-bold">Motivo del incidente *</label>
-                                    <textarea name="incidente_notas" id="incidente_notas_input" class="form-control" rows="4" required placeholder="Describa qué pasó..."></textarea>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Volver</button>
-                                <button type="submit" name="nuevo_estado" value="cancelado" class="btn btn-danger btn-lg">
-                                    <i class="bi bi-x-circle"></i> Confirmar Cancelación
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
             </div>
             {% endif %}
+
         </div>
     </div>
-    {% elif pedido.estado == 'entregado' %}
-    <div class="alert alert-success text-center">
-        <i class="bi bi-check-circle-fill"></i> Este pedido ya fue entregado exitosamente.
+
+    {# ─────────────────── ALPINE.JS MODALS ─────────────────── #}
+
+    {# Cancel Modal #}
+    <div x-show="cancelModal" x-cloak @click.outside="cancelModal = false" style="display:none"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/20 shadow-xl max-w-md w-full" @click.stop>
+            <div class="bg-error px-5 py-4 rounded-t-xl">
+                <h3 class="font-headline-md text-headline-md text-on-error flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[24px]">warning</span> Reportar Incidente / Cancelar
+                </h3>
+            </div>
+            <form method="post" action="{% url 'entregas:cambiar_estado' pedido.pk %}">
+                {% csrf_token %}
+                <div class="p-6">
+                    <label for="incidente_notas_input" class="block font-label-md text-label-md text-on-surface mb-2">Motivo del incidente *</label>
+                    <textarea name="incidente_notas" id="incidente_notas_input" rows="4" required
+                              placeholder="Describa qué pasó..."
+                              class="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-lg font-body-md text-body-md text-on-surface placeholder-on-surface-variant focus:outline-none focus:border-error focus:ring-1 focus:ring-error transition-colors resize-vertical"></textarea>
+                </div>
+                <div class="flex gap-3 px-6 pb-6">
+                    <button type="button" @click="cancelModal = false"
+                            class="flex-1 bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-surface-container-highest transition-colors">
+                        Volver
+                    </button>
+                    <button type="submit" name="nuevo_estado" value="cancelado"
+                            class="flex-1 bg-error text-on-error font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">
+                        Confirmar Cancelación
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-    {% if pedido.estado == 'entregado' %}
-    <div class="text-center mt-3">
-        <a href="{% url 'entregas:comprobante_pdf' pedido.pk %}" class="btn btn-primary btn-lg" target="_blank">
-            <i class="bi bi-file-earmark-pdf"></i> Descargar Comprobante PDF
+
+    {# Entregado Modal #}
+    <div x-show="entregadoModal" x-cloak @click.outside="entregadoModal = false" style="display:none"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/20 shadow-xl max-w-md w-full" @click.stop>
+            <div class="bg-tertiary px-5 py-4 rounded-t-xl">
+                <h3 class="font-headline-md text-headline-md text-on-tertiary flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[24px]">package_2</span> Confirmar Entrega
+                </h3>
+            </div>
+            <form method="post" action="{% url 'entregas:cambiar_estado' pedido.pk %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label for="id_foto_evidencia" class="block font-label-md text-label-md text-on-surface mb-2">
+                            <span class="material-symbols-outlined text-[18px] align-middle">photo_camera</span> Foto de Evidencia *
+                        </label>
+                        <input type="file" name="foto_evidencia" id="id_foto_evidencia"
+                               accept="image/*" required
+                               class="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-lg font-body-md text-body-md text-on-surface file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-primary-container file:text-primary file:font-label-md file:cursor-pointer hover:file:bg-primary-container/70 transition-colors focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary">
+                        <p class="font-caption text-caption text-on-surface-variant mt-1.5">Tome una foto del paquete entregado. Máximo 5MB. Obligatorio.</p>
+                    </div>
+                    <div>
+                        <label for="id_firma_imagen" class="block font-label-md text-label-md text-on-surface mb-2">
+                            <span class="material-symbols-outlined text-[18px] align-middle">draw</span> Firma del Cliente *
+                        </label>
+                        <input type="file" name="firma_imagen" id="id_firma_imagen"
+                               accept="image/*" required
+                               class="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant/30 rounded-lg font-body-md text-body-md text-on-surface file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-primary-container file:text-primary file:font-label-md file:cursor-pointer hover:file:bg-primary-container/70 transition-colors focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary">
+                        <p class="font-caption text-caption text-on-surface-variant mt-1.5">Imagen de la firma del cliente. Máximo 5MB. Obligatorio.</p>
+                    </div>
+                </div>
+                <div class="flex gap-3 px-6 pb-6">
+                    <button type="button" @click="entregadoModal = false"
+                            class="flex-1 bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-surface-container-highest transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" name="nuevo_estado" value="entregado"
+                            class="flex-1 bg-tertiary text-on-tertiary font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">
+                        Confirmar Entrega
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% elif pedido.estado == 'entregado' %}
+    {# Entregado state — success and PDF download #}
+    <div class="flex flex-col items-center gap-4 p-8 bg-tertiary-container/20 border border-tertiary/20 rounded-xl text-center mb-6">
+        <span class="material-symbols-outlined text-tertiary text-[48px]">check_circle</span>
+        <p class="font-headline-md text-headline-md text-on-surface">Este pedido ya fue entregado exitosamente.</p>
+        <a href="{% url 'entregas:comprobante_pdf' pedido.pk %}" target="_blank"
+           class="inline-flex items-center gap-2 bg-primary text-on-primary font-label-md text-label-md px-6 py-3 rounded-lg hover:opacity-90 transition-opacity shadow-sm no-underline">
+            <span class="material-symbols-outlined text-[20px]">picture_as_pdf</span> Descargar Comprobante PDF
         </a>
     </div>
-    {% endif %}
+
     {% elif pedido.estado == 'cancelado' %}
-    <div class="alert alert-danger text-center">
-        <i class="bi bi-x-circle-fill"></i> Este pedido fue cancelado.
+    {# Cancelado state #}
+    <div class="flex flex-col items-center gap-4 p-8 bg-error-container/20 border border-error/20 rounded-xl text-center mb-6">
+        <span class="material-symbols-outlined text-error text-[48px]">cancel</span>
+        <p class="font-headline-md text-headline-md text-on-surface">Este pedido fue cancelado.</p>
     </div>
+
     {% endif %}
+
     {% if not estado_form and pedido.estado != 'entregado' and pedido.estado != 'cancelado' %}
-    <div class="alert alert-info text-center mt-2">
-        <i class="bi bi-info-circle"></i> Tu pedido está en proceso. Recibirás actualizaciones pronto.
+    {# Info message for clients without action buttons #}
+    <div class="flex items-center gap-3 p-6 bg-surface-container-high border border-outline-variant/20 rounded-xl text-center">
+        <span class="material-symbols-outlined text-on-surface-variant text-[24px]">info</span>
+        <p class="font-body-md text-body-md text-on-surface-variant">Tu pedido está en proceso. Recibirás actualizaciones pronto.</p>
     </div>
     {% endif %}
 </div>

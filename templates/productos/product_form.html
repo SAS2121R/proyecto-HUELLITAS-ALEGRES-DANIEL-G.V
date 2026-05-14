@@ -1,87 +1,185 @@
 {% extends 'base.html' %}
+{% block extra_css %}
+<style>
+  /* Tw-form: DESIGN.md form styles */
+  .tw-form .form-group {
+    margin-bottom: 1.25rem;
+  }
+  .tw-form label {
+    display: block;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #191c1d;
+    margin-bottom: 0.375rem;
+  }
+  .tw-form input[type="text"],
+  .tw-form input[type="number"],
+  .tw-form input[type="email"],
+  .tw-form input[type="file"],
+  .tw-form select,
+  .tw-form textarea {
+    width: 100%;
+    border: 1px solid #c2c8bf;
+    border-radius: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.9375rem;
+    color: #191c1d;
+    background-color: #ffffff;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+  .tw-form input[type="text"]:focus,
+  .tw-form input[type="number"]:focus,
+  .tw-form input[type="email"]:focus,
+  .tw-form select:focus,
+  .tw-form textarea:focus {
+    outline: none;
+    border-color: #37563b;
+    box-shadow: 0 0 0 3px rgba(55, 86, 59, 0.15);
+  }
+  .tw-form textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+  .tw-form input[type="file"] {
+    border-style: dashed;
+    padding: 1rem;
+    cursor: pointer;
+  }
+  .tw-form input[type="file"]::file-selector-button {
+    border: none;
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    margin-right: 0.75rem;
+    background: #edeeef;
+    color: #424841;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .tw-form .errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 0.25rem 0 0 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.8125rem;
+    color: #ba1a1a;
+  }
+  .tw-form .errorlist li::before {
+    content: '• ';
+  }
+  /* Precio input with $ prefix */
+  .tw-form .relative input[type="number"] {
+    padding-left: 2.25rem;
+  }
+  /* Non-field errors */
+  .tw-form .errorlist.nonfield {
+    background: #ffdad6;
+    color: #93000a;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+  }
+</style>
+{% endblock %}
+
 {% block back_button %}{% include 'includes/back_button.html' %}{% endblock %}
 {% block content %}
-<div class="container py-4" style="position: relative;">
-  <h1>{{ form.instance.pk|yesno:"Editar producto,Nuevo producto" }}</h1>
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3 mb-6">
+    <span class="material-symbols-outlined text-primary">{% if form.instance.pk %}edit{% else %}add_circle{% endif %}</span>
+    {{ form.instance.pk|yesno:"Editar producto,Nuevo producto" }}
+  </h1>
 
   {% if form.errors %}
-  <div class="alert alert-danger alert-dismissible fade show" role="alert">
-    <strong>Error al guardar.</strong> Revisá los campos marcados en rojo.
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  <div class="flex items-start gap-3 bg-error-container text-on-error-container rounded-xl p-4 mb-6 border border-error/20">
+    <span class="material-symbols-outlined flex-shrink-0 mt-0.5">error</span>
+    <div>
+      <p class="font-label-md text-label-md font-semibold">Error al guardar</p>
+      <p class="font-body-md text-body-md">Revisá los campos marcados en rojo.</p>
+    </div>
   </div>
   {% endif %}
 
-  <form method="post" enctype="multipart/form-data" novalidate>
-    {% csrf_token %}
-    {{ form.non_field_errors }}
+  <div class="tw-form bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6">
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {{ form.non_field_errors }}
 
-    <div class="mb-3">
-      {{ form.nombre.label_tag }}
-      {{ form.nombre }}
-      {{ form.nombre.errors }}
-    </div>
-
-    <div class="mb-3">
-      {{ form.descripcion.label_tag }}
-      {{ form.descripcion }}
-      {{ form.descripcion.errors }}
-    </div>
-
-    <div class="mb-3">
-      {{ form.imagen.label_tag }}
-      {{ form.imagen }}
-      {{ form.imagen.errors }}
-      {% if form.instance.imagen %}
-      <div class="mt-2">
-        <small class="text-muted">Imagen actual:</small><br>
-        <img src="{{ form.instance.imagen.url }}" alt="{{ form.instance.nombre }}" class="img-thumbnail mt-1" style="max-height: 150px;">
+      <div class="form-group">
+        {{ form.nombre.label_tag }}
+        {{ form.nombre }}
+        {{ form.nombre.errors }}
       </div>
-      {% endif %}
-    </div>
 
-    <div class="row mb-3">
-      <div class="col-md-4">
-        {{ form.precio.label_tag }}
-        <div class="input-group">
-          <span class="input-group-text">$</span>
-          {{ form.precio }}
+      <div class="form-group">
+        {{ form.descripcion.label_tag }}
+        {{ form.descripcion }}
+        {{ form.descripcion.errors }}
+      </div>
+
+      <div class="form-group">
+        {{ form.imagen.label_tag }}
+        {{ form.imagen }}
+        {{ form.imagen.errors }}
+        {% if form.instance.imagen %}
+        <div class="mt-3">
+          <p class="font-caption text-caption text-on-surface-variant mb-1.5">Imagen actual:</p>
+          <img src="{{ form.instance.imagen.url }}" alt="{{ form.instance.nombre }}" class="rounded-lg border border-outline-variant/20 max-h-[150px] object-contain">
         </div>
-        {{ form.precio.errors }}
+        {% endif %}
       </div>
-      <div class="col-md-4">
-        {{ form.cantidad_stock.label_tag }}
-        {{ form.cantidad_stock }}
-        {{ form.cantidad_stock.errors }}
-      </div>
-      <div class="col-md-4">
-        {{ form.stock_minimo.label_tag }}
-        {{ form.stock_minimo }}
-        {{ form.stock_minimo.errors }}
-      </div>
-    </div>
 
-    <div class="row mb-3">
-      <div class="col-md-6">
-        {{ form.categoria.label_tag }}
-        {{ form.categoria }}
-        {{ form.categoria.errors }}
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="form-group">
+          {{ form.precio.label_tag }}
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant font-body-md text-body-md">$</span>
+            {{ form.precio }}
+          </div>
+          {{ form.precio.errors }}
+        </div>
+        <div class="form-group">
+          {{ form.cantidad_stock.label_tag }}
+          {{ form.cantidad_stock }}
+          {{ form.cantidad_stock.errors }}
+        </div>
+        <div class="form-group">
+          {{ form.stock_minimo.label_tag }}
+          {{ form.stock_minimo }}
+          {{ form.stock_minimo.errors }}
+        </div>
       </div>
-      <div class="col-md-6">
-        {{ form.proveedor.label_tag }}
-        {{ form.proveedor }}
-        {{ form.proveedor.errors }}
-      </div>
-    </div>
 
-    <button type="submit" class="btn btn-success">
-      <i class="bi bi-check-lg me-1"></i> Guardar
-    </button>
-    <a href="{% url 'productos:lista' %}" class="btn btn-secondary ms-2">
-      <i class="bi bi-x-lg me-1"></i> Cancelar
-    </a>
-  </form>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="form-group">
+          {{ form.categoria.label_tag }}
+          {{ form.categoria }}
+          {{ form.categoria.errors }}
+        </div>
+        <div class="form-group">
+          {{ form.proveedor.label_tag }}
+          {{ form.proveedor }}
+          {{ form.proveedor.errors }}
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button type="submit" class="inline-flex items-center gap-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg px-5 py-2.5 hover:opacity-90 transition-opacity">
+          <span class="material-symbols-outlined text-[18px]">check</span> Guardar
+        </button>
+        <a href="{% url 'productos:lista' %}" class="inline-flex items-center gap-2 bg-surface-container-high text-on-surface-variant font-label-md text-label-md rounded-lg px-5 py-2.5 hover:bg-surface-container-highest transition-colors">
+          <span class="material-symbols-outlined text-[18px]">close</span> Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
 // Preview imagen antes de subir
 document.addEventListener('DOMContentLoaded', function() {
@@ -96,8 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (!preview) {
                         preview = document.createElement('img');
                         preview.id = 'imagen-preview';
-                        preview.className = 'img-thumbnail mt-2';
-                        preview.style.maxHeight = '150px';
+                        preview.className = 'rounded-lg border border-outline-variant/20 max-h-[150px] object-contain mt-2';
                         input.parentElement.appendChild(preview);
                     }
                     preview.src = e.target.result;

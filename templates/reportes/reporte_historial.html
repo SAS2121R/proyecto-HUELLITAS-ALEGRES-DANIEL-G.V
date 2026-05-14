@@ -1,7 +1,7 @@
 {% extends "reportes/base_reporte.html" %}
 {% block content %}
 <div class="summary-box">
-    <h4>Historial Clinico - {{ mascota.nombre }}</h4>
+    <h4>Historial Clínico — {{ mascota.nombre }}</h4>
     <table>
         <tr><td><strong>Especie:</strong></td><td>{{ mascota.get_especie_display }}</td><td><strong>Raza:</strong></td><td>{{ mascota.raza|default:"N/A" }}</td></tr>
         <tr><td><strong>Propietario:</strong></td><td>{{ mascota.propietario.get_full_name }}</td><td><strong>Edad:</strong></td><td>{{ mascota.edad|default:"N/A" }}</td></tr>
@@ -12,7 +12,7 @@
         <tr>
             <th>Fecha</th>
             <th>Veterinario</th>
-            <th>Diagnostico</th>
+            <th>Diagnóstico</th>
             <th>Tratamiento</th>
         </tr>
     </thead>
@@ -25,7 +25,7 @@
             <td>{{ h.tratamiento|default:"-" }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="4" style="text-align:center;">Sin registros clinicos.</td></tr>
+        <tr><td colspan="4" style="text-align:center;">Sin registros clínicos.</td></tr>
         {% endfor %}
     </tbody>
 </table>

@@ -1,20 +1,41 @@
-{# Domiciliario sidebar — included from base.html when user is Domiciliario #}
-<div class="sidebar-heading">Entregas</div>
-<nav class="nav flex-column">
-    <a href="{% url 'entregas:dashboard' %}" class="nav-link {% if '/entregas/' in request.path and '/resumen' not in request.path %}active{% endif %}">
-        <i class="bi bi-truck"></i> Entregas
-    </a>
-    <a href="{% url 'entregas:resumen' %}" class="nav-link {% if '/resumen' in request.path %}active{% endif %}">
-        <i class="bi bi-clipboard-check"></i> Resumen
-    </a>
-</nav>
+{# ── Domiciliario sidebar — included from base.html when user is Domiciliario ── #}
+{# ── Uses DESIGN.md palette via Tailwind + Material Symbols icons ── #}
 
-<div class="sidebar-heading">Mi Perfil</div>
-<nav class="nav flex-column">
-    <a href="{% url 'usuarios:mi_perfil' %}" class="nav-link {% if '/perfil' in request.path %}active{% endif %}">
-        <i class="bi bi-person"></i> Mi Perfil
-    </a>
-    <a href="{% url 'usuarios:cambiar_password' %}" class="nav-link {% if '/password' in request.path %}active{% endif %}">
-        <i class="bi bi-key"></i> Contraseña
-    </a>
-</nav>
+<div class="flex flex-col h-full p-4 gap-1">
+
+    {# Brand #}
+    <div class="mb-6 px-3">
+        <h1 class="font-headline-md text-headline-md text-primary font-bold tracking-tight">Huellitas Alegres</h1>
+        <p class="font-caption text-caption text-secondary mt-1">Portal Domiciliario</p>
+    </div>
+
+    {# ── Section: Entregas ── #}
+    <p class="font-caption text-caption text-on-surface-variant uppercase tracking-wider px-3 pt-3 pb-1">Entregas</p>
+    <nav class="flex flex-col gap-0.5">
+        <a href="{% url 'entregas:dashboard' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/entregas/' in request.path and '/resumen' not in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/entregas/' in request.path and '/resumen' not in request.path %}icon-fill{% endif %}">local_shipping</span>
+            Entregas
+        </a>
+        <a href="{% url 'entregas:resumen' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/resumen' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/resumen' in request.path %}icon-fill{% endif %}">clipboard_check</span>
+            Resumen
+        </a>
+    </nav>
+
+    {# ── Section: Mi Perfil ── #}
+    <p class="font-caption text-caption text-on-surface-variant uppercase tracking-wider px-3 pt-5 pb-1">Mi Perfil</p>
+    <nav class="flex flex-col gap-0.5 flex-1">
+        <a href="{% url 'usuarios:mi_perfil' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/perfil' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/perfil' in request.path %}icon-fill{% endif %}">person</span>
+            Mi Perfil
+        </a>
+        <a href="{% url 'usuarios:cambiar_password' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
+            {% if '/password' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
+            <span class="material-symbols-outlined text-[20px] {% if '/password' in request.path %}icon-fill{% endif %}">key</span>
+            Contraseña
+        </a>
+    </nav>
+</div>

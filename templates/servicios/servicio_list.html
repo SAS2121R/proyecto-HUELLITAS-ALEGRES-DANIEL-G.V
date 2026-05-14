@@ -2,78 +2,111 @@
 {% load formato %}
 {% block back_button %}{% include 'includes/back_button.html' %}{% endblock %}
 {% block content %}
-<div class="container py-4">
-  <h1 class="mb-4">Servicios</h1>
-  <div class="d-flex justify-content-between mb-3">
-    <form method="get" class="d-flex gap-2">
-      <input type="text" name="q" value="{{ search|default:'' }}" class="form-control" placeholder="Buscar servicio...">
-      <select name="categoria" class="form-select">
-        <option value="">Todas las categorías</option>
-        {% for value, label in categorias %}
-        <option value="{{ value }}" {% if categoria == value %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-      <button type="submit" class="btn btn-outline-primary">Filtrar</button>
-    </form>
-    {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
-    <a href="{% url 'servicios:crear' %}" class="btn btn-success">Nuevo Servicio</a>
-    {% endif %}
-  </div>
-  {% if page_obj %}
-    <div class="table-responsive">
-      <table class="table table-hover align-middle">
-        <thead class="table-dark">
-          <tr>
-            <th>Nombre</th>
-            <th>Categoría</th>
-            <th>Tarifa</th>
-            <th>Duración</th>
-            {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
-            <th>Acciones</th>
-            {% endif %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for s in page_obj %}
-          <tr>
-            <td>{{ s.nombre }}</td>
-            <td>{{ s.get_categoria_display }}</td>
-            <td>{{ s.tarifa|pesos }}</td>
-            <td>{{ s.duracion_minutos }} min</td>
-            {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
-            <td>
-              <a href="{% url 'servicios:editar' s.pk %}" class="btn btn-sm btn-warning">Editar</a>
-              <a href="{% url 'servicios:eliminar' s.pk %}" class="btn btn-sm btn-danger">Desactivar</a>
-            </td>
-            {% endif %}
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <nav aria-label="Page navigation">
-      <ul class="pagination justify-content-center">
-        {% if page_obj.has_previous %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search|default:'' }}&categoria={{ categoria|default:'' }}">&laquo; Anterior</a></li>
-        {% else %}
-        <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
-        {% endif %}
-        {% for num in page_obj.paginator.page_range %}
-          {% if page_obj.number == num %}
-          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-          {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
-          <li class="page-item"><a class="page-link" href="?page={{ num }}&q={{ search|default:'' }}&categoria={{ categoria|default:'' }}">{{ num }}</a></li>
-          {% endif %}
-        {% endfor %}
-        {% if page_obj.has_next %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search|default:'' }}&categoria={{ categoria|default:'' }}">Siguiente &raquo;</a></li>
-        {% else %}
-        <li class="page-item disabled"><span class="page-link">Siguiente &raquo;</span></li>
-        {% endif %}
-      </ul>
-    </nav>
-  {% else %}
-    <div class="alert alert-info text-center">No hay servicios registrados.</div>
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+  <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
+    <span class="material-symbols-outlined text-primary">content_paste</span> Servicios
+  </h1>
+  {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+  <a href="{% url 'servicios:crear' %}" class="inline-flex items-center gap-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity no-underline">
+    <span class="material-symbols-outlined text-[18px]">add_circle</span> Nuevo Servicio
+  </a>
   {% endif %}
 </div>
+
+<!-- Search and Filter -->
+<form method="get" class="flex flex-col sm:flex-row gap-3 mb-4">
+  <input type="text" name="q" value="{{ search|default:'' }}" placeholder="Buscar servicio..." class="flex-1 px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+  <select name="categoria" class="px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+    <option value="">Todas las categorías</option>
+    {% for value, label in categorias %}
+    <option value="{{ value }}" {% if categoria == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="inline-flex items-center gap-1.5 bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">
+    <span class="material-symbols-outlined text-[18px]">search</span> Filtrar
+  </button>
+</form>
+
+{% if page_obj %}
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead class="border-b border-outline-variant/20">
+        <tr>
+          <th class="px-4 py-3 text-left font-label-md text-label-md text-on-surface-variant">Nombre</th>
+          <th class="px-4 py-3 text-left font-label-md text-label-md text-on-surface-variant">Categoría</th>
+          <th class="px-4 py-3 text-left font-label-md text-label-md text-on-surface-variant">Tarifa</th>
+          <th class="px-4 py-3 text-left font-label-md text-label-md text-on-surface-variant">Duración</th>
+          {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+          <th class="px-4 py-3 text-left font-label-md text-label-md text-on-surface-variant">Acciones</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in page_obj %}
+        <tr class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors">
+          <td class="px-4 py-3 font-body-md text-body-md text-on-surface">{{ s.nombre }}</td>
+          <td class="px-4 py-3">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-container/30 text-primary font-caption text-caption">{{ s.get_categoria_display }}</span>
+          </td>
+          <td class="px-4 py-3 font-body-md text-body-md text-on-surface">{{ s.tarifa|pesos }}</td>
+          <td class="px-4 py-3 font-body-md text-body-md text-on-surface">{{ s.duracion_minutos }} min</td>
+          {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-1.5">
+              <a href="{% url 'servicios:editar' s.pk %}" class="inline-flex items-center gap-1 bg-secondary-container/50 text-on-secondary-container font-caption text-caption rounded-lg px-3 py-1.5 hover:opacity-80 transition-opacity no-underline">
+                <span class="material-symbols-outlined text-[16px]">edit</span> Editar
+              </a>
+              <a href="{% url 'servicios:eliminar' s.pk %}" class="inline-flex items-center gap-1 bg-error-container/30 text-on-error-container font-caption text-caption rounded-lg px-3 py-1.5 hover:opacity-80 transition-opacity no-underline">
+                <span class="material-symbols-outlined text-[16px]">block</span> Desactivar
+              </a>
+            </div>
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="flex items-center justify-center gap-2 mt-6">
+  {% if page_obj.has_previous %}
+  <a href="?page={{ page_obj.previous_page_number }}&q={{ search|default:'' }}&categoria={{ categoria|default:'' }}" class="flex items-center justify-center w-9 h-9 rounded-lg border border-outline-variant/20 text-on-surface-variant hover:bg-surface-container transition-colors no-underline">
+    <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+  </a>
+  {% else %}
+  <span class="flex items-center justify-center w-9 h-9 rounded-lg border border-outline-variant/10 text-outline/40">
+    <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+  </span>
+  {% endif %}
+
+  {% for num in page_obj.paginator.page_range %}
+    {% if page_obj.number == num %}
+    <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-on-primary font-label-md text-label-md">{{ num }}</span>
+    {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+    <a href="?page={{ num }}&q={{ search|default:'' }}&categoria={{ categoria|default:'' }}" class="flex items-center justify-center w-9 h-9 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-label-md text-label-md no-underline">{{ num }}</a>
+    {% endif %}
+  {% endfor %}
+
+  {% if page_obj.has_next %}
+  <a href="?page={{ page_obj.next_page_number }}&q={{ search|default:'' }}&categoria={{ categoria|default:'' }}" class="flex items-center justify-center w-9 h-9 rounded-lg border border-outline-variant/20 text-on-surface-variant hover:bg-surface-container transition-colors no-underline">
+    <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+  </a>
+  {% else %}
+  <span class="flex items-center justify-center w-9 h-9 rounded-lg border border-outline-variant/10 text-outline/40">
+    <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+  </span>
+  {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="flex items-center justify-center gap-3 p-8 bg-surface-container rounded-xl border border-outline-variant/20">
+  <span class="material-symbols-outlined text-on-surface-variant text-[32px]">inventory_2</span>
+  <p class="font-body-md text-body-md text-on-surface-variant">No hay servicios registrados.</p>
+</div>
+{% endif %}
 {% endblock %}

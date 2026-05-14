@@ -3,295 +3,174 @@
 {% block title %}Huellitas Alegres — Inicio{% endblock %}
 
 {% block content %}
-<div class="text-center py-4">
-    <h1 class="display-5 fw-bold"><i class="bi bi-emoji-heart-eyes-fill text-danger"></i> Huellitas Alegres</h1>
-    <p class="lead text-muted">Clínica Veterinaria & Tienda para Mascotas</p>
-</div>
+<div class="max-w-5xl mx-auto">
 
-{% if user.is_authenticated %}
+    {% if user.is_authenticated %}
 
-{% if user.rol.nombre == 'Cliente' %}
-<!-- CLIENTE DASHBOARD -->
-<div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <a href="{% url 'tienda:catalogo' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-shop fs-1 text-success"></i>
-                    <h5 class="mt-2">🛍 Tienda</h5>
-                    <p class="text-muted small">Productos para tu mascota, entregados a tu puerta.</p>
-                </div>
-            </div>
-        </a>
+    {# ── Authenticated: Role-based quick-access cards ── #}
+    <div class="text-center py-6 mb-4">
+        <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center justify-center gap-3">
+            <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">pets</span>
+            Huellitas Alegres
+        </h1>
+        <p class="text-on-surface-variant font-body-md text-body-md mt-1">Clínica Veterinaria & Tienda para Mascotas</p>
     </div>
-    <div class="col-md-4">
-        <a href="{% url 'mascotas:lista' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-emoji-heart-eyes fs-1 text-danger"></i>
-                    <h5 class="mt-2">🐾 Mis Mascotas</h5>
-                    <p class="text-muted small">Gestiona las mascotas registradas.</p>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="{% url 'agenda:lista_citas' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-calendar fs-1 text-primary"></i>
-                    <h5 class="mt-2">📅 Mis Citas</h5>
-                    <p class="text-muted small">Solicita y gestiona tus citas veterinarias.</p>
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
-<div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <a href="{% url 'historial:lista' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-clipboard2-pulse fs-1 text-info"></i>
-                    <h5 class="mt-2">📋 Mi Historial</h5>
-                    <p class="text-muted small">Revisa el historial clínico de tus mascotas.</p>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="{% url 'entregas:mis_pedidos' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-bag-check fs-1 text-warning"></i>
-                    <h5 class="mt-2">📦 Mis Pedidos</h5>
-                    <p class="text-muted small">Consulta el estado de tus pedidos.</p>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="{% url 'usuarios:mi_perfil' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-person-circle fs-1 text-secondary"></i>
-                    <h5 class="mt-2">👤 Mi Perfil</h5>
-                    <p class="text-muted small">Edita tus datos personales y foto.</p>
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
 
-{% elif user.rol.nombre == 'Veterinario' %}
-<!-- VETERINARIO DASHBOARD -->
-<div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <a href="{% url 'mascotas:lista' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-emoji-heart-eyes fs-1 text-danger"></i>
-                    <h5 class="mt-2">🐾 Mascotas</h5>
-                    <p class="text-muted small">Gestionar pacientes registrados.</p>
-                </div>
-            </div>
+    {% if user.rol.nombre == 'Cliente' %}
+    {# ── CLIENTE DASHBOARD ── #}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        <a href="{% url 'tienda:catalogo' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-primary text-[36px]">store</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Tienda</h3>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Productos para tu mascota, entregados a tu puerta.</p>
+        </a>
+        <a href="{% url 'mascotas:lista' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-error text-[36px]" style="font-variation-settings: 'FILL' 1;">pets</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Mis Mascotas</h3>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Gestiona las mascotas registradas.</p>
+        </a>
+        <a href="{% url 'agenda:lista_citas' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-primary text-[36px]">calendar_month</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Mis Citas</h3>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Solicita y gestiona tus citas veterinarias.</p>
+        </a>
+        <a href="{% url 'historial:lista' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-secondary text-[36px]">clinical_notes</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Mi Historial</h3>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Revisa el historial clínico de tus mascotas.</p>
+        </a>
+        <a href="{% url 'entregas:mis_pedidos' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-tertiary text-[36px]">local_shipping</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Mis Pedidos</h3>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Consulta el estado de tus pedidos.</p>
+        </a>
+        <a href="{% url 'usuarios:mi_perfil' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-on-surface-variant text-[36px]">account_circle</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Mi Perfil</h3>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Edita tus datos personales y foto.</p>
         </a>
     </div>
-    <div class="col-md-4">
-        <a href="{% url 'agenda:lista_citas' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-calendar fs-1 text-primary"></i>
-                    <h5 class="mt-2">📅 Citas</h5>
-                    <p class="text-muted small">Agenda y gestión de citas.</p>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="{% url 'historial:lista' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-clipboard2-pulse fs-1 text-info"></i>
-                    <h5 class="mt-2">📋 Historial</h5>
-                    <p class="text-muted small">Registros clínicos de mascotas.</p>
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
-<div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <a href="{% url 'servicios:lista' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-heart-pulse fs-1 text-success"></i>
-                    <h5 class="mt-2">💊 Servicios</h5>
-                    <p class="text-muted small">Servicios veterinarios disponibles.</p>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="{% url 'productos:lista' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-box-seam fs-1 text-warning"></i>
-                    <h5 class="mt-2">📦 Productos</h5>
-                    <p class="text-muted small">Inventario y kardex.</p>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="{% url 'usuarios:mi_perfil' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-person-circle fs-1 text-secondary"></i>
-                    <h5 class="mt-2">👤 Mi Perfil</h5>
-                    <p class="text-muted small">Editar datos y foto de perfil.</p>
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
 
-{% elif user.rol.nombre == 'Domiciliario' %}
-<!-- DOMICILIARIO DASHBOARD -->
-<div class="row g-4 mb-4">
-    <div class="col-md-6">
-        <a href="{% url 'entregas:dashboard' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-truck fs-1 text-primary"></i>
-                    <h5 class="mt-2">🛵 Entregas</h5>
-                    <p class="text-muted small">Pedidos asignados y gestión de entregas.</p>
-                </div>
-            </div>
+    {% elif user.rol.nombre == 'Veterinario' %}
+    {# ── VETERINARIO DASHBOARD ── #}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        <a href="{% url 'mascotas:lista' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-error text-[36px]" style="font-variation-settings: 'FILL' 1;">pets</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Mascotas</h3>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Gestionar pacientes registrados.</p>
+        </a>
+        <a href="{% url 'agenda:lista_citas' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-primary text-[36px]">calendar_month</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Citas</h3>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Agenda y gestión de citas.</p>
+        </a>
+        <a href="{% url 'historial:lista' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-secondary text-[36px]">clinical_notes</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Historial</h3>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Registros clínicos de mascotas.</p>
+        </a>
+        <a href="{% url 'servicios:lista' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-tertiary text-[36px]">medical_services</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Servicios</h3>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Servicios veterinarios disponibles.</p>
+        </a>
+        <a href="{% url 'productos:lista' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-on-surface-variant text-[36px]">inventory_2</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Productos</h3>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Inventario y kardex.</p>
+        </a>
+        <a href="{% url 'usuarios:mi_perfil' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-on-surface-variant text-[36px]">account_circle</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Mi Perfil</h3>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Editar datos y foto de perfil.</p>
         </a>
     </div>
-    <div class="col-md-6">
-        <a href="{% url 'entregas:resumen' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-clipboard-check fs-1 text-success"></i>
-                    <h5 class="mt-2">📋 Resumen Diario</h5>
-                    <p class="text-muted small">Entregas del día.</p>
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
 
-{% elif user.rol.nombre == 'Administrador' %}
-<!-- ADMIN DASHBOARD -->
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <a href="{% url 'usuarios:admin_dashboard' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100 border-primary">
-                <div class="card-body">
-                    <i class="bi bi-speedometer2 fs-1 text-primary"></i>
-                    <h5 class="mt-2">📊 Dashboard</h5>
-                    <p class="text-muted small">Métricas y resumen.</p>
-                </div>
-            </div>
+    {% elif user.rol.nombre == 'Domiciliario' %}
+    {# ── DOMICILIARIO DASHBOARD ── #}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <a href="{% url 'entregas:dashboard' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-primary text-[36px]">local_shipping</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Entregas</h3>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Pedidos asignados y gestión de entregas.</p>
+        </a>
+        <a href="{% url 'entregas:resumen' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-tertiary text-[36px]">assignment_turned_in</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Resumen Diario</h3>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Entregas del día.</p>
         </a>
     </div>
-    <div class="col-md-3">
-        <a href="{% url 'mascotas:lista' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-emoji-heart-eyes fs-1 text-danger"></i>
-                    <h5 class="mt-2">🐾 Mascotas</h5>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-3">
-        <a href="{% url 'agenda:lista_citas' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-calendar fs-1 text-primary"></i>
-                    <h5 class="mt-2">📅 Citas</h5>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-3">
-        <a href="{% url 'historial:lista' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-clipboard2-pulse fs-1 text-info"></i>
-                    <h5 class="mt-2">📋 Historial</h5>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-3">
-        <a href="{% url 'productos:lista' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-box-seam fs-1 text-warning"></i>
-                    <h5 class="mt-2">📦 Productos</h5>
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <a href="{% url 'servicios:lista' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-heart-pulse fs-1 text-success"></i>
-                    <h5 class="mt-2">💊 Servicios</h5>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-3">
-        <a href="{% url 'entregas:dashboard' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-truck fs-1 text-dark"></i>
-                    <h5 class="mt-2">🛵 Entregas</h5>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-3">
-        <a href="{% url 'reportes:citas' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-bar-chart fs-1 text-secondary"></i>
-                    <h5 class="mt-2">📊 Reportes</h5>
-                </div>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-3">
-        <a href="{% url 'usuarios:lista_usuarios' %}" class="text-decoration-none">
-            <div class="card shadow-sm card-hover text-center h-100">
-                <div class="card-body">
-                    <i class="bi bi-people fs-1 text-purple"></i>
-                    <h5 class="mt-2">👥 Usuarios</h5>
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
-{% endif %}
 
-{% else %}
-<!-- UNAUTHENTICATED -->
-<div class="text-center py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <h2 class="mb-3">🏥 Tu mascota merece lo mejor</h2>
-            <p class="lead text-muted mb-4">Gestión clínica, tienda de productos y entrega a domicilio — todo en un solo lugar.</p>
-            <a href="{% url 'usuarios:auth' %}" class="btn btn-primary btn-lg px-5"><i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión</a>
+    {% elif user.rol.nombre == 'Administrador' %}
+    {# ── ADMIN DASHBOARD ── #}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <a href="{% url 'usuarios:admin_dashboard' %}" class="bg-surface-container-lowest rounded-xl border border-primary/20 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-primary text-[36px]" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Dashboard</h3>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Métricas y resumen.</p>
+        </a>
+        <a href="{% url 'mascotas:lista' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-error text-[36px]" style="font-variation-settings: 'FILL' 1;">pets</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Mascotas</h3>
+        </a>
+        <a href="{% url 'agenda:lista_citas' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-primary text-[36px]">calendar_month</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Citas</h3>
+        </a>
+        <a href="{% url 'historial:lista' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-secondary text-[36px]">clinical_notes</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Historial</h3>
+        </a>
+        <a href="{% url 'productos:lista' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-on-surface-variant text-[36px]">inventory_2</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Productos</h3>
+        </a>
+        <a href="{% url 'servicios:lista' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-tertiary text-[36px]">medical_services</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Servicios</h3>
+        </a>
+        <a href="{% url 'entregas:dashboard' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-on-surface text-[36px]">local_shipping</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Entregas</h3>
+        </a>
+        <a href="{% url 'reportes:citas' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-secondary text-[36px]">bar_chart</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Reportes</h3>
+        </a>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <a href="{% url 'usuarios:admin_users' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-on-surface-variant text-[36px]">group</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Usuarios</h3>
+        </a>
+        <a href="{% url 'proveedores:lista' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-on-surface-variant text-[36px]">local_shipping</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Proveedores</h3>
+        </a>
+        <a href="{% url 'usuarios:mi_perfil' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-on-surface-variant text-[36px]">account_circle</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Mi Perfil</h3>
+        </a>
+        <a href="{% url 'usuarios:admin_configuracion' %}" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 text-center hover:bg-surface-container-low transition-colors no-underline">
+            <span class="material-symbols-outlined text-on-surface-variant text-[36px]">settings</span>
+            <h3 class="font-headline-md text-headline-md text-on-surface mt-2">Configuración</h3>
+        </a>
+    </div>
+    {% endif %}
+
+    {% else %}
+    {# ── UNAUTHENTICATED ── #}
+    <div class="text-center py-12">
+        <div class="max-w-lg mx-auto">
+            <span class="material-symbols-outlined text-primary text-[64px]" style="font-variation-settings: 'FILL' 1;">veterinary</span>
+            <h2 class="font-headline-lg text-headline-lg text-on-surface mt-4">Tu mascota merece lo mejor</h2>
+            <p class="text-on-surface-variant font-body-lg text-body-lg mt-3 mb-6">Gestión clínica, tienda de productos y entrega a domicilio — todo en un solo lugar.</p>
+            <a href="{% url 'usuarios:auth' %}" class="inline-flex items-center gap-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg px-6 py-3 hover:opacity-90 transition-opacity">
+                <span class="material-symbols-outlined text-[20px]">login</span> Iniciar Sesión
+            </a>
         </div>
     </div>
+    {% endif %}
+
 </div>
-{% endif %}
 {% endblock %}

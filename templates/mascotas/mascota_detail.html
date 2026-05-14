@@ -1,66 +1,120 @@
 {% extends 'base.html' %}
 {% block back_button %}{% include 'includes/back_button.html' %}{% endblock %}
 {% block content %}
-<div class="container py-4">
-  <!-- Allergy Banner -->
-  {% if mascota.alergias and mascota.alergias != 'Ninguna' %}
-  <div class="alert alert-danger d-flex align-items-center" role="alert">
-    <span class="me-2" style="font-size: 1.5rem;">⚠️</span>
-    <div>
-      <strong>¡ALERTA MÉDICA!</strong> Este paciente es alérgico a: <strong>{{ mascota.alergias }}</strong>
-    </div>
+
+<!-- Allergy Banner -->
+{% if mascota.alergias and mascota.alergias != 'Ninguna' %}
+<div class="flex items-start gap-3 p-4 mb-6 bg-error-container/50 border border-error/30 rounded-xl">
+  <span class="material-symbols-outlined text-error text-[24px] flex-shrink-0 mt-0.5">warning</span>
+  <div class="font-body-md text-body-md">
+    <strong class="text-on-error-container">¡ALERTA MÉDICA!</strong> Este paciente es alérgico a: <strong class="text-on-error-container">{{ mascota.alergias }}</strong>
   </div>
-  {% endif %}
+</div>
+{% endif %}
 
-  <div class="row">
-    <!-- Photo -->
-    <div class="col-md-4 text-center mb-4">
-      {% if mascota.foto %}
-      <img src="{{ mascota.foto.url }}" alt="{{ mascota.nombre }}" class="img-thumbnail rounded" style="max-width: 250px;">
-      {% else %}
-      <div class="bg-light rounded d-flex align-items-center justify-content-center mx-auto" style="width: 200px; height: 200px;">
-        <span style="font-size: 5rem;">🐾</span>
-      </div>
-      {% endif %}
+<!-- Pet Header: Photo + Info -->
+<div class="flex flex-col md:flex-row gap-6 mb-6">
+  <!-- Photo -->
+  <div class="flex-shrink-0">
+    {% if mascota.foto %}
+    <img src="{{ mascota.foto.url }}" alt="{{ mascota.nombre }}" class="w-48 h-48 md:w-56 md:h-56 rounded-xl object-cover border border-outline-variant/20 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+    {% else %}
+    <div class="w-48 h-48 md:w-56 md:h-56 rounded-xl bg-surface-container flex items-center justify-center border border-outline-variant/20">
+      <span class="material-symbols-outlined text-on-surface-variant text-[64px]">pets</span>
     </div>
-    <!-- Info -->
-    <div class="col-md-8">
-      <h2>{{ mascota.nombre }}</h2>
-      <table class="table">
-        <tr><th>Especie</th><td>{{ mascota.especie }}</td></tr>
-        <tr><th>Raza</th><td>{{ mascota.raza|default:'-' }}</td></tr>
-        <tr><th>Sexo</th><td>{{ mascota.sexo }}</td></tr>
-        <tr><th>Edad</th><td>{{ mascota.get_edad }}</td></tr>
-        <tr><th>Esterilizado</th><td>{% if mascota.esterilizado %}✅ Sí{% else %}❌ No{% endif %}</td></tr>
-        <tr><th>Alergias</th><td>{{ mascota.alergias }}</td></tr>
-        {% if user.rol.nombre != 'Cliente' %}
-        <tr><th>Propietario</th><td>{{ mascota.propietario.get_full_name|default:mascota.propietario.username }}</td></tr>
-        {% if mascota.propietario.cedula %}
-        <tr><th>Cédula</th><td>{{ mascota.propietario.cedula }}</td></tr>
-        {% endif %}
-        {% endif %}
-      </table>
+    {% endif %}
+  </div>
 
-      <!-- Last Visit -->
-      <div class="card mb-3">
-        <div class="card-header">📅 Última visita</div>
-        <div class="card-body">
-          {% if ultima_cita %}
-          <p class="mb-0"><strong>{{ ultima_cita.disponibilidad.fecha }}</strong> — {{ ultima_cita.disponibilidad.hora_inicio }}</p>
-          {% else %}
-          <p class="mb-0 text-muted">Sin visitas registradas</p>
+  <!-- Info Table -->
+  <div class="flex-1 min-w-0">
+    <h2 class="font-headline-md text-headline-md text-on-surface mb-4">{{ mascota.nombre }}</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+        <tbody class="font-body-md text-body-md">
+          <tr class="border-b border-outline-variant/10">
+            <th class="text-left px-4 py-3 font-label-md text-label-md text-on-surface-variant w-32">Especie</th>
+            <td class="px-4 py-3 text-on-surface">{{ mascota.especie }}</td>
+          </tr>
+          <tr class="border-b border-outline-variant/10">
+            <th class="text-left px-4 py-3 font-label-md text-label-md text-on-surface-variant">Raza</th>
+            <td class="px-4 py-3 text-on-surface">{{ mascota.raza|default:'-' }}</td>
+          </tr>
+          <tr class="border-b border-outline-variant/10">
+            <th class="text-left px-4 py-3 font-label-md text-label-md text-on-surface-variant">Sexo</th>
+            <td class="px-4 py-3 text-on-surface">{{ mascota.sexo }}</td>
+          </tr>
+          <tr class="border-b border-outline-variant/10">
+            <th class="text-left px-4 py-3 font-label-md text-label-md text-on-surface-variant">Edad</th>
+            <td class="px-4 py-3 text-on-surface">{{ mascota.get_edad }}</td>
+          </tr>
+          <tr class="border-b border-outline-variant/10">
+            <th class="text-left px-4 py-3 font-label-md text-label-md text-on-surface-variant">Esterilizado</th>
+            <td class="px-4 py-3 text-on-surface">
+              {% if mascota.esterilizado %}
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-container/30 text-primary font-caption text-caption">
+                <span class="material-symbols-outlined text-[14px]">check_circle</span> Sí
+              </span>
+              {% else %}
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-caption text-caption">
+                <span class="material-symbols-outlined text-[14px]">cancel</span> No
+              </span>
+              {% endif %}
+            </td>
+          </tr>
+          <tr class="border-b border-outline-variant/10">
+            <th class="text-left px-4 py-3 font-label-md text-label-md text-on-surface-variant">Alergias</th>
+            <td class="px-4 py-3 text-on-surface">{{ mascota.alergias }}</td>
+          </tr>
+          {% if user.rol.nombre != 'Cliente' %}
+          <tr class="border-b border-outline-variant/10">
+            <th class="text-left px-4 py-3 font-label-md text-label-md text-on-surface-variant">Propietario</th>
+            <td class="px-4 py-3 text-on-surface">{{ mascota.propietario.get_full_name|default:mascota.propietario.username }}</td>
+          </tr>
+          {% if mascota.propietario.cedula %}
+          <tr>
+            <th class="text-left px-4 py-3 font-label-md text-label-md text-on-surface-variant">Cédula</th>
+            <td class="px-4 py-3 text-on-surface">{{ mascota.propietario.cedula }}</td>
+          </tr>
           {% endif %}
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="d-flex gap-2 flex-wrap">
-        <a href="{% url 'historial:por_mascota' mascota.pk %}" class="btn btn-info text-white">📋 Historial Clínico</a>
-        <a href="{% url 'agenda:crear_cita' %}" class="btn btn-primary">📅 Agendar Cita</a>
-        <a href="{% url 'mascotas:editar' mascota.pk %}" class="btn btn-warning">✏️ Editar</a>
-        <a href="{% url 'mascotas:lista' %}" class="btn btn-secondary">← Volver</a>
-      </div>
+          {% endif %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
+
+<!-- Last Visit Card -->
+<div class="mb-6">
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
+    <div class="bg-surface-container-high px-6 py-3 border-b border-outline-variant/20">
+      <h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary">calendar_today</span> Última Visita
+      </h3>
+    </div>
+    <div class="p-6">
+      {% if ultima_cita %}
+      <p class="font-body-md text-body-md text-on-surface"><strong>{{ ultima_cita.disponibilidad.fecha }}</strong> — {{ ultima_cita.disponibilidad.hora_inicio }}</p>
+      {% else %}
+      <p class="font-body-md text-body-md text-on-surface-variant">Sin visitas registradas</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Actions -->
+<div class="flex flex-wrap gap-3">
+  <a href="{% url 'historial:por_mascota' mascota.pk %}" class="inline-flex items-center gap-2 bg-tertiary-container/30 text-tertiary font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">
+    <span class="material-symbols-outlined text-[18px]">description</span> Historial Clínico
+  </a>
+  <a href="{% url 'agenda:crear_cita' %}" class="inline-flex items-center gap-2 bg-primary-container/30 text-primary font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">
+    <span class="material-symbols-outlined text-[18px]">event</span> Agendar Cita
+  </a>
+  <a href="{% url 'mascotas:editar' mascota.pk %}" class="inline-flex items-center gap-2 bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-surface-container-highest transition-colors">
+    <span class="material-symbols-outlined text-[18px]">edit</span> Editar
+  </a>
+  <a href="{% url 'mascotas:lista' %}" class="inline-flex items-center gap-2 bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-surface-container-highest transition-colors">
+    <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver
+  </a>
+</div>
+
 {% endblock %}

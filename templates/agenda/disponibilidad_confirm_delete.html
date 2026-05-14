@@ -1,30 +1,28 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<div class="container py-4">
-  <div class="row justify-content-center">
-    <div class="col-md-6">
-      <div class="card border-danger">
-        <div class="card-header bg-danger text-white">
-          <h4 class="mb-0">Confirmar Eliminación</h4>
+<div class="max-w-lg mx-auto">
+  <div class="bg-surface-container-lowest rounded-xl border border-error/30 overflow-hidden custom-shadow">
+    <div class="bg-error px-4 py-3">
+      <h2 class="font-headline-md text-headline-md text-on-error flex items-center gap-2">
+        <span class="material-symbols-outlined">warning</span> Confirmar Eliminación
+      </h2>
+    </div>
+    <div class="p-6">
+      <p class="font-body-md text-body-md text-on-surface mb-4">
+        ¿Estás seguro de que deseas eliminar la disponibilidad de
+        <strong>{{ disponibilidad.veterinario }}</strong>
+        el <strong>{{ disponibilidad.fecha }}</strong>
+        de <strong>{{ disponibilidad.hora_inicio|time:"H:i" }}</strong>
+        a <strong>{{ disponibilidad.hora_fin|time:"H:i" }}</strong>?
+      </p>
+      <p class="text-on-surface-variant font-body-md text-body-md mb-6">Esta acción no se puede deshacer.</p>
+      <form method="post">
+        {% csrf_token %}
+        <div class="flex flex-col gap-3">
+          <button type="submit" class="w-full bg-error text-on-error font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">Sí, eliminar</button>
+          <a href="{% url 'agenda:lista_disponibilidad' %}" class="w-full text-center bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-surface-container-highest transition-colors">Cancelar</a>
         </div>
-        <div class="card-body">
-          <p>¿Estás seguro de que deseas eliminar la disponibilidad de
-            <strong>{{ disponibilidad.veterinario }}</strong>
-            el <strong>{{ disponibilidad.fecha }}</strong>
-            de <strong>{{ disponibilidad.hora_inicio|time:"H:i" }}</strong>
-            a <strong>{{ disponibilidad.hora_fin|time:"H:i" }}</strong>?
-          </p>
-          <p class="text-muted">Esta acción no se puede deshacer.</p>
-          <form method="post">
-            {% csrf_token %}
-            <div class="d-grid gap-2">
-              <button type="submit" class="btn btn-danger">Sí, eliminar</button>
-              <a href="{% url 'agenda:lista_disponibilidad' %}" class="btn btn-secondary">Cancelar</a>
-            </div>
-          </form>
-        </div>
-      </div>
+      </form>
     </div>
   </div>
 </div>

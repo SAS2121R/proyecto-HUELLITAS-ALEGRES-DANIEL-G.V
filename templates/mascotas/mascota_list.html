@@ -1,130 +1,157 @@
 {% extends 'base.html' %}
 {% block back_button %}{% include 'includes/back_button.html' %}{% endblock %}
 {% block content %}
-<div class="container py-4">
-  {% if user.rol.nombre == 'Cliente' %}
-  <h1 class="mb-4"><i class="bi bi-house-heart"></i> Mis Mascotas</h1>
-  {% else %}
-  <h1 class="mb-4">Listado de Mascotas</h1>
-  {% endif %}
 
-  <!-- Action buttons for Cliente -->
+<!-- Page Header -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
   {% if user.rol.nombre == 'Cliente' %}
-  <div class="d-grid d-md-flex gap-3 mb-4">
-    <a href="{% url 'mascotas:nuevo' %}" class="btn btn-success btn-lg">
-      <i class="bi bi-plus-circle"></i> Registrar Mascota
+  <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
+    <span class="material-symbols-outlined text-primary">pets</span> Mis Mascotas
+  </h1>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'mascotas:nuevo' %}" class="inline-flex items-center gap-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">
+      <span class="material-symbols-outlined text-[18px]">add</span> Registrar Mascota
     </a>
-    <a href="{% url 'agenda:lista_citas' %}" class="btn btn-primary btn-lg">
-      <i class="bi bi-calendar-check"></i> Mis Citas
+    <a href="{% url 'agenda:lista_citas' %}" class="inline-flex items-center gap-2 bg-primary-container text-on-primary-container font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">
+      <span class="material-symbols-outlined text-[18px]">calendar_month</span> Mis Citas
+    </a>
+  </div>
+  {% else %}
+  <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
+    <span class="material-symbols-outlined text-primary">pets</span> Listado de Mascotas
+  </h1>
+  {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+  <div class="flex gap-2">
+    <a href="{% url 'mascotas:nuevo' %}" class="inline-flex items-center gap-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">
+      <span class="material-symbols-outlined text-[18px]">add</span> Nueva Mascota
     </a>
   </div>
   {% endif %}
-
-  <!-- Search bar -->
-  <form method="get" class="mb-3">
-    <div class="row g-2 align-items-center">
-      <div class="col-md-6">
-        <div class="input-group">
-          <input type="text" name="q" class="form-control" placeholder="Buscar por nombre, especie o cédula del propietario..." value="{{ q|default:'' }}">
-          {% if especie %}
-          <input type="hidden" name="especie" value="{{ especie }}">
-          {% endif %}
-          <button class="btn btn-outline-secondary" type="submit">Buscar</button>
-          {% if q or especie %}
-          <a href="{% url 'mascotas:lista' %}" class="btn btn-outline-danger">Limpiar</a>
-          {% endif %}
-        </div>
-      </div>
-      <div class="col-md-6 text-end">
-        {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' or user.rol.nombre == 'Cliente' %}
-        <a href="{% url 'mascotas:nuevo' %}" class="btn btn-success"><i class="bi bi-plus-circle"></i> Nueva mascota</a>
-        {% endif %}
-      </div>
-    </div>
-  </form>
-
-  <!-- Species filter badges -->
-  <div class="mb-3">
-    <a href="?{% if q %}q={{ q }}{% endif %}"
-       class="badge rounded-pill {% if not especie %}bg-primary{% else %}bg-secondary{% endif %} text-decoration-none me-1"
-       style="font-size: 0.9rem;">
-      Todos
-    </a>
-    {% for value, label in especie_choices %}
-    <a href="?{% if q %}q={{ q }}&{% endif %}especie={{ value }}"
-       class="badge rounded-pill {% if especie == value %}bg-primary{% else %}bg-secondary{% endif %} text-decoration-none me-1"
-       style="font-size: 0.9rem;">
-      {{ label }}
-    </a>
-    {% endfor %}
-  </div>
-
-  {% if mascotas %}
-    <div class="table-responsive">
-      <table class="table table-hover align-middle">
-        <thead class="table-dark">
-          <tr>
-            <th>Foto</th>
-            <th>Nombre</th>
-            <th>Especie</th>
-            <th>Raza</th>
-            <th>Sexo</th>
-            <th>Edad</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for m in mascotas %}
-          <tr>
-            <td>
-              {% if m.foto %}
-              <img src="{{ m.foto.url }}" alt="{{ m.nombre }}" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
-              {% else %}
-              <span class="text-muted" style="font-size: 1.5rem;">🐾</span>
-              {% endif %}
-            </td>
-            <td><a href="{% url 'mascotas:detalle' m.pk %}">{{ m.nombre }}</a></td>
-            <td>{{ m.especie }}</td>
-            <td>{{ m.raza|default:'-' }}</td>
-            <td>{{ m.sexo }}</td>
-            <td>{{ m.get_edad }}</td>
-            <td>
-              <a href="{% url 'mascotas:editar' m.pk %}" class="btn btn-sm btn-warning">Editar</a>
-              {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
-              <a href="{% url 'mascotas:eliminar' m.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <!-- Paginación -->
-    <nav aria-label="Page navigation">
-      <ul class="pagination justify-content-center">
-        {% if mascotas.has_previous %}
-        <li class="page-item"><a class="page-link" href="?{% if q %}q={{ q }}&{% endif %}{% if especie %}especie={{ especie }}&{% endif %}page={{ mascotas.previous_page_number }}">&laquo; Anterior</a></li>
-        {% else %}
-        <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
-        {% endif %}
-        {% for num in mascotas.paginator.page_range %}
-          {% if mascotas.number == num %}
-          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-          {% elif num >= mascotas.number|add:-2 and num <= mascotas.number|add:2 %}
-          <li class="page-item"><a class="page-link" href="?{% if q %}q={{ q }}&{% endif %}{% if especie %}especie={{ especie }}&{% endif %}page={{ num }}">{{ num }}</a></li>
-          {% endif %}
-        {% endfor %}
-        {% if mascotas.has_next %}
-        <li class="page-item"><a class="page-link" href="?{% if q %}q={{ q }}&{% endif %}{% if especie %}especie={{ especie }}&{% endif %}page={{ mascotas.next_page_number }}">Siguiente &raquo;</a></li>
-        {% else %}
-        <li class="page-item disabled"><span class="page-link">Siguiente &raquo;</span></li>
-        {% endif %}
-      </ul>
-    </nav>
-  {% else %}
-    <div class="alert alert-info text-center">
-      No se encontraron mascotas{% if q or especie %} con los filtros aplicados{% endif %}.
-    </div>
   {% endif %}
 </div>
+
+<!-- Search bar -->
+<form method="get" class="mb-4">
+  <div class="flex flex-col sm:flex-row gap-2">
+    <div class="flex-1 relative">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] pointer-events-none">search</span>
+      <input type="text" name="q" class="w-full pl-10 pr-4 py-2.5 bg-surface-container border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Buscar por nombre, especie o cédula..." value="{{ q|default:'' }}">
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="inline-flex items-center gap-2 bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-surface-container-highest transition-colors">
+        <span class="material-symbols-outlined text-[18px]">search</span> Buscar
+      </button>
+      {% if q or especie %}
+      <a href="{% url 'mascotas:lista' %}" class="inline-flex items-center gap-2 bg-error-container/50 text-on-error-container font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-error-container transition-colors">
+        <span class="material-symbols-outlined text-[18px]">close</span> Limpiar
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% if especie %}
+  <input type="hidden" name="especie" value="{{ especie }}">
+  {% endif %}
+</form>
+
+<!-- Species filter badges -->
+<div class="flex flex-wrap gap-2 mb-4">
+  <a href="?{% if q %}q={{ q }}{% endif %}"
+     class="inline-flex items-center px-3 py-1.5 rounded-full font-caption text-caption {% if not especie %}bg-primary text-on-primary{% else %}bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest{% endif %} transition-colors">
+    Todos
+  </a>
+  {% for value, label in especie_choices %}
+  <a href="?{% if q %}q={{ q }}&{% endif %}especie={{ value }}"
+     class="inline-flex items-center px-3 py-1.5 rounded-full font-caption text-caption {% if especie == value %}bg-primary text-on-primary{% else %}bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest{% endif %} transition-colors">
+    {{ label }}
+  </a>
+  {% endfor %}
+</div>
+
+{% if mascotas %}
+  <!-- Table -->
+  <div class="overflow-x-auto">
+    <table class="w-full bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+      <thead>
+        <tr class="border-b border-outline-variant/20 text-on-surface-variant font-label-md text-label-md">
+          <th class="text-left px-4 py-3">Foto</th>
+          <th class="text-left px-4 py-3">Nombre</th>
+          <th class="text-left px-4 py-3">Especie</th>
+          <th class="text-left px-4 py-3">Raza</th>
+          <th class="text-left px-4 py-3">Sexo</th>
+          <th class="text-left px-4 py-3">Edad</th>
+          <th class="text-left px-4 py-3">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="font-body-md text-body-md text-on-surface">
+        {% for m in mascotas %}
+        <tr class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors">
+          <td class="px-4 py-3">
+            {% if m.foto %}
+            <img src="{{ m.foto.url }}" alt="{{ m.nombre }}" class="w-10 h-10 rounded-full object-cover">
+            {% else %}
+            <span class="material-symbols-outlined text-on-surface-variant text-[24px]">pets</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3"><a href="{% url 'mascotas:detalle' m.pk %}" class="text-primary font-medium hover:underline">{{ m.nombre }}</a></td>
+          <td class="px-4 py-3">{{ m.especie }}</td>
+          <td class="px-4 py-3">{{ m.raza|default:'-' }}</td>
+          <td class="px-4 py-3">{{ m.sexo }}</td>
+          <td class="px-4 py-3">{{ m.get_edad }}</td>
+          <td class="px-4 py-3">
+            <div class="flex gap-2">
+              <a href="{% url 'mascotas:editar' m.pk %}" class="inline-flex items-center gap-1 bg-surface-container-high text-on-surface font-caption text-caption px-2.5 py-1 rounded-lg hover:bg-surface-container-highest transition-colors">
+                <span class="material-symbols-outlined text-[14px]">edit</span> Editar
+              </a>
+              {% if user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+              <a href="{% url 'mascotas:eliminar' m.pk %}" class="inline-flex items-center gap-1 bg-error-container/50 text-error font-caption text-caption px-2.5 py-1 rounded-lg hover:bg-error-container transition-colors">
+                <span class="material-symbols-outlined text-[14px]">delete</span> Eliminar
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <nav class="flex items-center justify-center gap-2 mt-6" aria-label="Paginación">
+    {% if mascotas.has_previous %}
+    <a href="?{% if q %}q={{ q }}&{% endif %}{% if especie %}especie={{ especie }}&{% endif %}page={{ mascotas.previous_page_number }}" class="inline-flex items-center gap-1 px-3 py-2 bg-surface-container-lowest border border-outline-variant/30 rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-high transition-colors">
+      <span class="material-symbols-outlined text-[18px]">chevron_left</span> Anterior
+    </a>
+    {% else %}
+    <span class="inline-flex items-center gap-1 px-3 py-2 bg-surface-container text-on-surface-variant border border-outline-variant/20 rounded-lg font-label-md text-label-md opacity-60">
+      <span class="material-symbols-outlined text-[18px]">chevron_left</span> Anterior
+    </span>
+    {% endif %}
+
+    {% for num in mascotas.paginator.page_range %}
+      {% if mascotas.number == num %}
+      <span class="inline-flex items-center justify-center w-9 h-9 bg-primary text-on-primary rounded-lg font-label-md text-label-md">{{ num }}</span>
+      {% elif num >= mascotas.number|add:-2 and num <= mascotas.number|add:2 %}
+      <a href="?{% if q %}q={{ q }}&{% endif %}{% if especie %}especie={{ especie }}&{% endif %}page={{ num }}" class="inline-flex items-center justify-center w-9 h-9 bg-surface-container-lowest border border-outline-variant/20 rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-high transition-colors">{{ num }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if mascotas.has_next %}
+    <a href="?{% if q %}q={{ q }}&{% endif %}{% if especie %}especie={{ especie }}&{% endif %}page={{ mascotas.next_page_number }}" class="inline-flex items-center gap-1 px-3 py-2 bg-surface-container-lowest border border-outline-variant/30 rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-high transition-colors">
+      Siguiente <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+    </a>
+    {% else %}
+    <span class="inline-flex items-center gap-1 px-3 py-2 bg-surface-container text-on-surface-variant border border-outline-variant/20 rounded-lg font-label-md text-label-md opacity-60">
+      Siguiente <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+    </span>
+    {% endif %}
+  </nav>
+
+{% else %}
+  <!-- Empty state -->
+  <div class="flex items-center justify-center gap-3 p-8 bg-surface-container rounded-xl border border-outline-variant/20">
+    <span class="material-symbols-outlined text-on-surface-variant text-[24px]">pets</span>
+    <p class="font-body-md text-body-md text-on-surface-variant">No se encontraron mascotas{% if q or especie %} con los filtros aplicados{% endif %}.</p>
+  </div>
+{% endif %}
+
 {% endblock %}

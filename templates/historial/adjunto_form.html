@@ -1,54 +1,103 @@
 {% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    .tw-form input[type="text"],
+    .tw-form input[type="email"],
+    .tw-form input[type="password"],
+    .tw-form input[type="number"],
+    .tw-form input[type="date"],
+    .tw-form input[type="time"],
+    .tw-form input[type="url"],
+    .tw-form input[type="tel"],
+    .tw-form textarea,
+    .tw-form select {
+        width: 100%; padding: 0.625rem 1rem; background: #f3f4f5; border: 1px solid #c2c8bf;
+        border-radius: 0.5rem; font-family: 'Manrope', sans-serif; font-size: 1rem;
+        line-height: 1.6; color: #191c1d; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .tw-form input:focus, .tw-form textarea:focus, .tw-form select:focus {
+        outline: none; border-color: #37563b; box-shadow: 0 0 0 1px #37563b;
+    }
+    .tw-form input[type="file"] { padding: 0.5rem; }
+    .tw-form label { display: block; font-family: 'Manrope', sans-serif; font-size: 0.875rem; font-weight: 600; letter-spacing: 0.01em; color: #191c1d; margin-bottom: 0.375rem; }
+    .tw-form .helptext { display: block; margin-top: 0.25rem; font-size: 0.75rem; color: #424841; }
+    .tw-form .errorlist { list-style: none; padding: 0; margin: 0.25rem 0 0; }
+    .tw-form .errorlist li { font-size: 0.75rem; color: #ba1a1a; font-weight: 500; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Subir Archivo Adjunto</h1>
-    <a href="{% url 'historial:detalle' historial.pk %}" class="btn btn-outline-secondary">Volver al Historial</a>
-  </div>
-
-  <div class="card mb-4">
-    <div class="card-body">
-      <h5 class="card-title">Historial #{{ historial.pk }}</h5>
-      <p class="card-text">
-        <strong>Mascota:</strong> {{ historial.mascota }} |
-        <strong>Tipo:</strong> {{ historial.get_tipo_consulta_display }} |
-        <strong>Fecha:</strong> {{ historial.fecha_consulta|date:"d/m/Y" }}
-      </p>
+<div class="max-w-2xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary">upload</span> Subir Archivo Adjunto
+        </h1>
+        <a href="{% url 'historial:detalle' historial.pk %}" class="inline-flex items-center gap-1.5 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver al Historial
+        </a>
     </div>
-  </div>
 
-  <div class="card">
-    <div class="card-body">
-      <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="mb-3">
-          <label for="{{ form.archivo.id_for_label }}" class="form-label">Archivo</label>
-          {{ form.archivo }}
-          <div class="form-text">Tamaño máximo: 5 MB. Formatos recomendados: PDF, JPG, PNG.</div>
-          {% if form.archivo.errors %}
-            <div class="text-danger">{{ form.archivo.errors }}</div>
-          {% endif %}
+    {# Historial info card #}
+    <div class="bg-surface-container-low rounded-xl p-4 border border-outline-variant/20 mb-6">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary text-[28px]">clinical_notes</span>
+            <div>
+                <h3 class="font-label-md text-label-md text-on-surface">Historial #{{ historial.pk }}</h3>
+                <p class="font-caption text-caption text-on-surface-variant">
+                    <span class="font-medium">{{ historial.mascota }}</span> · {{ historial.get_tipo_consulta_display }} · {{ historial.fecha_consulta|date:"d/m/Y" }}
+                </p>
+            </div>
         </div>
-        <div class="mb-3">
-          <label for="{{ form.tipo.id_for_label }}" class="form-label">Tipo de archivo</label>
-          {{ form.tipo }}
-          {% if form.tipo.errors %}
-            <div class="text-danger">{{ form.tipo.errors }}</div>
-          {% endif %}
-        </div>
-        <div class="mb-3">
-          <label for="{{ form.descripcion.id_for_label }}" class="form-label">Descripción</label>
-          {{ form.descripcion }}
-          {% if form.descripcion.errors %}
-            <div class="text-danger">{{ form.descripcion.errors }}</div>
-          {% endif %}
-        </div>
-        <button type="submit" class="btn btn-primary">
-          <i class="bi bi-upload"></i> Subir Archivo
-        </button>
-        <a href="{% url 'historial:detalle' historial.pk %}" class="btn btn-outline-secondary">Cancelar</a>
-      </form>
     </div>
-  </div>
+
+    {# Upload form #}
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 tw-form">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label for="{{ form.archivo.id_for_label }}">Archivo</label>
+                {{ form.archivo }}
+                <p class="mt-1 font-caption text-caption text-on-surface-variant">Tamaño máximo: 5 MB. Formatos recomendados: PDF, JPG, PNG.</p>
+                {% if form.archivo.errors %}
+                <div class="mt-1">
+                    {% for error in form.archivo.errors %}
+                    <p class="text-error font-caption text-caption">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="mb-4">
+                <label for="{{ form.tipo.id_for_label }}">Tipo de archivo</label>
+                {{ form.tipo }}
+                {% if form.tipo.errors %}
+                <div class="mt-1">
+                    {% for error in form.tipo.errors %}
+                    <p class="text-error font-caption text-caption">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="mb-4">
+                <label for="{{ form.descripcion.id_for_label }}">Descripción</label>
+                {{ form.descripcion }}
+                {% if form.descripcion.errors %}
+                <div class="mt-1">
+                    {% for error in form.descripcion.errors %}
+                    <p class="text-error font-caption text-caption">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button type="submit" class="bg-primary text-on-primary font-label-md text-label-md rounded-lg px-lg py-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">upload</span> Subir Archivo
+                </button>
+                <a href="{% url 'historial:detalle' historial.pk %}" class="bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-lg py-sm hover:bg-surface-container-highest transition-colors inline-flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">close</span> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

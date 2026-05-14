@@ -9,6 +9,12 @@ from .forms import MascotaForm
 
 
 @login_required(login_url='/usuarios/login/')
+def cliente_dashboard(request):
+    """Dashboard del Cliente — portal con accesos rápidos."""
+    return render(request, 'mascotas/cliente_dashboard.html')
+
+
+@login_required(login_url='/usuarios/login/')
 def lista_mascotas(request):
     """Lista mascotas con filtrado por rol, búsqueda Q objects y filtro por especie."""
     q = request.GET.get('q', '').strip()

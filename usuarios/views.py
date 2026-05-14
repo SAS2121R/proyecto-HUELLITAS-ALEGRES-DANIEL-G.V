@@ -45,6 +45,13 @@ import json
 Usuario = get_user_model()
 
 
+def landing_page(request):
+    """Landing page pública. Usuarios autenticados son redirigidos a su dashboard por rol."""
+    if request.user.is_authenticated:
+        return redirect(get_redirect_url(request.user))
+    return render(request, 'landing.html')
+
+
 def get_redirect_url(user):
     """Retorna la URL de redirección post-login según el rol del usuario."""
     rol_nombre = user.rol.nombre
@@ -53,7 +60,7 @@ def get_redirect_url(user):
     elif rol_nombre == 'Veterinario':
         return reverse('agenda:dashboard_vet')
     elif rol_nombre == 'Cliente':
-        return reverse('mascotas:lista')
+        return reverse('mascotas:dashboard')
     elif rol_nombre == 'Domiciliario':
         return reverse('entregas:dashboard')
     else:
@@ -344,7 +351,13 @@ def register_view(request):
 def admin_user_list(request):
     """Vista para listar todos los usuarios (solo Administrador)."""
     users = Usuario.objects.select_related('rol').all().order_by('pk')
-    return render(request, 'usuarios/admin/user_list.html', {'users': users})
+    return render(request, 'usuarios/admin/users.html', {
+        'users': users,
+        'search': '',
+        'rol_filter': '',
+        'status_filter': '',
+        'roles': Rol.objects.all().order_by('nombre'),
+    })
 
 
 @login_required
@@ -357,10 +370,10 @@ def admin_user_edit(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, f'Rol de {user.get_full_name() or user.username} actualizado exitosamente.')
-            return redirect('usuarios:admin_user_list')
+            return redirect('usuarios:admin_users')
     else:
         form = RolChangeForm(instance=user)
-    return render(request, 'usuarios/admin/user_edit.html', {'form': form, 'target_user': user})
+    return render(request, 'usuarios/admin/user_form.html', {'form': form, 'target_user': user, 'action': 'Editar'})
 
 
 # ========================================
@@ -369,8 +382,8 @@ def admin_user_edit(request, pk):
 @login_required
 @veterinario_required
 def vet_dashboard(request):
-    """Vista del dashboard para veterinarios."""
-    return render(request, 'usuarios/dashboard_vet.html')
+    """Vista del dashboard para veterinarios — redirige al dashboard de agenda."""
+    return redirect('agenda:dashboard_vet')
 
 
 @login_required

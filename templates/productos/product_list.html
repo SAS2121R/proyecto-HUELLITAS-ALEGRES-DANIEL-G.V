@@ -1,108 +1,153 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container py-4">
-  <h1 class="mb-4">Listado de Productos</h1>
-
-  <!-- Search and filter bar -->
-  <form method="get" class="row g-3 mb-3">
-    <div class="col-md-5">
-      <input type="text" name="q" class="form-control" placeholder="Buscar por nombre o proveedor..." value="{{ search|default:'' }}">
-    </div>
-    <div class="col-md-3">
-      <select name="categoria" class="form-select">
-        <option value="">Todas las categorías</option>
-        {% for val, label in categorias %}
-        <option value="{{ val }}" {% if categoria == val %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-2">
-      <button type="submit" class="btn btn-primary w-100">Filtrar</button>
-    </div>
-    <div class="col-md-2">
-      <a href="{% url 'productos:lista' %}" class="btn btn-outline-secondary w-100">Limpiar</a>
-    </div>
-  </form>
-
-  <div class="d-flex justify-content-between mb-3">
-    <div>
-      <a href="{% url 'productos:alertas' %}" class="btn btn-outline-danger">
-        Alertas Stock {% if alert_products %}<span class="badge bg-danger">{{ alert_products|length }}</span>{% endif %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
+      <span class="material-symbols-outlined text-primary">inventory_2</span> Productos
+    </h1>
+    <div class="flex flex-wrap gap-2">
+      <a href="{% url 'productos:alertas' %}" class="inline-flex items-center gap-2 bg-error-container text-on-error-container font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">
+        <span class="material-symbols-outlined text-[18px]">warning</span>
+        Alertas{% if alert_products %} ({{ alert_products|length }}){% endif %}
       </a>
-    </div>
-    <div>
-      <a href="{% url 'productos:nuevo' %}" class="btn btn-success">Nuevo producto</a>
-      <a href="{% url 'productos:entrada' %}" class="btn btn-outline-primary">Entrada inventario</a>
+      <a href="{% url 'productos:nuevo' %}" class="inline-flex items-center gap-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">
+        <span class="material-symbols-outlined text-[18px]">add</span> Nuevo
+      </a>
+      <a href="{% url 'productos:entrada' %}" class="inline-flex items-center gap-2 bg-primary-container text-on-primary-container font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity">
+        <span class="material-symbols-outlined text-[18px]">archive</span> Entrada
+      </a>
     </div>
   </div>
 
-  {% if page_obj %}
-    <div class="table-responsive">
-      <table class="table table-hover align-middle">
-        <thead class="table-dark">
-          <tr>
-            <th>Nombre</th>
-            <th>Categoría</th>
-            <th>Precio</th>
-            <th>Stock</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for p in page_obj %}
-          <tr>
-            <td>
-              {{ p.nombre }}
-              {% if not p.esta_activo %}<span class="badge bg-secondary">Inactivo</span>{% endif %}
-            </td>
-            <td>{{ p.get_categoria_display }}</td>
-            <td>${{ p.precio }}</td>
-            <td>{{ p.cantidad_stock }}</td>
-            <td>
-              {% if p.estado_stock == 'verde' %}
-              <span class="badge bg-success">OK</span>
-              {% elif p.estado_stock == 'amarillo' %}
-              <span class="badge bg-warning text-dark">Bajo</span>
-              {% else %}
-              <span class="badge bg-danger">Crítico</span>
-              {% endif %}
-            </td>
-            <td>
-              <a href="{% url 'productos:kardex' p.pk %}" class="btn btn-sm btn-info" title="Kardex">Kardex</a>
-              <a href="{% url 'productos:editar' p.pk %}" class="btn btn-sm btn-warning">Editar</a>
-              <a href="{% url 'productos:eliminar' p.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
-            </td>
-          </tr>
+  <!-- Search & Filter Bar -->
+  <form method="get" class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-4 mb-6">
+    <div class="flex flex-col md:flex-row gap-3">
+      <div class="flex-1">
+        <input type="text" name="q" placeholder="Buscar por nombre o proveedor..." value="{{ search|default:'' }}"
+               class="w-full rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface font-body-md text-body-md px-3.5 py-2.5 placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-shadow">
+      </div>
+      <div class="md:w-56">
+        <select name="categoria" class="w-full rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface font-body-md text-body-md px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-shadow">
+          <option value="">Todas las categorías</option>
+          {% for val, label in categorias %}
+          <option value="{{ val }}" {% if categoria == val %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
-        </tbody>
-      </table>
+        </select>
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="inline-flex items-center gap-1.5 bg-primary text-on-primary font-label-md text-label-md rounded-lg px-5 py-2.5 hover:opacity-90 transition-opacity">
+          <span class="material-symbols-outlined text-[18px]">search</span> Filtrar
+        </button>
+        <a href="{% url 'productos:lista' %}" class="inline-flex items-center gap-1.5 bg-surface-container-high text-on-surface-variant font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-surface-container-highest transition-colors">
+          <span class="material-symbols-outlined text-[18px]">close</span> Limpiar
+        </a>
+      </div>
     </div>
-    <!-- Paginación -->
-    <nav aria-label="Page navigation">
-      <ul class="pagination justify-content-center">
-        {% if page_obj.has_previous %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if categoria %}&categoria={{ categoria }}{% endif %}">&laquo; Anterior</a></li>
-        {% else %}
-        <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
+  </form>
+
+  {% if page_obj %}
+    <!-- Table -->
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="bg-surface-container">
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-left">Nombre</th>
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-left">Categoría</th>
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-left">Precio</th>
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-center">Stock</th>
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-center">Estado</th>
+              <th class="font-label-md text-label-md text-on-surface px-4 py-3 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-outline-variant/20">
+            {% for p in page_obj %}
+            <tr class="hover:bg-surface-container-low/50 transition-colors">
+              <td class="px-4 py-3 font-body-md text-body-md text-on-surface">
+                {{ p.nombre }}
+                {% if not p.esta_activo %}<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-caption text-caption">Inactivo</span>{% endif %}
+              </td>
+              <td class="px-4 py-3 font-body-md text-body-md text-on-surface-variant">{{ p.get_categoria_display }}</td>
+              <td class="px-4 py-3 font-body-md text-body-md text-on-surface">${{ p.precio }}</td>
+              <td class="px-4 py-3 font-body-md text-body-md text-on-surface text-center">{{ p.cantidad_stock }}</td>
+              <td class="px-4 py-3 text-center">
+                {% if p.estado_stock == 'verde' %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-container/30 text-on-primary-container font-caption text-caption">
+                  <span class="w-1.5 h-1.5 rounded-full bg-primary"></span> OK
+                </span>
+                {% elif p.estado_stock == 'amarillo' %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-container/30 text-on-tertiary-container font-caption text-caption">
+                  <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Bajo
+                </span>
+                {% else %}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error-container/50 text-on-error-container font-caption text-caption">
+                  <span class="w-1.5 h-1.5 rounded-full bg-error"></span> Crítico
+                </span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex justify-center gap-1.5">
+                  <a href="{% url 'productos:kardex' p.pk %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary-container text-on-secondary-container font-caption text-caption hover:opacity-90 transition-opacity">
+                    <span class="material-symbols-outlined text-[16px]">history</span> Kardex
+                  </a>
+                  <a href="{% url 'productos:editar' p.pk %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-tertiary-container text-on-tertiary-container font-caption text-caption hover:opacity-90 transition-opacity">
+                    <span class="material-symbols-outlined text-[16px]">edit</span> Editar
+                  </a>
+                  <a href="{% url 'productos:eliminar' p.pk %}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-error-container text-on-error-container font-caption text-caption hover:opacity-90 transition-opacity">
+                    <span class="material-symbols-outlined text-[16px]">delete</span> Eliminar
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="flex items-center justify-center gap-1 mt-6" aria-label="Paginación">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if categoria %}&categoria={{ categoria }}{% endif %}"
+         class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant/20 text-on-surface-variant font-label-md text-label-md hover:bg-surface-container transition-colors">
+        <span class="material-symbols-outlined text-[18px]">chevron_left</span> Anterior
+      </a>
+      {% else %}
+      <span class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant/10 text-on-surface-variant/40 font-label-md text-label-md cursor-not-allowed">
+        <span class="material-symbols-outlined text-[18px]">chevron_left</span> Anterior
+      </span>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="inline-flex items-center justify-center min-w-[40px] h-10 rounded-lg bg-primary text-on-primary font-label-md text-label-md">{{ num }}</span>
+        {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+        <a href="?page={{ num }}{% if search %}&q={{ search }}{% endif %}{% if categoria %}&categoria={{ categoria }}{% endif %}"
+           class="inline-flex items-center justify-center min-w-[40px] h-10 rounded-lg bg-surface-container-lowest border border-outline-variant/20 text-on-surface-variant font-label-md text-label-md hover:bg-surface-container transition-colors">{{ num }}</a>
         {% endif %}
-        {% for num in page_obj.paginator.page_range %}
-          {% if page_obj.number == num %}
-          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-          {% elif num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
-          <li class="page-item"><a class="page-link" href="?page={{ num }}{% if search %}&q={{ search }}{% endif %}{% if categoria %}&categoria={{ categoria }}{% endif %}">{{ num }}</a></li>
-          {% endif %}
-        {% endfor %}
-        {% if page_obj.has_next %}
-        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}{% if categoria %}&categoria={{ categoria }}{% endif %}">Siguiente &raquo;</a></li>
-        {% else %}
-        <li class="page-item disabled"><span class="page-link">Siguiente &raquo;</span></li>
-        {% endif %}
-      </ul>
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}{% if categoria %}&categoria={{ categoria }}{% endif %}"
+         class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant/20 text-on-surface-variant font-label-md text-label-md hover:bg-surface-container transition-colors">
+        Siguiente <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+      </a>
+      {% else %}
+      <span class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant/10 text-on-surface-variant/40 font-label-md text-label-md cursor-not-allowed">
+        Siguiente <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+      </span>
+      {% endif %}
     </nav>
+    {% endif %}
+
   {% else %}
-    <div class="alert alert-info text-center">
-      No hay productos registrados en la base de datos.
+    <!-- Empty State -->
+    <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-12 text-center">
+      <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 mb-3">inventory_2</span>
+      <h3 class="font-headline-md text-headline-md text-on-surface-variant mb-2">Sin productos</h3>
+      <p class="font-body-md text-body-md text-on-surface-variant/60">No hay productos registrados en la base de datos.</p>
     </div>
   {% endif %}
 </div>

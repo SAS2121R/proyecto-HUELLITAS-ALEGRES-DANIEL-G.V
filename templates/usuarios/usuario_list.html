@@ -1,28 +1,42 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container py-4">
-  <h1 class="mb-4">Listado de Usuarios</h1>
-  <div class="table-responsive">
-    <table class="table table-hover">
-      <thead class="table-dark">
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+  <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
+    <span class="material-symbols-outlined text-primary">people</span> Listado de Usuarios
+  </h1>
+</div>
+
+{% if users %}
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-outline-variant/10 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full">
+      <thead class="border-b border-outline-variant/20">
         <tr>
-          <th>Email</th>
-          <th>Nombre</th>
-          <th>Rol</th>
-          <th>Fecha de registro</th>
+          <th class="px-4 py-3 text-left font-label-md text-label-md text-on-surface-variant">Email</th>
+          <th class="px-4 py-3 text-left font-label-md text-label-md text-on-surface-variant">Nombre</th>
+          <th class="px-4 py-3 text-left font-label-md text-label-md text-on-surface-variant">Rol</th>
+          <th class="px-4 py-3 text-left font-label-md text-label-md text-on-surface-variant">Fecha de registro</th>
         </tr>
       </thead>
       <tbody>
         {% for u in users %}
-        <tr>
-          <td>{{ u.email }}</td>
-          <td>{{ u.first_name|default:u.username }}</td>
-          <td>{{ u.rol.nombre }}</td>
-          <td>{{ u.fecha_registro|date:"d/m/Y" }}</td>
+        <tr class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors">
+          <td class="px-4 py-3 font-body-md text-body-md text-on-surface">{{ u.email }}</td>
+          <td class="px-4 py-3 font-body-md text-body-md text-on-surface">{{ u.first_name|default:u.username }}</td>
+          <td class="px-4 py-3">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-container/30 text-primary font-caption text-caption">{{ u.rol.nombre }}</span>
+          </td>
+          <td class="px-4 py-3 font-body-md text-body-md text-on-surface">{{ u.fecha_registro|date:"d/m/Y" }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+{% else %}
+<div class="flex items-center justify-center gap-3 p-8 bg-surface-container rounded-xl border border-outline-variant/20">
+  <span class="material-symbols-outlined text-on-surface-variant text-[32px]">person_off</span>
+  <p class="font-body-md text-body-md text-on-surface-variant">No hay usuarios registrados.</p>
+</div>
+{% endif %}
 {% endblock %}

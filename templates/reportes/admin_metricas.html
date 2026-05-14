@@ -17,7 +17,7 @@
     }
     .progress-ring__bg {
         fill: none;
-        stroke: #e9ecef;
+        stroke: #c2c8bf;
         stroke-width: 12;
     }
     .progress-ring__fill {
@@ -28,27 +28,12 @@
         stroke-dashoffset: 452;
         transition: stroke-dashoffset 1.6s cubic-bezier(.4,0,.2,1), stroke .3s ease;
     }
-    .progress-ring__fill.animated {
-        /* offset set via JS after element is in viewport */
-    }
     .progress-ring-center {
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
         text-align: center;
-    }
-    .progress-ring-center .ring-value {
-        font-size: 2.5rem;
-        font-weight: 800;
-        line-height: 1;
-    }
-    .progress-ring-center .ring-label {
-        font-size: .75rem;
-        text-transform: uppercase;
-        letter-spacing: .08rem;
-        color: #6c757d;
-        margin-top: 2px;
     }
     /* Mini ring for card */
     .progress-ring-mini {
@@ -59,219 +44,181 @@
         width: 64px;
         height: 64px;
     }
-    .progress-ring-mini .progress-ring__bg { stroke-width: 14; stroke: #e9ecef; }
+    .progress-ring-mini .progress-ring__bg { stroke-width: 14; stroke: #c2c8bf; }
     .progress-ring-mini .progress-ring__fill { stroke-width: 14; stroke-dasharray: 163; stroke-dashoffset: 163; }
     .mini-ring-center {
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%,-50%);
-        font-size: .85rem;
-        font-weight: 800;
-        line-height: 1;
-    }
-    /* Detail stats */
-    .stat-item {
-        display: flex;
-        align-items: center;
-        gap: .6rem;
-        padding: .55rem 0;
-    }
-    .stat-item .stat-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: .9rem;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="mb-0"><i class="bi bi-bar-chart-line"></i> Métricas de Negocio</h1>
-        <div>
-            <a href="{% url 'reportes:admin_metricas_pdf' %}" class="btn btn-outline-danger btn-sm"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
-            <a href="{% url 'reportes:admin_metricas_excel' %}" class="btn btn-outline-success btn-sm"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+<div class="max-w-6xl mx-auto">
+    {# ── Header ── #}
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+        <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary">monitoring</span> Métricas de Negocio
+        </h1>
+        <div class="flex gap-2">
+            <a href="{% url 'reportes:admin_metricas_pdf' %}" class="inline-flex items-center gap-1.5 bg-error-container/50 text-on-error-container font-label-md text-label-md rounded-lg px-3 py-2 hover:bg-error-container transition-colors" target="_blank">
+                <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span> PDF
+            </a>
+            <a href="{% url 'reportes:admin_metricas_excel' %}" class="inline-flex items-center gap-1.5 bg-primary-container/30 text-primary font-label-md text-label-md rounded-lg px-3 py-2 hover:bg-primary-container transition-colors">
+                <span class="material-symbols-outlined text-[16px]">table</span> Excel
+            </a>
         </div>
     </div>
-    <p class="text-muted">Período: {{ start_of_month|date:"F Y" }} — Datos hasta {{ today|date:"d/m/Y" }}</p>
+    <p class="text-on-surface-variant font-body-md text-body-md mb-6">Período: {{ start_of_month|date:"F Y" }} — Datos hasta {{ today|date:"d/m/Y" }}</p>
 
-    <!-- Summary Cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
-            <div class="card shadow-sm text-center card-hover">
-                <div class="card-body">
-                    <i class="bi bi-bag-check fs-2 text-success"></i>
-                    <h3 class="mt-1 mb-0">{{ total_entregados }}</h3>
-                    <small class="text-muted">Pedidos Entregados</small>
-                </div>
+    {# ── Summary Cards ── #}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-4 text-center">
+            <span class="material-symbols-outlined text-on-tertiary text-[28px]" style="font-variation-settings: 'FILL' 1;">local_shipping</span>
+            <p class="font-headline-lg text-headline-lg text-on-surface mt-1">{{ total_entregados }}</p>
+            <p class="font-caption text-caption text-on-surface-variant">Pedidos Entregados</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-4 text-center">
+            <span class="material-symbols-outlined text-secondary text-[28px]">payments</span>
+            <p class="font-headline-lg text-headline-lg text-on-surface mt-1">${{ ingresos_mes|floatformat:0 }}</p>
+            <p class="font-caption text-caption text-on-surface-variant">Ingresos del Mes</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-4 text-center">
+            <span class="material-symbols-outlined text-error text-[28px]">warning</span>
+            <p class="font-headline-lg text-headline-lg text-on-surface mt-1">{{ con_incidente }}</p>
+            <p class="font-caption text-caption text-on-surface-variant">Incidentes</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-4 flex items-center justify-center gap-3">
+            <div class="progress-ring-mini relative">
+                <svg viewBox="0 0 64 64">
+                    <circle class="progress-ring__bg" cx="32" cy="32" r="26"/>
+                    <circle class="progress-ring__fill" cx="32" cy="32" r="26" data-percent="{{ tasa_cumplimiento }}"
+                            style="stroke: {% if tasa_cumplimiento >= 90 %}#37563b{% elif tasa_cumplimiento >= 70 %}#4f6f52{% else %}#625e56{% endif %};"/>
+                </svg>
+                <span class="mini-ring-center font-headline-md text-headline-md {% if tasa_cumplimiento >= 70 %}text-primary{% else %}text-secondary{% endif %}">{{ tasa_cumplimiento }}%</span>
+            </div>
+            <div class="text-left">
+                <p class="font-headline-md text-headline-md text-on-surface {% if tasa_cumplimiento >= 90 %}text-primary{% elif tasa_cumplimiento >= 70 %}text-primary{% else %}text-secondary{% endif %}">{{ tasa_cumplimiento }}%</p>
+                <p class="font-caption text-caption text-on-surface-variant">Cumplimiento</p>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="card shadow-sm text-center card-hover">
-                <div class="card-body">
-                    <i class="bi bi-cash-coin fs-2 text-warning"></i>
-                    <h3 class="mt-1 mb-0">${{ ingresos_mes|floatformat:0 }}</h3>
-                    <small class="text-muted">Ingresos del Mes</small>
-                </div>
+    </div>
+
+    {# ── Tables + Details ── #}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        {# ── TOP 5 PRODUCTOS ── #}
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
+            <div class="bg-tertiary-container px-5 py-3">
+                <h2 class="font-label-md text-label-md text-on-tertiary-container flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">emoji_events</span> Top 5 Productos Más Vendidos
+                </h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-outline-variant/20 text-on-surface-variant font-label-md text-label-md">
+                            <th class="px-4 py-3">#</th>
+                            <th class="px-4 py-3">Producto</th>
+                            <th class="px-4 py-3">Categoría</th>
+                            <th class="px-4 py-3">Unidades</th>
+                            <th class="px-4 py-3">Ingresos</th>
+                        </tr>
+                    </thead>
+                    <tbody class="font-body-md text-body-md text-on-surface">
+                        {% for prod in top_productos %}
+                        <tr class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors">
+                            <td class="px-4 py-3 font-label-md text-label-md">{{ forloop.counter }}</td>
+                            <td class="px-4 py-3">{{ prod.producto__nombre }}</td>
+                            <td class="px-4 py-3"><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary-container/50 text-on-secondary-container font-caption text-caption">{{ prod.producto__categoria }}</span></td>
+                            <td class="px-4 py-3">{{ prod.total_vendido }}</td>
+                            <td class="px-4 py-3 font-label-md text-label-md">${{ prod.ingresos|floatformat:0 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="px-4 py-6 text-center text-on-surface-variant">Sin datos</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="card shadow-sm text-center card-hover">
-                <div class="card-body">
-                    <i class="bi bi-exclamation-triangle fs-2 text-danger"></i>
-                    <h3 class="mt-1 mb-0">{{ con_incidente }}</h3>
-                    <small class="text-muted">Incidentes</small>
-                </div>
+
+        {# ── PRODUCTIVIDAD STAFF ── #}
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
+            <div class="bg-primary-container px-5 py-3">
+                <h2 class="font-label-md text-label-md text-on-primary-container flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">assignment_turned_in</span> Productividad de Staff
+                </h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-outline-variant/20 text-on-surface-variant font-label-md text-label-md">
+                            <th class="px-4 py-3">Veterinario</th>
+                            <th class="px-4 py-3">Citas este Mes</th>
+                            <th class="px-4 py-3">Citas Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="font-body-md text-body-md text-on-surface">
+                        {% for vet in vet_productividad %}
+                        <tr class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors">
+                            <td class="px-4 py-3">{{ vet.get_full_name|default:vet.email }}</td>
+                            <td class="px-4 py-3"><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary-container/30 text-primary font-caption text-caption">{{ vet.citas_mes }}</span></td>
+                            <td class="px-4 py-3">{{ vet.citas_total }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="px-4 py-6 text-center text-on-surface-variant">Sin datos</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="card shadow-sm text-center card-hover position-relative" style="overflow:hidden;">
-                <div class="card-body d-flex align-items-center justify-content-center gap-3">
-                    <!-- Mini Progress Ring -->
-                    <div class="progress-ring-mini position-relative">
-                        <svg viewBox="0 0 64 64">
-                            <circle class="progress-ring__bg" cx="32" cy="32" r="26"/>
-                            <circle class="progress-ring__fill"
-                                    cx="32" cy="32" r="26"
-                                    data-percent="{{ tasa_cumplimiento }}"
-                                    style="stroke: {% if tasa_cumplimiento >= 90 %}#198754{% elif tasa_cumplimiento >= 70 %}#28a745{% else %}#fd7e14{% endif %};"/>
+    </div>
+
+    {# ── TASA CUMPLIMIENTO + CONFIG ── #}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        {# ── Donut Ring ── #}
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
+            <div class="bg-surface-container-highest px-5 py-3">
+                <h2 class="font-label-md text-label-md text-on-surface flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">speed</span> Tasa de Cumplimiento
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="flex items-center gap-6">
+                    {# Progress Ring #}
+                    <div class="progress-ring-container flex-shrink-0">
+                        <svg class="progress-ring" viewBox="0 0 180 180" width="180" height="180">
+                            <circle class="progress-ring__bg" cx="90" cy="90" r="72"/>
+                            <circle class="progress-ring__fill" id="ring-fill" cx="90" cy="90" r="72" data-percent="{{ tasa_cumplimiento }}"
+                                    style="stroke: {% if tasa_cumplimiento >= 90 %}#37563b{% elif tasa_cumplimiento >= 70 %}#4f6f52{% else %}#625e56{% endif %};"/>
                         </svg>
-                        <span class="mini-ring-center text-{% if tasa_cumplimiento >= 70 %}success{% else %}warning{% endif %}">{{ tasa_cumplimiento }}%</span>
+                        <div class="progress-ring-center">
+                            <div class="font-display-lg text-display-lg {% if tasa_cumplimiento >= 70 %}text-primary{% else %}text-secondary{% endif %}" id="ring-value" style="font-family: 'Plus Jakarta Sans', sans-serif;">{{ tasa_cumplimiento }}%</div>
+                            <div class="font-caption text-caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.08rem; margin-top: 2px;">Cumplimiento</div>
+                        </div>
                     </div>
-                    <div class="text-start">
-                        <h4 class="mb-0 fw-bold text-{% if tasa_cumplimiento >= 90 %}success{% elif tasa_cumplimiento >= 70 %}success{% else %}warning{% endif %}">{{ tasa_cumplimiento }}%</h4>
-                        <small class="text-muted">Cumplimiento</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4">
-        <!-- TOP 5 PRODUCTOS -->
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-trophy"></i> Top 5 Productos Más Vendidos</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-sm mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>#</th>
-                                    <th>Producto</th>
-                                    <th>Categoría</th>
-                                    <th>Unidades</th>
-                                    <th>Ingresos</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for prod in top_productos %}
-                                <tr>
-                                    <td><strong>{{ forloop.counter }}</strong></td>
-                                    <td>{{ prod.producto__nombre }}</td>
-                                    <td><span class="badge bg-secondary">{{ prod.producto__categoria }}</span></td>
-                                    <td>{{ prod.total_vendido }}</td>
-                                    <td>${{ prod.ingresos|floatformat:0 }}</td>
-                                </tr>
-                                {% empty %}
-                                <tr><td colspan="5" class="text-center text-muted">Sin datos</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- PRODUCTIVIDAD STAFF -->
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Productividad de Staff</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-sm mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Veterinario</th>
-                                    <th>Citas este Mes</th>
-                                    <th>Citas Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for vet in vet_productividad %}
-                                <tr>
-                                    <td>{{ vet.get_full_name|default:vet.email }}</td>
-                                    <td>
-                                        <span class="badge bg-primary rounded-pill">{{ vet.citas_mes }}</span>
-                                    </td>
-                                    <td>{{ vet.citas_total }}</td>
-                                </tr>
-                                {% empty %}
-                                <tr><td colspan="3" class="text-center text-muted">Sin datos</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- TASA CUMPLIMIENTO DETALLE — Donut Ring -->
-    <div class="row g-4 mt-1">
-        <div class="col-md-6">
-            <div class="card shadow-sm" style="box-shadow: 0 .35rem .8rem rgba(0,0,0,.08);">
-                <div class="card-header bg-dark text-white">
-                    <h5 class="mb-0"><i class="bi bi-speedometer2"></i> Tasa de Cumplimiento</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex align-items-center gap-4">
-                        <!-- Progress Ring -->
-                        <div class="progress-ring-container flex-shrink-0">
-                            <svg class="progress-ring" viewBox="0 0 180 180" width="180" height="180">
-                                <circle class="progress-ring__bg" cx="90" cy="90" r="72"/>
-                                <circle class="progress-ring__fill"
-                                        id="ring-fill"
-                                        cx="90" cy="90" r="72"
-                                        data-percent="{{ tasa_cumplimiento }}"
-style="stroke: {% if tasa_cumplimiento >= 90 %}#198754{% elif tasa_cumplimiento >= 70 %}#28a745{% else %}#fd7e14{% endif %};"/>
-                            </svg>
-                            <div class="progress-ring-center">
-                                <div class="ring-value text-{% if tasa_cumplimiento >= 90 %}success{% elif tasa_cumplimiento >= 70 %}success{% else %}warning{% endif %}" id="ring-value">{{ tasa_cumplimiento }}%</div>
-                                <div class="ring-label">Cumplimiento</div>
+                    {# Stats ── #}
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 py-2">
+                            <span class="w-8 h-8 rounded-full bg-primary-container/20 flex items-center justify-center text-primary"><span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span></span>
+                            <div>
+                                <p class="font-label-md text-label-md text-on-surface">{{ total_entregados }}</p>
+                                <p class="font-caption text-caption text-on-surface-variant">Entregados</p>
                             </div>
                         </div>
-                        <!-- Stats -->
-                        <div class="flex-grow-1">
-                            <div class="stat-item">
-                                <span class="stat-icon bg-success bg-opacity-10 text-success"><i class="bi bi-check-circle-fill"></i></span>
-                                <div>
-                                    <div class="fw-bold">{{ total_entregados }}</div>
-                                    <small class="text-muted">Entregados</small>
-                                </div>
+                        <div class="flex items-center gap-3 py-2">
+                            <span class="w-8 h-8 rounded-full bg-error-container/30 flex items-center justify-center text-error"><span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">warning</span></span>
+                            <div>
+                                <p class="font-label-md text-label-md text-on-surface">{{ con_incidente }}</p>
+                                <p class="font-caption text-caption text-on-surface-variant">Con incidentes</p>
                             </div>
-                            <div class="stat-item">
-                                <span class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="bi bi-exclamation-triangle-fill"></i></span>
-                                <div>
-                                    <div class="fw-bold">{{ con_incidente }}</div>
-                                    <small class="text-muted">Con incidentes</small>
-                                </div>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-icon bg-secondary bg-opacity-10 text-secondary"><i class="bi bi-receipt"></i></span>
-                                <div>
-                                    <div class="fw-bold">{{ total_pedidos }}</div>
-                                    <small class="text-muted">Total pedidos</small>
-                                </div>
+                        </div>
+                        <div class="flex items-center gap-3 py-2">
+                            <span class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">receipt_long</span></span>
+                            <div>
+                                <p class="font-label-md text-label-md text-on-surface">{{ total_pedidos }}</p>
+                                <p class="font-caption text-caption text-on-surface-variant">Total pedidos</p>
                             </div>
                         </div>
                     </div>
@@ -279,24 +226,47 @@ style="stroke: {% if tasa_cumplimiento >= 90 %}#198754{% elif tasa_cumplimiento 
             </div>
         </div>
 
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0"><i class="bi bi-building"></i> Datos de la Clínica</h5>
+        {# ── Datos Clínica ── #}
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
+            <div class="bg-secondary-container/40 px-5 py-3">
+                <h2 class="font-label-md text-label-md text-on-secondary-container flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">apartment</span> Datos de la Clínica
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary text-[20px]">store</span>
+                        <span class="font-label-md text-label-md text-on-surface"><strong>{{ config.nombre }}</strong></span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">badge</span>
+                        <span class="font-body-md text-body-md text-on-surface"><strong>NIT:</strong> {{ config.nit }}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">location_on</span>
+                        <span class="font-body-md text-body-md text-on-surface"><strong>Dirección:</strong> {{ config.direccion }}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">phone</span>
+                        <span class="font-body-md text-body-md text-on-surface"><strong>Tel:</strong> {{ config.telefono }}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">email</span>
+                        <span class="font-body-md text-body-md text-on-surface"><strong>Email:</strong> {{ config.email }}</span>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <p><i class="bi bi-shop"></i> <strong>{{ config.nombre }}</strong></p>
-                    <p><i class="bi bi-1-circle"></i> <strong>NIT:</strong> {{ config.nit }}</p>
-                    <p><i class="bi bi-geo-alt"></i> <strong>Dirección:</strong> {{ config.direccion }}</p>
-                    <p><i class="bi bi-telephone"></i> <strong>Tel:</strong> {{ config.telefono }}</p>
-                    <p><i class="bi bi-envelope"></i> <strong>Email:</strong> {{ config.email }}</p>
-                    <a href="{% url 'usuarios:admin_configuracion' %}" class="btn btn-outline-warning btn-sm"><i class="bi bi-pencil"></i> Editar Configuración</a>
+                <div class="mt-4 pt-4 border-t border-outline-variant/20">
+                    <a href="{% url 'usuarios:admin_configuracion' %}" class="inline-flex items-center gap-2 bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-4 py-2 hover:bg-surface-container-highest transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">edit</span> Editar Configuración
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+{% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     /* ── Animate main ring ── */
@@ -306,7 +276,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const r = parseFloat(ringFill.getAttribute('r'));
         const C = 2 * Math.PI * r;
         ringFill.style.strokeDasharray = C;
-        ringFill.style.strokeDashoffset = C;          // start empty
+        ringFill.style.strokeDashoffset = C;
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 ringFill.style.strokeDashoffset = C - (C * pct / 100);
@@ -314,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    /* ── Animate mini rings (card) ── */
+    /* ── Animate mini rings ── */
     document.querySelectorAll('.progress-ring-mini .progress-ring__fill').forEach(el => {
         const pct = parseFloat(el.dataset.percent) || 0;
         const r = parseFloat(el.getAttribute('r'));

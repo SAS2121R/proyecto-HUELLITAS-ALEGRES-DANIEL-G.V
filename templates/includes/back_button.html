@@ -1,20 +1,20 @@
-{# Back button — smart redirect based on user role #}
+{# Back button — smart redirect based on user role — DESIGN.md styled #}
 {% if user.is_authenticated %}
 {% if user.rol.nombre == 'Veterinario' %}
-<a href="{% url 'agenda:dashboard_vet' %}" class="btn btn-outline-secondary btn-sm mb-3 me-2" style="border-radius: 2rem;">
-    <i class="fas fa-arrow-left me-1"></i> Volver al Dashboard
+<a href="{% url 'agenda:dashboard_vet' %}" class="inline-flex items-center gap-1.5 mb-4 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">
+    <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver al Dashboard
 </a>
 {% elif user.rol.nombre == 'Administrador' %}
-<a href="{% url 'usuarios:admin_dashboard' %}" class="btn btn-outline-secondary btn-sm mb-3 me-2" style="border-radius: 2rem;">
-    <i class="fas fa-arrow-left me-1"></i> Volver al Panel
+<a href="{% url 'usuarios:admin_dashboard' %}" class="inline-flex items-center gap-1.5 mb-4 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">
+    <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver al Panel
 </a>
 {% elif user.rol.nombre == 'Domiciliario' %}
-<a href="{% url 'entregas:dashboard' %}" class="btn btn-outline-secondary btn-sm mb-3 me-2" style="border-radius: 2rem;">
-    <i class="fas fa-arrow-left me-1"></i> Volver a Entregas
+<a href="{% url 'entregas:dashboard' %}" class="inline-flex items-center gap-1.5 mb-4 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">
+    <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver a Entregas
 </a>
 {% elif user.rol.nombre == 'Cliente' %}
-<a href="{% url 'mascotas:lista' %}" class="btn btn-outline-secondary btn-sm mb-3 me-2" style="border-radius: 2rem;">
-    <i class="fas fa-arrow-left me-1"></i> Volver a Mis Mascotas
+<a href="{% url 'mascotas:lista' %}" class="inline-flex items-center gap-1.5 mb-4 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">
+    <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver a Mis Mascotas
 </a>
 {% endif %}
 {% endif %}

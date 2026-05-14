@@ -1,0 +1,434 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Huellitas Alegres - Cuidado Veterinario</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-low": "#f3f4f5",
+            "secondary": "#625e56",
+            "surface": "#f8f9fa",
+            "tertiary-fixed": "#d9eaa3",
+            "on-tertiary": "#ffffff",
+            "secondary-container": "#e6dfd5",
+            "on-background": "#191c1d",
+            "on-primary-container": "#ccf0cc",
+            "on-secondary": "#ffffff",
+            "outline-variant": "#c2c8bf",
+            "surface-container-lowest": "#ffffff",
+            "error-container": "#ffdad6",
+            "surface-container-high": "#e7e8e9",
+            "secondary-fixed-dim": "#cdc5bc",
+            "secondary-fixed": "#e9e1d8",
+            "surface-bright": "#f8f9fa",
+            "on-primary-fixed-variant": "#2f4e33",
+            "tertiary": "#47541d",
+            "tertiary-container": "#5e6d33",
+            "primary-fixed": "#c8ecc8",
+            "primary-fixed-dim": "#acd0ad",
+            "on-tertiary-fixed-variant": "#3e4c16",
+            "outline": "#737971",
+            "on-secondary-container": "#67625a",
+            "on-surface-variant": "#424841",
+            "surface-container-highest": "#e1e3e4",
+            "surface-variant": "#e1e3e4",
+            "on-surface": "#191c1d",
+            "on-primary-fixed": "#03210b",
+            "background": "#f8f9fa",
+            "surface-container": "#edeeef",
+            "on-primary": "#ffffff",
+            "inverse-surface": "#2e3132",
+            "on-secondary-fixed": "#1e1b15",
+            "on-tertiary-fixed": "#161f00",
+            "inverse-primary": "#acd0ad",
+            "surface-tint": "#466649",
+            "error": "#ba1a1a",
+            "tertiary-fixed-dim": "#bdce89",
+            "surface-dim": "#d9dadb",
+            "primary-container": "#4f6f52",
+            "on-error": "#ffffff",
+            "on-secondary-fixed-variant": "#4a463f",
+            "primary": "#37563b",
+            "on-error-container": "#93000a",
+            "inverse-on-surface": "#f0f1f2",
+            "on-tertiary-container": "#ddeea7"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "base": "8px",
+            "xl": "80px",
+            "margin-desktop": "40px",
+            "md": "24px",
+            "lg": "48px",
+            "margin-mobile": "16px",
+            "gutter": "24px",
+            "xs": "4px",
+            "sm": "12px"
+          },
+          "fontFamily": {
+            "label-md": ["Manrope"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "caption": ["Manrope"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "body-lg": ["Manrope"],
+            "body-md": ["Manrope"],
+            "display-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "600"}],
+            "headline-lg-mobile": ["28px", {"lineHeight": "1.3", "fontWeight": "600"}],
+            "headline-md": ["24px", {"lineHeight": "1.4", "fontWeight": "600"}],
+            "caption": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+            "headline-lg": ["32px", {"lineHeight": "1.3", "fontWeight": "600"}],
+            "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+            "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+            "display-lg": ["48px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+          }
+        }
+      }
+    }
+</script>
+<style>
+    .custom-shadow-level-1 {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    }
+    /* Smooth scroll for anchor links */
+    html { scroll-behavior: smooth; }
+</style>
+</head>
+<body class="bg-background text-on-background antialiased selection:bg-primary-container selection:text-on-primary-container">
+
+<!-- TopNavBar -->
+<nav class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 max-w-[1440px] mx-auto bg-surface/95 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
+    <div class="flex items-center gap-lg">
+        <a class="font-display-lg text-headline-md text-primary tracking-tight" href="{% url 'landing' %}">
+            <span class="material-symbols-outlined align-middle mr-1" style="font-size:28px">pets</span>
+            Huellitas Alegres
+        </a>
+        <div class="hidden md:flex gap-md items-center">
+            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#servicios">Servicios</a>
+            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#precios">Precios</a>
+            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#nosotros">Nosotros</a>
+        </div>
+    </div>
+    <div class="flex items-center gap-sm">
+        <a href="{% url 'usuarios:auth' %}" class="hidden md:inline-block font-label-md text-label-md text-primary bg-transparent border border-outline-variant hover:border-primary hover:opacity-80 transition-all rounded-lg px-md py-sm cursor-pointer">Acceso Staff</a>
+        <a href="{% url 'usuarios:register' %}" class="font-label-md text-label-md text-on-primary bg-primary hover:opacity-80 transition-all rounded-lg px-md py-sm inline-block text-center">Registrar Mascota</a>
+    </div>
+</nav>
+
+<main class="w-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop pt-[120px]">
+
+    <!-- Hero Section -->
+    <section class="flex flex-col md:flex-row items-center gap-xl mb-xl">
+        <div class="flex-1 flex flex-col items-start gap-md">
+            <div class="inline-flex items-center gap-xs px-sm py-xs bg-surface-container rounded-full text-secondary font-label-md text-label-md">
+                <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+                Precisión y Ternura
+            </div>
+            <h1 class="font-display-lg text-display-lg text-on-surface text-balance">
+                Cuidado veterinario excepcional para quienes más amas.
+            </h1>
+            <p class="font-body-lg text-body-lg text-on-surface-variant max-w-[500px]">
+                En Huellitas Alegres combinamos tecnología médica de vanguardia con un trato cálido y empático. Porque su bienestar es nuestra prioridad absoluta.
+            </p>
+            <div class="flex flex-wrap items-center gap-sm mt-sm">
+                <a href="{% url 'usuarios:register' %}" class="font-label-md text-label-md text-on-primary bg-primary hover:bg-surface-tint transition-colors rounded-lg px-lg py-sm shadow-sm inline-block text-center">
+                    Registrar Mascota
+                </a>
+                <a href="#servicios" class="font-label-md text-label-md text-primary bg-secondary-container hover:bg-surface-container-high transition-colors rounded-lg px-lg py-sm inline-block text-center">
+                    Conoce Nuestros Servicios
+                </a>
+            </div>
+        </div>
+        <div class="flex-1 w-full relative h-[400px] md:h-[600px] rounded-xl overflow-hidden custom-shadow-level-1">
+            <img alt="Mascota feliz en clínica veterinaria" class="absolute inset-0 w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUlcFJhh-W0-ZmsBoV4carxmSdUhRDuDbuIrwvxlOhYoVLklM9k2hod1FmfCrJeC6GeRzL5es--2j9DDLUDwjSaLj30mhRzA21AwVhfn22Q2uU93zYu3PRB7M8ctLW2nuQW5A0XE6ND6oT96zG8G4OgaWiJu7ONXZLG3QT16avWsToYDiJsOOSw14Toav7hFad3UGI8q4C6QQSdrblkAloe4U21TKbk0ftQqId_qZxQocFKR_Nr3WtSLRmwT-G4vZ5R9eYd8IiCDBW">
+        </div>
+    </section>
+
+    <!-- Core Services (Bento) -->
+    <section class="pt-xl pb-lg" id="servicios">
+        <div class="mb-lg text-center">
+            <h2 class="font-headline-lg text-headline-lg md:text-headline-lg text-on-surface mb-sm">Servicios Integrales</h2>
+            <p class="font-body-md text-body-md text-on-surface-variant max-w-[600px] mx-auto">Diseñados para cubrir todas las etapas de la vida de tu mascota, con la tranquilidad que brinda la excelencia médica.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+            <!-- Service 1: Bienestar General -->
+            <div class="bg-surface-container-lowest rounded-xl p-md custom-shadow-level-1 flex flex-col gap-sm border border-transparent hover:border-primary/20 transition-colors">
+                <div class="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container mb-xs">
+                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">monitor_heart</span>
+                </div>
+                <h3 class="font-headline-md text-headline-md text-on-surface">Bienestar General</h3>
+                <p class="font-body-md text-body-md text-on-surface-variant flex-1">Chequeos preventivos, vacunación y planes nutricionales personalizados para mantener a tu compañero vital y saludable.</p>
+                <a class="font-label-md text-label-md text-primary inline-flex items-center gap-xs mt-sm hover:underline decoration-primary" href="{% url 'servicios:lista' %}">
+                    Saber más <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </a>
+            </div>
+            <!-- Service 2: Cirugía Avanzada -->
+            <div class="bg-surface-container-lowest rounded-xl p-md custom-shadow-level-1 flex flex-col gap-sm border border-transparent hover:border-primary/20 transition-colors md:col-span-2 relative overflow-hidden">
+                <div class="relative z-10 flex flex-col h-full justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container mb-xs">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">medical_services</span>
+                        </div>
+                        <h3 class="font-headline-md text-headline-md text-on-surface">Cirugía Avanzada</h3>
+                        <p class="font-body-md text-body-md text-on-surface-variant max-w-[400px]">Quirófanos equipados con tecnología de última generación y monitoreo constante para procedimientos seguros y recuperaciones rápidas.</p>
+                    </div>
+                    <a class="font-label-md text-label-md text-primary inline-flex items-center gap-xs mt-sm hover:underline decoration-primary" href="{% url 'agenda:lista_citas' %}">
+                        Agendar Cita <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                    </a>
+                </div>
+                <!-- Decorative element -->
+                <div class="absolute right-0 bottom-0 w-64 h-64 bg-surface-container-low rounded-tl-full -z-0 opacity-50"></div>
+            </div>
+            <!-- Service 3: Cuidado Dental -->
+            <div class="bg-surface-container-lowest rounded-xl p-md custom-shadow-level-1 flex flex-col gap-sm border border-transparent hover:border-primary/20 transition-colors">
+                <div class="w-12 h-12 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container mb-xs">
+                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dentistry</span>
+                </div>
+                <h3 class="font-headline-md text-headline-md text-on-surface">Cuidado Dental</h3>
+                <p class="font-body-md text-body-md text-on-surface-variant flex-1">Profilaxis, extracciones y tratamientos periodontales para asegurar una sonrisa sana y prevenir enfermedades sistémicas.</p>
+            </div>
+            <!-- CTA Card within grid -->
+            <div class="bg-primary rounded-xl p-md flex flex-col items-center justify-center text-center gap-sm md:col-span-2">
+                <h3 class="font-headline-md text-headline-md text-on-primary">¿Necesitas una consulta urgente?</h3>
+                <p class="font-body-md text-body-md text-on-primary/90 max-w-[400px]">Nuestro equipo está disponible para atender emergencias con la rapidez y precisión necesarias.</p>
+                <a href="{% url 'agenda:lista_citas' %}" class="mt-sm font-label-md text-label-md text-primary bg-on-primary hover:bg-surface transition-colors rounded-lg px-lg py-sm inline-block text-center">
+                    Contactar Ahora
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Precios Section -->
+    <section class="pt-lg pb-lg" id="precios">
+        <div class="mb-lg text-center">
+            <h2 class="font-headline-lg text-headline-lg text-on-surface mb-sm">Planes y Precios</h2>
+            <p class="font-body-md text-body-md text-on-surface-variant max-w-[600px] mx-auto">Transparencia total. Conoce nuestros planes diseñados para cada necesidad.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+            <!-- Plan Básico -->
+            <div class="bg-surface-container-lowest rounded-xl p-md custom-shadow-level-1 border border-outline-variant/10 flex flex-col">
+                <div class="mb-sm">
+                    <span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Básico</span>
+                </div>
+                <h3 class="font-headline-lg text-headline-lg text-on-surface mb-xs">$25.000</h3>
+                <p class="font-caption text-caption text-secondary mb-md">Por consulta</p>
+                <ul class="flex flex-col gap-xs flex-1">
+                    <li class="flex items-center gap-xs font-body-md text-body-md text-on-surface">
+                        <span class="material-symbols-outlined text-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        Consulta general
+                    </li>
+                    <li class="flex items-center gap-xs font-body-md text-body-md text-on-surface">
+                        <span class="material-symbols-outlined text-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        Vacunación básica
+                    </li>
+                    <li class="flex items-center gap-xs font-body-md text-body-md text-on-surface">
+                        <span class="material-symbols-outlined text-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        Desparasitación
+                    </li>
+                </ul>
+                <a href="{% url 'agenda:lista_citas' %}" class="mt-md w-full font-label-md text-label-md text-primary bg-secondary-container hover:bg-surface-container-high transition-colors rounded-lg px-md py-sm inline-block text-center">
+                    Agendar Cita
+                </a>
+            </div>
+            <!-- Plan Integral (destacado) -->
+            <div class="bg-primary rounded-xl p-md custom-shadow-level-1 border-2 border-primary flex flex-col relative">
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-on-primary text-primary font-label-md text-label-md px-md py-xs rounded-full">
+                    Más Popular
+                </div>
+                <div class="mb-sm mt-sm">
+                    <span class="font-label-md text-label-md text-on-primary/80 uppercase tracking-wider">Integral</span>
+                </div>
+                <h3 class="font-headline-lg text-headline-lg text-on-primary mb-xs">$55.000</h3>
+                <p class="font-caption text-caption text-on-primary/80 mb-md">Por consulta</p>
+                <ul class="flex flex-col gap-xs flex-1">
+                    <li class="flex items-center gap-xs font-body-md text-body-md text-on-primary">
+                        <span class="material-symbols-outlined text-on-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        Todo del Plan Básico
+                    </li>
+                    <li class="flex items-center gap-xs font-body-md text-body-md text-on-primary">
+                        <span class="material-symbols-outlined text-on-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        Exámenes de laboratorio
+                    </li>
+                    <li class="flex items-center gap-xs font-body-md text-body-md text-on-primary">
+                        <span class="material-symbols-outlined text-on-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        Radiografías
+                    </li>
+                    <li class="flex items-center gap-xs font-body-md text-body-md text-on-primary">
+                        <span class="material-symbols-outlined text-on-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        Seguimiento post-consulta
+                    </li>
+                </ul>
+                <a href="{% url 'agenda:lista_citas' %}" class="mt-md w-full font-label-md text-label-md text-primary bg-on-primary hover:bg-surface transition-colors rounded-lg px-md py-sm inline-block text-center">
+                    Agendar Cita
+                </a>
+            </div>
+            <!-- Plan Premium -->
+            <div class="bg-surface-container-lowest rounded-xl p-md custom-shadow-level-1 border border-outline-variant/10 flex flex-col">
+                <div class="mb-sm">
+                    <span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Premium</span>
+                </div>
+                <h3 class="font-headline-lg text-headline-lg text-on-surface mb-xs">$95.000</h3>
+                <p class="font-caption text-caption text-secondary mb-md">Por consulta</p>
+                <ul class="flex flex-col gap-xs flex-1">
+                    <li class="flex items-center gap-xs font-body-md text-body-md text-on-surface">
+                        <span class="material-symbols-outlined text-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        Todo del Plan Integral
+                    </li>
+                    <li class="flex items-center gap-xs font-body-md text-body-md text-on-surface">
+                        <span class="material-symbols-outlined text-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        Cirugías menores
+                    </li>
+                    <li class="flex items-center gap-xs font-body-md text-body-md text-on-surface">
+                        <span class="material-symbols-outlined text-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        Hospitalización
+                    </li>
+                    <li class="flex items-center gap-xs font-body-md text-body-md text-on-surface">
+                        <span class="material-symbols-outlined text-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        Atención domiciliaria
+                    </li>
+                </ul>
+                <a href="{% url 'agenda:lista_citas' %}" class="mt-md w-full font-label-md text-label-md text-primary bg-secondary-container hover:bg-surface-container-high transition-colors rounded-lg px-md py-sm inline-block text-center">
+                    Agendar Cita
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonios Section -->
+    <section class="pt-lg pb-lg" id="testimonios">
+        <div class="mb-lg text-center">
+            <h2 class="font-headline-lg text-headline-lg text-on-surface mb-sm">Lo que dicen nuestras familias</h2>
+            <p class="font-body-md text-body-md text-on-surface-variant max-w-[600px] mx-auto">Historias reales de quienes confían en nosotros el cuidado de sus compañeros.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+            <!-- Testimonio 1 -->
+            <div class="bg-surface-container-lowest rounded-xl p-md custom-shadow-level-1 border border-outline-variant/10 flex flex-col gap-sm">
+                <div class="flex items-center gap-sm mb-xs">
+                    <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-label-md">MC</div>
+                    <div>
+                        <p class="font-label-md text-label-md text-on-surface">María Camila</p>
+                        <p class="font-caption text-caption text-secondary">Dueña de Max</p>
+                    </div>
+                </div>
+                <div class="flex gap-xs mb-xs">
+                    <span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+                </div>
+                <p class="font-body-md text-body-md text-on-surface-variant flex-1">"Desde la primera cita supe que estábamos en el mejor lugar. El equipo trató a Max como si fuera suyo."</p>
+            </div>
+            <!-- Testimonio 2 -->
+            <div class="bg-surface-container-lowest rounded-xl p-md custom-shadow-level-1 border border-outline-variant/10 flex flex-col gap-sm">
+                <div class="flex items-center gap-sm mb-xs">
+                    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-label-md">AR</div>
+                    <div>
+                        <p class="font-label-md text-label-md text-on-surface">Andrés Ruiz</p>
+                        <p class="font-caption text-caption text-secondary">Dueño de Luna</p>
+                    </div>
+                </div>
+                <div class="flex gap-xs mb-xs">
+                    <span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+                </div>
+                <p class="font-body-md text-body-md text-on-surface-variant flex-1">"La cirugía de Luna fue un éxito rotundo. La transparencia durante todo el proceso me dio mucha tranquilidad."</p>
+            </div>
+            <!-- Testimonio 3 -->
+            <div class="bg-surface-container-lowest rounded-xl p-md custom-shadow-level-1 border border-outline-variant/10 flex flex-col gap-sm">
+                <div class="flex items-center gap-sm mb-xs">
+                    <div class="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container font-bold text-label-md">LT</div>
+                    <div>
+                        <p class="font-label-md text-label-md text-on-surface">Laura Torres</p>
+                        <p class="font-caption text-caption text-secondary">Dueña de Rocky</p>
+                    </div>
+                </div>
+                <div class="flex gap-xs mb-xs">
+                    <span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+                    <span class="material-symbols-outlined text-[18px] text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+                </div>
+                <p class="font-body-md text-body-md text-on-surface-variant flex-1">"Rocky tenía miedo al dentista… ¡ya no! El equipo dental de Huellitas es increíble."</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Nosotros Section -->
+    <section class="pt-lg pb-xl" id="nosotros">
+        <div class="flex flex-col md:flex-row items-center gap-xl">
+            <div class="flex-1 w-full relative h-[300px] md:h-[450px] rounded-xl overflow-hidden custom-shadow-level-1">
+                <img alt="Interior de la clínica Huellitas Alegres" class="absolute inset-0 w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1x-yvaVqwh12VOtAdFZFRoPNfYxKPoBUifaiPJ1CloGxC9d5YMqQ5dnZ6vAKuO5omEJqvWx6BwM2GITU2pfm_-YepmtWEqlBQ_n7j4fAo5K3IUTrehjiIq780284tqRsylqCSkP0G5XYPWLjr_uBDX1fznSdl_d6gNnxsDy4Hipnw39tbL_5EropLYs2f8-KVzfzN4YaR_ku9D2-RmjJtojYArheIqeSRAsCKkrSIR3HVanezPZIndxOL2rC-h4tuRM1cj75l8QwS">
+            </div>
+            <div class="flex-1 flex flex-col items-start gap-md">
+                <div class="inline-flex items-center gap-xs px-sm py-xs bg-surface-container rounded-full text-secondary font-label-md text-label-md">
+                    <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                    Sobre Nosotros
+                </div>
+                <h2 class="font-headline-lg text-headline-lg text-on-surface">Más de 10 años cuidando lo que más quieres.</h2>
+                <p class="font-body-lg text-body-lg text-on-surface-variant">
+                    Huellitas Alegres nació de la convicción de que la medicina veterinaria puede ser tanto precisa como compasiva. Nuestro equipo combina formación de excelencia con un trato genuinamente humano.
+                </p>
+                <div class="grid grid-cols-3 gap-md mt-sm w-full">
+                    <div class="text-center">
+                        <h3 class="font-headline-lg text-headline-lg text-primary">5k+</h3>
+                        <p class="font-caption text-caption text-secondary">Pacientes felices</p>
+                    </div>
+                    <div class="text-center">
+                        <h3 class="font-headline-lg text-headline-lg text-primary">12</h3>
+                        <p class="font-caption text-caption text-secondary">Profesionales</p>
+                    </div>
+                    <div class="text-center">
+                        <h3 class="font-headline-lg text-headline-lg text-primary">98%</h3>
+                        <p class="font-caption text-caption text-secondary">Satisfacción</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="w-full bg-surface-container-highest border-t border-outline-variant/30">
+    <div class="max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-md py-lg">
+        <div class="font-headline-md text-headline-md text-primary">
+            Huellitas Alegres
+        </div>
+        <div class="flex gap-md">
+            <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary underline decoration-transparent hover:decoration-primary transition-all" href="#">Privacidad</a>
+            <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary underline decoration-transparent hover:decoration-primary transition-all" href="#">Términos</a>
+            <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary underline decoration-transparent hover:decoration-primary transition-all" href="{% url 'usuarios:auth' %}">Iniciar Sesión</a>
+            <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary underline decoration-transparent hover:decoration-primary transition-all" href="#">Contacto</a>
+        </div>
+        <div class="font-caption text-caption text-on-surface-variant">
+            © {% now "Y" %} Huellitas Alegres. Cuidado Veterinario con Precisión y Ternura.
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

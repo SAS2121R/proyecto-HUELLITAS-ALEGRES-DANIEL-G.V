@@ -3,22 +3,26 @@
 <head>
 <meta charset="utf-8">
 <style>
+    /* DESIGN.md palette for PDF reports */
     @page { size: letter; margin: 2cm; }
-    body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; }
-    .header { text-align: center; border-bottom: 2px solid #2c3e50; padding-bottom: 10px; margin-bottom: 20px; }
-    .header h1 { color: #2c3e50; margin: 0; font-size: 18pt; }
-    .header p { color: #555; margin: 2px 0; font-size: 9pt; }
-    .summary-box { background: #ecf0f1; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
-    .summary-box h4 { margin: 0 0 8px 0; color: #2c3e50; }
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; color: #191c1d; }
+    .header { text-align: center; border-bottom: 2px solid #37563b; padding-bottom: 10px; margin-bottom: 20px; }
+    .header h1 { color: #37563b; margin: 0; font-size: 18pt; }
+    .header p { color: #424841; margin: 2px 0; font-size: 9pt; }
+    .summary-box { background: #edeeef; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+    .summary-box h4 { margin: 0 0 8px 0; color: #37563b; font-size: 12pt; }
+    .summary-box td { padding: 3px 12px 3px 0; font-size: 9pt; }
+    .summary-box td strong { color: #191c1d; }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th { background: #2c3e50; color: white; padding: 8px; text-align: left; font-size: 9pt; }
-    td { padding: 6px 8px; border-bottom: 1px solid #ddd; font-size: 9pt; }
-    tr:nth-child(even) { background: #f9f9f9; }
-    .badge { padding: 3px 8px; border-radius: 3px; font-size: 8pt; font-weight: bold; }
-    .badge-success { background: #27ae60; color: white; }
-    .badge-warning { background: #f39c12; color: white; }
-    .badge-danger { background: #e74c3c; color: white; }
-    .footer { text-align: center; font-size: 8pt; color: #999; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 10px; }
+    th { background: #37563b; color: #ffffff; padding: 8px; text-align: left; font-size: 9pt; }
+    td { padding: 6px 8px; border-bottom: 1px solid #c2c8bf; font-size: 9pt; color: #191c1d; }
+    tr:nth-child(even) { background: #f3f4f5; }
+    .badge { padding: 3px 8px; border-radius: 3px; font-size: 8pt; font-weight: bold; color: #ffffff; }
+    .badge-success { background: #37563b; }
+    .badge-warning { background: #5e6d33; }
+    .badge-danger { background: #ba1a1a; }
+    .badge-info { background: #4f6f52; }
+    .footer { text-align: center; font-size: 8pt; color: #737971; margin-top: 20px; border-top: 1px solid #c2c8bf; padding-top: 10px; }
 </style>
 </head>
 <body>

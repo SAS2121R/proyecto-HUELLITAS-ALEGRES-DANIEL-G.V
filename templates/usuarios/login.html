@@ -1,249 +1,353 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Huellitas Alegres - Sistema de Usuarios</title>
-    <link rel="stylesheet" href="{% load static %}{% static 'usuarios/css/auth.css' %}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <meta name="description" content="Sistema de autenticación moderno y seguro para Huellitas Alegres">
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>{% block title %}Acceso — Huellitas Alegres{% endblock %}</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-low": "#f3f4f5",
+            "secondary": "#625e56",
+            "surface": "#f8f9fa",
+            "tertiary-fixed": "#d9eaa3",
+            "on-tertiary": "#ffffff",
+            "secondary-container": "#e6dfd5",
+            "on-background": "#191c1d",
+            "on-primary-container": "#ccf0cc",
+            "on-secondary": "#ffffff",
+            "outline-variant": "#c2c8bf",
+            "surface-container-lowest": "#ffffff",
+            "error-container": "#ffdad6",
+            "surface-container-high": "#e7e8e9",
+            "secondary-fixed-dim": "#cdc5bc",
+            "secondary-fixed": "#e9e1d8",
+            "surface-bright": "#f8f9fa",
+            "on-primary-fixed-variant": "#2f4e33",
+            "tertiary": "#47541d",
+            "tertiary-container": "#5e6d33",
+            "primary-fixed": "#c8ecc8",
+            "primary-fixed-dim": "#acd0ad",
+            "on-tertiary-fixed-variant": "#3e4c16",
+            "outline": "#737971",
+            "on-secondary-container": "#67625a",
+            "on-surface-variant": "#424841",
+            "surface-container-highest": "#e1e3e4",
+            "surface-variant": "#e1e3e4",
+            "on-surface": "#191c1d",
+            "on-primary-fixed": "#03210b",
+            "background": "#f8f9fa",
+            "surface-container": "#edeeef",
+            "on-primary": "#ffffff",
+            "inverse-surface": "#2e3132",
+            "on-secondary-fixed": "#1e1b15",
+            "on-tertiary-fixed": "#161f00",
+            "inverse-primary": "#acd0ad",
+            "surface-tint": "#466649",
+            "error": "#ba1a1a",
+            "tertiary-fixed-dim": "#bdce89",
+            "surface-dim": "#d9dadb",
+            "primary-container": "#4f6f52",
+            "on-error": "#ffffff",
+            "on-secondary-fixed-variant": "#4a463f",
+            "primary": "#37563b",
+            "on-error-container": "#93000a",
+            "inverse-on-surface": "#f0f1f2",
+            "on-tertiary-container": "#ddeea7"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "base": "8px",
+            "xl": "80px",
+            "margin-desktop": "40px",
+            "md": "24px",
+            "lg": "48px",
+            "margin-mobile": "16px",
+            "gutter": "24px",
+            "xs": "4px",
+            "sm": "12px"
+          },
+          "fontFamily": {
+            "label-md": ["Manrope"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "body-lg": ["Manrope"],
+            "body-md": ["Manrope"],
+            "caption": ["Manrope"],
+            "display-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "600"}],
+            "headline-md": ["24px", {"lineHeight": "1.4", "fontWeight": "600"}],
+            "headline-lg": ["32px", {"lineHeight": "1.3", "fontWeight": "600"}],
+            "caption": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+            "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+            "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+            "display-lg": ["48px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+          }
+        }
+      }
+    }
+</script>
+<style>
+    .card-shadow {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    }
+    .auth-input:focus {
+        border-color: #37563b !important;
+        box-shadow: 0 0 0 3px rgba(55, 86, 59, 0.12);
+    }
+    .form-section {
+        position: relative;
+        min-height: 320px;
+    }
+    .form-slide {
+        opacity: 0;
+        transform: translateY(12px);
+        transition: opacity 0.35s ease, transform 0.35s ease;
+        pointer-events: none;
+        position: absolute;
+        top: 0; left: 0; right: 0;
+    }
+    .form-slide.active {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: all;
+        position: relative;
+    }
+    .input-error {
+        border-color: #ba1a1a !important;
+        animation: shake 0.4s ease-in-out;
+    }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-8px); }
+        50% { transform: translateX(8px); }
+        75% { transform: translateX(-4px); }
+    }
+</style>
 </head>
-<body>
-    <!-- Contenedor principal con efectos visuales -->
-    <main class="auth-container" role="main" aria-labelledby="auth-title">
-        <!-- Header con diseño vibrante -->
-        <header class="auth-header">
-            <h1 id="auth-title">🐾 Huellitas Alegres</h1>
-            <p>Plataforma moderna de gestión veterinaria</p>
-        </header>
 
-        <!-- Navegación entre formularios con efectos -->
-        <nav class="switcher" role="tablist" aria-label="Seleccionar tipo de formulario">
-            <button 
-                type="button" 
-                class="active" 
-                data-form="login" 
-                role="tab" 
-                aria-selected="true" 
-                aria-controls="login-form"
-                id="login-tab">
-                ✨ Iniciar Sesión
-            </button>
-            <button 
-                type="button" 
-                data-form="register" 
-                role="tab" 
-                aria-selected="false" 
-                aria-controls="register-form"
-                id="register-tab">
-                🚀 Registrarse
-            </button>
-        </nav>
+<body class="bg-surface min-h-screen flex items-center justify-center antialiased selection:bg-primary-container selection:text-on-primary-container p-margin-mobile md:p-0">
 
-        <!-- Área de mensajes del sistema -->
-        <div id="message-area" aria-live="polite" aria-atomic="true">
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="{% if message.tags == 'error' %}error-message{% else %}success-message{% endif %}" 
-                         role="alert" 
-                         tabindex="0">
-                        {% if message.tags == 'error' %}⚠️{% else %}✅{% endif %} {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
+<div class="w-full max-w-[440px] mx-auto">
+
+    <!-- Logo + brand -->
+    <div class="text-center mb-lg">
+        <a href="{% url 'landing' %}" class="inline-flex items-center gap-sm mb-sm group">
+            <span class="material-symbols-outlined text-primary text-[36px]" style="font-variation-settings: 'FILL' 1;">pets</span>
+            <span class="font-headline-md text-headline-md text-primary tracking-tight">Huellitas Alegres</span>
+        </a>
+        <p class="font-body-md text-body-md text-on-surface-variant">Cuidado veterinario con precisi&oacute;n y ternura</p>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-surface-container-lowest rounded-xl card-shadow border border-outline-variant/10 overflow-hidden">
+
+        <!-- Tab switcher -->
+        <div class="flex bg-surface-container border-b border-outline-variant/20 relative" id="auth-tabs">
+            <button type="button" class="flex-1 py-sm font-label-md text-label-md text-on-surface-variant transition-colors" data-form="login" id="tab-login">
+                Iniciar Sesi&oacute;n
+            </button>
+            <button type="button" class="flex-1 py-sm font-label-md text-label-md text-on-surface-variant transition-colors" data-form="register" id="tab-register">
+                Registrarse
+            </button>
+            <div class="absolute bottom-0 h-0.5 bg-primary transition-all duration-300 ease-out" id="tab-indicator" style="width: 50%; left: 0;"></div>
         </div>
 
-        <!-- Sección de formularios con transiciones -->
-        <section class="form-section">
-            <!-- Formulario de Login -->
-            <div id="login-form" 
-                 class="form-slide active" 
-                 role="tabpanel" 
-                 aria-labelledby="login-tab">
-                <form method="post" action="{% url 'usuarios:login' %}" novalidate>
+        <!-- Form section -->
+        <div class="p-lg form-section" id="form-section">
+
+            <!-- Django messages -->
+            {% if messages %}
+            {% for message in messages %}
+            <div class="mb-md p-sm rounded-lg text-sm font-medium {% if message.tags == 'error' %}bg-error-container text-on-error-container{% elif message.tags == 'success' %}bg-primary-container/30 text-primary{% elif message.tags == 'warning' %}bg-secondary-container text-on-secondary-container{% else %}bg-surface-container text-on-surface{% endif %} flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[18px]">{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}check_circle{% else %}info{% endif %}</span>
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- ===== LOGIN FORM ===== -->
+            <div class="form-slide login active" id="login-form">
+                <form method="post" action="{% url 'usuarios:login' %}">
                     {% csrf_token %}
-                    
-                    <div class="form-group">
-                        <label for="login-email" class="required">📧 Correo Electrónico</label>
-                        <input 
-                            type="email" 
-                            id="login-email" 
-                            name="email" 
-                            placeholder="tu@email.com"
-                            required 
-                            autocomplete="email"
-                            aria-describedby="login-email-help"
-                            data-validation="email">
-                        <div id="login-email-help" class="help-text">
-                            💡 Ingresa tu correo electrónico registrado
-                        </div>
-                        <div class="error-text" role="alert"></div>
+                    <div class="mb-md">
+                        <label for="login-email" class="block font-label-md text-label-md text-on-surface-variant mb-xs">
+                            <span class="material-symbols-outlined text-[16px] align-middle mr-xs">mail</span>
+                            Correo Electr&oacute;nico
+                        </label>
+                        <input type="email" id="login-email" name="email" required placeholder="tu@email.com"
+                               class="auth-input w-full px-md py-sm bg-surface border border-outline-variant/40 rounded-lg font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/50 outline-none transition-all">
                     </div>
 
-                    <div class="form-group">
-                        <label for="login-password" class="required">🔐 Contraseña</label>
-                        <input 
-                            type="password" 
-                            id="login-password" 
-                            name="password" 
-                            placeholder="Tu contraseña segura"
-                            required 
-                            autocomplete="current-password"
-                            aria-describedby="login-password-help"
-                            data-validation="password">
-                        <div id="login-password-help" class="help-text">
-                            🛡️ Mínimo 8 caracteres con mayúsculas y números
-                        </div>
-                        <div class="error-text" role="alert"></div>
+                    <div class="mb-md">
+                        <label for="login-password" class="block font-label-md text-label-md text-on-surface-variant mb-xs">
+                            <span class="material-symbols-outlined text-[16px] align-middle mr-xs">lock</span>
+                            Contrase&ntilde;a
+                        </label>
+                        <input type="password" id="login-password" name="password" required placeholder="Tu contrase&ntilde;a"
+                               class="auth-input w-full px-md py-sm bg-surface border border-outline-variant/40 rounded-lg font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/50 outline-none transition-all">
                     </div>
 
-                    <button type="submit" class="btn-primary" aria-describedby="login-submit-help">
-                        <span class="btn-text">🎯 Acceder al Sistema</span>
-                        <span class="btn-loading">⏳ Verificando credenciales...</span>
+                    <button type="submit" class="w-full font-label-md text-label-md text-on-primary bg-primary hover:bg-surface-tint transition-colors rounded-lg px-md py-sm mt-sm flex items-center justify-center gap-xs">
+                        <span class="material-symbols-outlined text-[18px]">login</span>
+                        Iniciar Sesi&oacute;n
                     </button>
-                    <div id="login-submit-help" class="help-text">
-                        🔥 Acceso instantáneo a tu cuenta
-                    </div>
+
+                    <p class="text-center mt-md font-caption text-caption text-on-surface-variant">
+                        &iquest;No tienes cuenta? <button type="button" class="text-primary hover:underline font-semibold" onclick="switchToRegister()">Reg&iacute;strate aqu&iacute;</button>
+                    </p>
                 </form>
             </div>
 
-            <!-- Formulario de Registro -->
-            <div id="register-form" 
-                 class="form-slide" 
-                 role="tabpanel" 
-                 aria-labelledby="register-tab">
-                <form method="post" action="{% url 'usuarios:register' %}" novalidate>
+            <!-- ===== REGISTER FORM ===== -->
+            <div class="form-slide register" id="register-form">
+                <form method="post" action="{% url 'usuarios:register' %}" id="register-form-el">
                     {% csrf_token %}
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="register-first-name" class="required">👤 Nombre</label>
-                            <input 
-                                type="text" 
-                                id="register-first-name" 
-                                name="first_name" 
-                                placeholder="Tu nombre"
-                                required 
-                                autocomplete="given-name"
-                                aria-describedby="register-first-name-help"
-                                data-validation="name">
-                            <div id="register-first-name-help" class="help-text">
-                                ✨ Solo letras
-                            </div>
-                            <div class="error-text" role="alert"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="register-last-name" class="required">👥 Apellido</label>
-                            <input 
-                                type="text" 
-                                id="register-last-name" 
-                                name="last_name" 
-                                placeholder="Tu apellido"
-                                required 
-                                autocomplete="family-name"
-                                aria-describedby="register-last-name-help"
-                                data-validation="name">
-                            <div id="register-last-name-help" class="help-text">
-                                ✨ Solo letras
-                            </div>
-                            <div class="error-text" role="alert"></div>
-                        </div>
+                    <div class="mb-md">
+                        <label for="register-first_name" class="block font-label-md text-label-md text-on-surface-variant mb-xs">
+                            <span class="material-symbols-outlined text-[16px] align-middle mr-xs">person</span>
+                            Nombre Completo
+                        </label>
+                        <input type="text" id="register-first_name" name="first_name" required placeholder="Tu nombre"
+                               class="auth-input w-full px-md py-sm bg-surface border border-outline-variant/40 rounded-lg font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/50 outline-none transition-all">
                     </div>
 
-                    <div class="form-group">
-                        <label for="register-email" class="required">📧 Correo Electrónico</label>
-                        <input 
-                            type="email" 
-                            id="register-email" 
-                            name="email" 
-                            placeholder="tu@email.com"
-                            required 
-                            autocomplete="email"
-                            aria-describedby="register-email-help"
-                            data-validation="email">
-                        <div id="register-email-help" class="help-text">
-                            💌 Será tu usuario para iniciar sesión
-                        </div>
-                        <div class="error-text" role="alert"></div>
+                    <div class="mb-md">
+                        <label for="register-email" class="block font-label-md text-label-md text-on-surface-variant mb-xs">
+                            <span class="material-symbols-outlined text-[16px] align-middle mr-xs">mail</span>
+                            Correo Electr&oacute;nico
+                        </label>
+                        <input type="email" id="register-email" name="email" required placeholder="tu@email.com"
+                               class="auth-input w-full px-md py-sm bg-surface border border-outline-variant/40 rounded-lg font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/50 outline-none transition-all">
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="register-password" class="required">🔐 Contraseña</label>
-                            <input 
-                                type="password" 
-                                id="register-password" 
-                                name="password1" 
-                                placeholder="Contraseña segura"
-                                required 
-                                autocomplete="new-password"
-                                aria-describedby="register-password-help"
-                                data-validation="password">
-                            <div id="register-password-help" class="help-text">
-                                🛡️ Mín. 8 caracteres, mayúsculas y números
-                            </div>
-                            <div class="error-text" role="alert"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="register-password-confirm" class="required">🔒 Confirmar</label>
-                            <input 
-                                type="password" 
-                                id="register-password-confirm" 
-                                name="password2" 
-                                placeholder="Repite la contraseña"
-                                required 
-                                autocomplete="new-password"
-                                aria-describedby="register-password-confirm-help"
-                                data-validation="password-confirm">
-                            <div id="register-password-confirm-help" class="help-text">
-                                🔄 Debe coincidir exactamente
-                            </div>
-                            <div class="error-text" role="alert"></div>
-                        </div>
+                    <div class="mb-md">
+                        <label for="register-telefono" class="block font-label-md text-label-md text-on-surface-variant mb-xs">
+                            <span class="material-symbols-outlined text-[16px] align-middle mr-xs">phone</span>
+                            Tel&eacute;fono <span class="font-caption text-caption text-on-surface-variant/60">(opcional)</span>
+                        </label>
+                        <input type="tel" id="register-telefono" name="telefono" placeholder="300 123 4567"
+                               class="auth-input w-full px-md py-sm bg-surface border border-outline-variant/40 rounded-lg font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/50 outline-none transition-all">
                     </div>
 
-                    <div class="form-group">
-                        <label for="register-phone">📱 Teléfono (Opcional)</label>
-                        <input 
-                            type="tel" 
-                            id="register-phone" 
-                            name="phone" 
-                            placeholder="+57 300 123 4567"
-                            autocomplete="tel"
-                            aria-describedby="register-phone-help"
-                            data-validation="phone">
-                        <div id="register-phone-help" class="help-text">
-                            📞 Para contacto de emergencia
-                        </div>
-                        <div class="error-text" role="alert"></div>
+                    <div class="mb-md">
+                        <label for="register-password1" class="block font-label-md text-label-md text-on-surface-variant mb-xs">
+                            <span class="material-symbols-outlined text-[16px] align-middle mr-xs">lock</span>
+                            Contrase&ntilde;a
+                        </label>
+                        <input type="password" id="register-password1" name="password1" required placeholder="M&iacute;nimo 6 caracteres"
+                               class="auth-input w-full px-md py-sm bg-surface border border-outline-variant/40 rounded-lg font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/50 outline-none transition-all">
                     </div>
 
-                    <button type="submit" class="btn-primary" aria-describedby="register-submit-help">
-                        <span class="btn-text">🎉 Crear Mi Cuenta</span>
-                        <span class="btn-loading">⚡ Creando tu cuenta...</span>
+                    <div class="mb-md">
+                        <label for="register-password2" class="block font-label-md text-label-md text-on-surface-variant mb-xs">
+                            <span class="material-symbols-outlined text-[16px] align-middle mr-xs">lock</span>
+                            Confirmar Contrase&ntilde;a
+                        </label>
+                        <input type="password" id="register-password2" name="password2" required placeholder="Repite tu contrase&ntilde;a"
+                               class="auth-input w-full px-md py-sm bg-surface border border-outline-variant/40 rounded-lg font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/50 outline-none transition-all">
+                    </div>
+
+                    {% if register_form and register_form.errors %}
+                    <div class="mb-md p-sm rounded-lg bg-error-container text-on-error-container font-caption text-caption">
+                        {% for field in register_form %}
+                        {% for error in field.errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                        {% endfor %}
+                        {% for error in register_form.non_field_errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <button type="submit" class="w-full font-label-md text-label-md text-on-primary bg-primary hover:bg-surface-tint transition-colors rounded-lg px-md py-sm mt-sm flex items-center justify-center gap-xs">
+                        <span class="material-symbols-outlined text-[18px]">person_add</span>
+                        Crear Cuenta
                     </button>
-                    <div id="register-submit-help" class="help-text">
-                        🚀 ¡Únete a nuestra comunidad veterinaria!
-                    </div>
+
+                    <p class="text-center mt-md font-caption text-caption text-on-surface-variant">
+                        &iquest;Ya tienes cuenta? <button type="button" class="text-primary hover:underline font-semibold" onclick="switchToLogin()">Inicia sesi&oacute;n</button>
+                    </p>
                 </form>
             </div>
-        </section>
 
-        <!-- Información adicional -->
-        <footer class="auth-footer" role="contentinfo">
-            <p>🌟 Sistema seguro con encriptación de última generación</p>
-            <p>💝 Desarrollado con amor para el cuidado animal</p>
-        </footer>
-    </main>
+        </div><!-- end form-section -->
+    </div><!-- end card -->
 
-    <!-- Scripts para funcionalidad avanzada -->
-    <script src="{% load static %}{% static 'usuarios/js/auth.js' %}"></script>
-    
-    <!-- Anuncio para lectores de pantalla -->
-    <div class="sr-only" aria-live="polite" id="screen-reader-announcements"></div>
+    <!-- Back to landing -->
+    <div class="text-center mt-md">
+        <a href="{% url 'landing' %}" class="inline-flex items-center gap-xs font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+            Volver al inicio
+        </a>
+    </div>
+
+    <p class="text-center mt-xs font-caption text-caption text-on-surface-variant/60">
+        &copy; {% now "Y" %} Huellitas Alegres. Todos los derechos reservados.
+    </p>
+
+</div>
+
+<script>
+function switchToLogin() {
+    document.getElementById('login-form').classList.add('active');
+    document.getElementById('register-form').classList.remove('active');
+    document.getElementById('tab-login').classList.add('text-primary', 'font-bold');
+    document.getElementById('tab-register').classList.remove('text-primary', 'font-bold');
+    document.getElementById('tab-indicator').style.left = '0';
+}
+
+function switchToRegister() {
+    document.getElementById('register-form').classList.add('active');
+    document.getElementById('login-form').classList.remove('active');
+    document.getElementById('tab-register').classList.add('text-primary', 'font-bold');
+    document.getElementById('tab-login').classList.remove('text-primary', 'font-bold');
+    document.getElementById('tab-indicator').style.left = '50%';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var tabLogin = document.getElementById('tab-login');
+    var tabRegister = document.getElementById('tab-register');
+    tabLogin.addEventListener('click', switchToLogin);
+    tabRegister.addEventListener('click', switchToRegister);
+
+    {% if register_form and register_form.errors %}
+    switchToRegister();
+    {% else %}
+    switchToLogin();
+    {% endif %}
+
+    document.querySelectorAll('.auth-input').forEach(function(input) {
+        input.addEventListener('blur', function() {
+            if (this.value && !this.checkValidity()) {
+                this.classList.add('input-error');
+            } else {
+                this.classList.remove('input-error');
+            }
+        });
+        input.addEventListener('input', function() {
+            this.classList.remove('input-error');
+        });
+    });
+});
+</script>
+
 </body>
 </html>
