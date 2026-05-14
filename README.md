@@ -11,6 +11,7 @@ Plataforma web desarrollada con Django que permite administrar de forma completa
 - [Descripción General](#-descripción-general)
 - [Roles del Sistema](#-roles-del-sistema)
 - [Funcionalidades por Rol](#-funcionalidades-por-rol)
+- [Diseño Visual](#-diseño-visual)
 - [Características Técnicas Destacadas](#-características-técnicas-destacadas)
 - [Tecnologías](#-tecnologías)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
@@ -27,6 +28,8 @@ Plataforma web desarrollada con Django que permite administrar de forma completa
 **Huellitas Alegres** es un sistema de información diseñado para cubrir todas las necesidades operativas de una clínica veterinaria. Desde el registro de mascotas y la programación de citas, hasta la venta de productos con entrega a domicilio y la generación de reportes financieros en PDF y Excel.
 
 El sistema implementa un modelo de **roles diferenciados** donde cada tipo de usuario accede únicamente a las funcionalidades correspondientes a su perfil, garantizando seguridad y fluidez en la operación diaria.
+
+La interfaz sigue un **sistema de diseño Material Design** con paleta personalizada (documentada en `DESIGN.md`), tipografía Plus Jakarta Sans para encabezados y Manrope para cuerpo, e iconos Material Symbols Outlined. La Landing Page pública recibe al visitante y redirige automáticamente al dashboard del rol correspondiente tras autenticación.
 
 ---
 
@@ -48,6 +51,7 @@ El sistema implementa un modelo de **roles diferenciados** donde cada tipo de us
 - CRUD de disponibilidades (bloques horarios)
 - Gestión de citas (crear, confirmar, cancelar)
 - Historial clínico completo con adjuntos (hasta 5 MB)
+- Atención de citas con registro directo al historial
 - Catálogo de servicios veterinarios con tarifas en pesos colombianos
 - Reportes en PDF/Excel de citas, historial, inventario y servicios
 
@@ -61,6 +65,7 @@ El sistema implementa un modelo de **roles diferenciados** donde cada tipo de us
 - Comprobante PDF con datos dinámicos de la clínica (NIT, dirección, teléfono)
 
 ### 👤 Cliente
+- Landing Page pública con información de la clínica
 - Registro de cuenta propia con auto-asignación de rol
 - Dashboard personalizado con sus mascotas y citas
 - CRUD completo de sus mascotas
@@ -68,13 +73,13 @@ El sistema implementa un modelo de **roles diferenciados** donde cada tipo de us
 - **Tienda en línea**: catálogo con imágenes de productos, badges de disponibilidad, carrito en sesión, checkout con asignación automática de domiciliario
 - Consulta de pedidos realizados con seguimiento
 - Historial clínico de sus mascotas (solo lectura)
-- Mi Perfil: edición de datos y cambio de contraseña
+- Mi Perfil: edición de datos, foto y cambio de contraseña
 
 ### 👑 Administrador
 - Dashboard con métricas: usuarios, mascotas, citas, ingresos del mes
 - **Gestión de Usuarios**: crear, editar, activar/desactivar, asignar contraseña temporal
 - **Torre de Control**: vista global de pedidos con reasignación inline de domiciliario, tabla de domiciliarios con estado de disponibilidad y botones Reincorporar/Desactivar
-- **Métricas de Negocio**: Top 5 Productos, Productividad de Staff, Tasa de Cumplimiento (donut ring animado)
+- **Métricas de Negocio**: Top 5 Productos, Productividad de Staff, Tasa de Cumplimiento (anillo de progreso SVG animado)
 - **Exportación de Métricas**: PDF y Excel con datos dinámicos de ConfiguraciónClínica
 - **Configuración Clínica**: modelo singleton (NIT, dirección, teléfono, email) reflejado en todos los PDF
 - **Gestión de Proveedores**: CRUD completo con vinculación al inventario
@@ -83,12 +88,27 @@ El sistema implementa un modelo de **roles diferenciados** donde cada tipo de us
 
 ---
 
+## 🎨 Diseño Visual
+
+El sistema cuenta con un **sistema de diseño cohesivo** basado en Material Design 3, implementado con Tailwind CSS CDN y documentado en `DESIGN.md`:
+
+- **Paleta**: Primary=#37563b, Primary Container=#4f6f52, Surface=#f8f9fa, Error=#ba1a1a, con variantes para containers, outlines y estados
+- **Tipografía**: Plus Jakarta Sans (encabezados) + Manrope (cuerpo y etiquetas)
+- **Iconografía**: Material Symbols Outlined con variante FILL para estados activos
+- **Componentes**: Cards con colored-header, status pills, danger/confirmation cards, progress rings SVG, formularios con `.tw-form`
+- **Sidebar**: Navegación condicional por rol, con indicador activo y colapso en móvil
+- **Navbar**: Slim con avatar del usuario, dropdown Alpine.js y enlace de inicio de sesión
+
+La **Landing Page** (`/`) es standalone (no extiende `base.html`) y presenta la clínica al visitante. Al autenticarse, redirige automáticamente al dashboard del rol correspondiente mediante `get_redirect_url()`.
+
+---
+
 ## 🚀 Características Técnicas Destacadas
 
 ### 🔄 Asignación Round-Robin de Domiciliarios
 El sistema asigna automáticamente pedidos al domiciliario **disponible con menos carga** (pedidos activos: pendiente + en camino). Cuando un domiciliario cancela por incidente, se marca como **no disponible** y el Admin puede reincorporarlo desde la Torre de Control con un solo clic.
 
-### 📊 Donut Ring de Tasa de Cumplimiento
+### 📊 Anillo de Progreso SVG Animado
 Las métricas de negocio muestran la tasa de cumplimiento como un **anillo de progreso SVG animado** con umbrales de color: >90% verde, 70-89% esmeralda, <70% naranja. Se llena suavemente al cargar la página.
 
 ### 🛒 Tienda con Estados de Disponibilidad
@@ -104,8 +124,8 @@ Los productos pueden tener fotos de referencia subidas por el Admin. El sistema 
 ### 💵 Formato Pesos Colombianos
 Las tarifas y precios se muestran con **puntos de miles** ($85.000 en vez de $85000) mediante filtros de template personalizados. El formulario de servicios acepta entrada con o sin puntos (85.000 o 85000).
 
-### 🛡️ Sidebar Persistente por Rol
-Cada rol tiene su propia barra lateral con colores diferenciados (Admin: azul oscuro, Vet: turquesa, Cliente: púrpura, Domiciliario: gris con acento ámbar) que persiste en todas las páginas. El navbar es slim con solo logo y perfil.
+### 🔐 Control de Acceso por Roles
+Cada vista está protegida por decoradores de rol (`@role_required`, `@admin_required`, `@veterinario_required`) que verifican autenticación y permisos. Las vistas que manejan datos sensibles (métricas de negocio, exportación PDF/Excel) están restringidas exclusivamente a Administradores.
 
 ### 📝 Evidencia Obligatoria de Entrega
 Para confirmar una entrega, el domiciliario **debe** subir foto de evidencia y firma del cliente. Ambos campos son obligatorios en modelo, formulario y vista. Un pedido no puede pasar a "entregado" sin ellos.
@@ -118,7 +138,7 @@ Para confirmar una entrega, el domiciliario **debe** subir foto de evidencia y f
 |------------|-----------|
 | **Backend** | Django 5.2 (Python 3.12+) |
 | **Base de Datos** | SQLite (desarrollo) / PostgreSQL (producción) |
-| **Frontend** | Bootstrap 5.3, Bootstrap Icons |
+| **Frontend** | Tailwind CSS CDN + Alpine.js + Material Symbols Outlined |
 | **Plantillas** | Django Templates con herencia y bloques |
 | **PDF** | xhtml2pdf |
 | **Excel** | openpyxl |
@@ -142,16 +162,18 @@ huellitas_alegres/
 │   ├── models.py          # Pedido (estados: pendiente, en_camino, entregado, cancelado), PedidoItem
 │   ├── forms.py           # PedidoForm, CambiarEstadoForm, EvidenciaForm, ReasignarDomiciliarioForm
 │   ├── views.py           # Dashboard, detalle, torre de control, asignar_domiciliario_disponible()
-│   └── urls.py            # toggle_disponibilidad, etc.
+│   └── urls.py            # toggle_disponibilidad, comprobante_pdf, etc.
 ├── historial/             # Historial Clínico y Adjuntos
 ├── huellitas_alegres/     # Configuración del proyecto Django
-│   └── templatetags/      # Filtros personalizados (no usado — los filtros están en servicios/)
-├── mascotas/               # Mascotas (pacientes)
-├── productos/              # Inventario y Kardex
+│   ├── settings.py        # TIME_ZONE = 'America/Bogota', AUTH_USER_MODEL
+│   ├── urls.py            # URLs principales con namespaces por app
+│   └── templatetags/      # Filtros personalizados
+├── mascotas/              # Mascotas (pacientes)
+├── productos/             # Inventario y Kardex
 │   ├── models.py          # Producto (con imagen + auto-resize), MovimientoInventario
 │   ├── forms.py           # ProductoForm (tarifa como CharField con limpieza de puntos)
 │   └── views.py           # CRUD con request.FILES para imágenes
-├── proveedores/            # Proveedores (CRUD)
+├── proveedores/           # Proveedores (CRUD)
 ├── reportes/              # Reportes PDF/Excel y Métricas Admin
 │   └── views.py           # admin_metricas, admin_metricas_pdf, admin_metricas_excel
 ├── servicios/              # Catálogo de Servicios Veterinarios
@@ -161,16 +183,24 @@ huellitas_alegres/
 │   └── views.py           # Checkout con asignación round-robin de domiciliario
 ├── usuarios/              # Usuarios, Roles, Perfil, Configuración Clínica
 │   ├── models.py          # Usuario (con is_disponible), Rol, Perfil, ConfiguracionClinica
-│   ├── decorators.py      # role_required
+│   ├── decorators.py      # role_required, admin_required, veterinario_required
 │   └── views.py           # Auth, dashboards, gestión de usuarios
-├── templates/             # Plantillas base y compartidas
-│   ├── base.html          # Layout con sidebar condicional por rol
-│   ├── includes/          # admin_sidebar, vet_sidebar, cliente_sidebar, domiciliario_sidebar
-│   ├── reportes/         # admin_metricas.html (donut ring SVG), base_reporte.html
-│   ├── entregas/          # dashboard, detalle, torre_control (disponibilidad toggle)
-│   ├── tienda/            # catalogo.html (card-img-top + availability badges)
-│   └── productos/          # product_form.html (enctype + image preview)
-└── manage.py
+├── templates/             # Plantillas con diseño Material Design
+│   ├── base.html          # Layout unificado: navbar + sidebar + contenido
+│   ├── landing.html       # Landing Page pública (standalone)
+│   ├── inicio.html        # Dashboard fallback con cards por rol
+│   ├── includes/          # admin_sidebar, vet_sidebar, cliente_sidebar, domiciliario_sidebar, back_button
+│   ├── agenda/            # Dashboard vet, citas, disponibilidades
+│   ├── entregas/          # Dashboard, detalle, torre_control, resumen, mis_pedidos
+│   ├── historial/         # Historial clínico con adjuntos y atender cita
+│   ├── mascotas/          # CRUD mascotas + cliente_dashboard
+│   ├── productos/          # CRUD productos, kardex, alertas
+│   ├── proveedores/       # CRUD proveedores
+│   ├── reportes/          # admin_metricas (SVG ring), reportes PDF
+│   ├── servicios/          # CRUD servicios
+│   ├── tienda/            # Catálogo, carrito, checkout
+│   └── usuarios/          # Auth, perfil, admin (dashboard, users, configuración)
+└── DESIGN.md              # Sistema de diseño (paleta, tipografía, componentes)
 ```
 
 ---
@@ -180,7 +210,7 @@ huellitas_alegres/
 1. **Clonar el repositorio:**
 
 ```bash
-git clone https://github.com/SAS2121R/proyecto-HUELLITAS-ALEGRES-DANIEL-G.V.git
+git clone https://github.com/DANIELSPROGRAMMING/proyecto-HUELLITAS-ALEGRES-DANIEL-G.V.git
 cd proyecto-HUELLITAS-ALEGRES-DANIEL-G.V
 ```
 
@@ -250,6 +280,10 @@ python manage.py runserver
 ```
 
 El servidor se inicia en `http://127.0.0.1:8000/`
+
+- `/` — Landing Page (pública, redirige al dashboard si ya estás autenticado)
+- `/usuarios/auth/` — Login / Registro
+- `/inicio/` — Dashboard genérico (fallback)
 
 ---
 
