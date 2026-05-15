@@ -73,16 +73,16 @@
               <td class="px-4 py-3 font-body-md text-body-md text-on-surface text-center">{{ p.cantidad_stock }}</td>
               <td class="px-4 py-3 text-center">
                 {% if p.estado_stock == 'verde' %}
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-container/30 text-on-primary-container font-caption text-caption">
-                  <span class="w-1.5 h-1.5 rounded-full bg-primary"></span> OK
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary text-on-primary font-caption text-caption">
+                  <span class="w-1.5 h-1.5 rounded-full bg-on-primary/50"></span> OK
                 </span>
                 {% elif p.estado_stock == 'amarillo' %}
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-container/30 text-on-tertiary-container font-caption text-caption">
-                  <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Bajo
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#92780c] text-white font-caption text-caption">
+                  <span class="w-1.5 h-1.5 rounded-full bg-white/70"></span> Bajo
                 </span>
                 {% else %}
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error-container/50 text-on-error-container font-caption text-caption">
-                  <span class="w-1.5 h-1.5 rounded-full bg-error"></span> Crítico
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error text-on-error font-caption text-caption">
+                  <span class="w-1.5 h-1.5 rounded-full bg-on-error/50"></span> Crítico
                 </span>
                 {% endif %}
               </td>
