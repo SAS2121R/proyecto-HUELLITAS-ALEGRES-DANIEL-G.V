@@ -63,6 +63,9 @@ def _export_inventario_excel(queryset):
 @role_required('Administrador', 'Veterinario')
 def reporte_citas(request):
     citas = Cita.objects.select_related('mascota', 'disponibilidad__veterinario').order_by('-disponibilidad__fecha')
+    # Si es Veterinario, solo sus propias citas
+    if request.user.rol.nombre == 'Veterinario':
+        citas = citas.filter(disponibilidad__veterinario=request.user)
     estado = request.GET.get('estado')
     fecha_desde = request.GET.get('fecha_desde')
     fecha_hasta = request.GET.get('fecha_hasta')
@@ -83,6 +86,7 @@ def reporte_citas(request):
         'programadas': programadas,
         'canceladas': canceladas,
         'config': ConfiguracionClinica.get_config(),
+        'es_veterinario': request.user.rol.nombre == 'Veterinario',
     }
     return _render_to_pdf('reportes/reporte_citas.html', context)
 
@@ -101,7 +105,7 @@ def reporte_historial(request, mascota_pk):
 
 
 @login_required
-@role_required('Administrador', 'Veterinario')
+@role_required('Administrador')
 def reporte_inventario(request):
     productos = Producto.objects.all().order_by('categoria', 'nombre')
     stock_bajo = request.GET.get('stock_bajo')
@@ -128,6 +132,30 @@ def reporte_inventario(request):
 @login_required
 @role_required('Administrador', 'Veterinario')
 def reporte_servicios(request):
+    # Si es Veterinario, mostrar sus historiales clínicos (consultas realizadas)
+    if request.user.rol.nombre == 'Veterinario':
+        historiales = HistorialClinico.objects.filter(
+            veterinario=request.user
+        ).select_related('mascota', 'cita').order_by('-fecha_consulta')
+        fecha_desde = request.GET.get('fecha_desde')
+        fecha_hasta = request.GET.get('fecha_hasta')
+        tipo = request.GET.get('tipo')
+        if fecha_desde:
+            historiales = historiales.filter(fecha_consulta__date__gte=fecha_desde)
+        if fecha_hasta:
+            historiales = historiales.filter(fecha_consulta__date__lte=fecha_hasta)
+        if tipo:
+            historiales = historiales.filter(tipo_consulta=tipo)
+        total = historiales.count()
+        context = {
+            'historiales': historiales,
+            'total': total,
+            'config': ConfiguracionClinica.get_config(),
+            'es_veterinario': True,
+        }
+        return _render_to_pdf('reportes/reporte_mis_servicios.html', context)
+
+    # Admin: catálogo completo de servicios
     servicios = Servicio.objects.all().order_by('categoria', 'nombre')
     categoria = request.GET.get('categoria')
     if categoria:
@@ -139,6 +167,7 @@ def reporte_servicios(request):
         'total': total,
         'activos': activos,
         'config': ConfiguracionClinica.get_config(),
+        'es_veterinario': False,
     }
     return _render_to_pdf('reportes/reporte_servicios.html', context)
 

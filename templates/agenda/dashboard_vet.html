@@ -111,11 +111,11 @@
                         <td class="py-3 px-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-sm">
-                                    {{ cita.mascota|slice:":1"|upper }}
+                                    {{ cita.mascota.nombre|slice:":1"|upper }}
                                 </div>
                                 <div>
-                                    <div class="font-medium">{{ cita.mascota }}</div>
-                                    <div class="text-sm text-on-surface-variant">{{ cita.disponibilidad.fecha|date:"d/m/Y" }}</div>
+                                    <div class="font-medium">{{ cita.mascota.nombre }}</div>
+                                    <div class="text-xs text-on-surface-variant">{{ cita.mascota.especie }} · {{ cita.disponibilidad.fecha|date:"d/m/Y" }}</div>
                                 </div>
                             </div>
                         </td>
