@@ -36,7 +36,7 @@ from django.db.models import Count, Sum, Avg, Q, F
 from django.utils import timezone
 from datetime import timedelta
 
-from .decorators import admin_required, veterinario_required
+from .decorators import admin_required, veterinario_required, role_required
 from .forms import RolChangeForm, PerfilForm, PerfilEditForm, CrearUsuarioForm, EditarUsuarioForm, SetPasswordForm
 from .models import Rol, Perfil
 import json
@@ -377,10 +377,10 @@ def admin_user_edit(request, pk):
 
 
 # ========================================
-# VISTAS DE VETERINARIO (Solo Veterinario)
+# VISTAS DE VETERINARIO (Veterinario y Administrador)
 # ========================================
 @login_required
-@veterinario_required
+@role_required('Veterinario', 'Administrador')
 def vet_dashboard(request):
     """Vista del dashboard para veterinarios — redirige al dashboard de agenda."""
     return redirect('agenda:dashboard_vet')

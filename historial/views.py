@@ -25,8 +25,10 @@ def lista_historiales(request):
         qs = HistorialClinico.objects.filter(veterinario=request.user)
     elif request.user.rol.nombre == 'Administrador':
         qs = HistorialClinico.objects.all()
-    else:  # Cliente
+    elif request.user.rol.nombre == 'Cliente':
         qs = HistorialClinico.objects.filter(mascota__propietario=request.user)
+    else:
+        raise PermissionDenied
 
     search = request.GET.get('q', '').strip()
     if search:
@@ -80,6 +82,8 @@ def detalle_historial(request, pk):
         raise PermissionDenied
     if request.user.rol.nombre == 'Cliente' and historial.mascota.propietario != request.user:
         raise PermissionDenied
+    if request.user.rol.nombre not in ('Veterinario', 'Administrador', 'Cliente'):
+        raise PermissionDenied
     # Administrador can view any
 
     return render(request, 'historial/historial_detail.html', {'historial': historial})
@@ -95,6 +99,9 @@ def editar_historial(request, pk):
         raise PermissionDenied
     # Permission: Vet can only edit own
     if request.user.rol.nombre == 'Veterinario' and historial.veterinario != request.user:
+        raise PermissionDenied
+    # Permission: Domiciliario cannot edit (403)
+    if request.user.rol.nombre not in ('Veterinario', 'Administrador'):
         raise PermissionDenied
     # Administrador can edit any
 
@@ -119,6 +126,9 @@ def historial_por_mascota(request, mascota_pk):
 
     # Permission: Cliente can only view own pets
     if request.user.rol.nombre == 'Cliente' and mascota.propietario != request.user:
+        raise PermissionDenied
+    # Permission: Domiciliario cannot view historial (403)
+    if request.user.rol.nombre not in ('Veterinario', 'Administrador', 'Cliente'):
         raise PermissionDenied
     # Veterinario and Administrador can view any
 
