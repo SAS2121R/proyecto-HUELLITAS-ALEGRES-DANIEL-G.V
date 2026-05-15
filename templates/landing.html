@@ -5,64 +5,57 @@
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
 <title>Huellitas Alegres - Cuidado Veterinario</title>
+
+{# ── Prevent flash of wrong theme ── #}
+<script>
+(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}})();
+</script>
+
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com" rel="preconnect">
 <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
+
+{# ── Dark Mode Color System ── #}
+<style>
+:root{--color-primary:#37563b;--color-primary-container:#4f6f52;--color-on-primary:#ffffff;--color-on-primary-container:#ccf0cc;--color-surface:#f8f9fa;--color-surface-container:#edeeef;--color-surface-container-low:#f3f4f5;--color-surface-container-lowest:#ffffff;--color-surface-container-high:#e7e8e9;--color-surface-container-highest:#e1e3e4;--color-secondary:#625e56;--color-secondary-container:#e6dfd5;--color-on-secondary-container:#67625a;--color-on-surface:#191c1d;--color-on-surface-variant:#424841;--color-outline:#737971;--color-outline-variant:#c2c8bf;--color-error:#ba1a1a;--color-error-container:#ffdad6;--color-on-error:#ffffff;--color-on-error-container:#93000a;--color-tertiary:#47541d;--color-tertiary-container:#5e6d33;--color-on-tertiary:#ffffff;--color-on-tertiary-container:#ddeea7;--color-background:#f8f9fa;--color-on-background:#191c1d}
+.dark{--color-primary:#7dba85;--color-primary-container:#2c4a30;--color-on-primary:#003916;--color-on-primary-container:#ccf0cc;--color-surface:#111413;--color-surface-container:#1d201f;--color-surface-container-low:#191c1b;--color-surface-container-lowest:#0c0f0e;--color-surface-container-high:#282b29;--color-surface-container-highest:#333534;--color-secondary:#d0c8bb;--color-secondary-container:#4a453e;--color-on-secondary-container:#f5ede2;--color-on-surface:#e2e0db;--color-on-surface-variant:#c2c8bf;--color-outline:#8c928a;--color-outline-variant:#424841;--color-error:#ffb4ab;--color-error-container:#93000a;--color-on-error:#690005;--color-on-error-container:#ffdad6;--color-tertiary:#bdd78d;--color-tertiary-container:#324b0a;--color-on-tertiary:#2e4408;--color-on-tertiary-container:#ddeea7;--color-background:#111413;--color-on-background:#e2e0db}
+</style>
+
 <script>
     tailwind.config = {
       darkMode: "class",
       theme: {
         extend: {
           "colors": {
-            "surface-container-low": "#f3f4f5",
-            "secondary": "#625e56",
-            "surface": "#f8f9fa",
-            "tertiary-fixed": "#d9eaa3",
-            "on-tertiary": "#ffffff",
-            "secondary-container": "#e6dfd5",
-            "on-background": "#191c1d",
-            "on-primary-container": "#ccf0cc",
-            "on-secondary": "#ffffff",
-            "outline-variant": "#c2c8bf",
-            "surface-container-lowest": "#ffffff",
-            "error-container": "#ffdad6",
-            "surface-container-high": "#e7e8e9",
-            "secondary-fixed-dim": "#cdc5bc",
-            "secondary-fixed": "#e9e1d8",
-            "surface-bright": "#f8f9fa",
-            "on-primary-fixed-variant": "#2f4e33",
-            "tertiary": "#47541d",
-            "tertiary-container": "#5e6d33",
-            "primary-fixed": "#c8ecc8",
-            "primary-fixed-dim": "#acd0ad",
-            "on-tertiary-fixed-variant": "#3e4c16",
-            "outline": "#737971",
-            "on-secondary-container": "#67625a",
-            "on-surface-variant": "#424841",
-            "surface-container-highest": "#e1e3e4",
-            "surface-variant": "#e1e3e4",
-            "on-surface": "#191c1d",
-            "on-primary-fixed": "#03210b",
-            "background": "#f8f9fa",
-            "surface-container": "#edeeef",
-            "on-primary": "#ffffff",
-            "inverse-surface": "#2e3132",
-            "on-secondary-fixed": "#1e1b15",
-            "on-tertiary-fixed": "#161f00",
-            "inverse-primary": "#acd0ad",
-            "surface-tint": "#466649",
-            "error": "#ba1a1a",
-            "tertiary-fixed-dim": "#bdce89",
-            "surface-dim": "#d9dadb",
-            "primary-container": "#4f6f52",
-            "on-error": "#ffffff",
-            "on-secondary-fixed-variant": "#4a463f",
-            "primary": "#37563b",
-            "on-error-container": "#93000a",
-            "inverse-on-surface": "#f0f1f2",
-            "on-tertiary-container": "#ddeea7"
+            "primary": "var(--color-primary)",
+            "primary-container": "var(--color-primary-container)",
+            "on-primary": "var(--color-on-primary)",
+            "on-primary-container": "var(--color-on-primary-container)",
+            "surface": "var(--color-surface)",
+            "surface-container": "var(--color-surface-container)",
+            "surface-container-low": "var(--color-surface-container-low)",
+            "surface-container-lowest": "var(--color-surface-container-lowest)",
+            "surface-container-high": "var(--color-surface-container-high)",
+            "surface-container-highest": "var(--color-surface-container-highest)",
+            "secondary": "var(--color-secondary)",
+            "secondary-container": "var(--color-secondary-container)",
+            "on-secondary-container": "var(--color-on-secondary-container)",
+            "on-surface": "var(--color-on-surface)",
+            "on-surface-variant": "var(--color-on-surface-variant)",
+            "outline": "var(--color-outline)",
+            "outline-variant": "var(--color-outline-variant)",
+            "error": "var(--color-error)",
+            "error-container": "var(--color-error-container)",
+            "on-error": "var(--color-on-error)",
+            "on-error-container": "var(--color-on-error-container)",
+            "tertiary": "var(--color-tertiary)",
+            "tertiary-container": "var(--color-tertiary-container)",
+            "on-tertiary": "var(--color-on-tertiary)",
+            "on-tertiary-container": "var(--color-on-tertiary-container)",
+            "background": "var(--color-background)",
+            "on-background": "var(--color-on-background)"
           },
           "borderRadius": {
             "DEFAULT": "0.25rem",
