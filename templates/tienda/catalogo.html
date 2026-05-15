@@ -58,7 +58,7 @@
     {# Product card grid #}
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {% for producto in page_obj %}
-        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col hover:shadow-lg transition-shadow">
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-md transition-all duration-300 ease-in-out overflow-hidden flex flex-col hover:scale-105 hover:shadow-xl hover:-translate-y-1 hover:border-[#37563b]/40">
             {% if producto.imagen %}
             <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="w-full h-44 object-cover">
             {% else %}
