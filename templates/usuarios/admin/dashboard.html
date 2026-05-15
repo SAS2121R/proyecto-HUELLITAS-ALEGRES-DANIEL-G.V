@@ -106,7 +106,7 @@
                         <td class="py-3 px-4">
                             <div class="flex items-center gap-3">
                                 {% if u.perfil.foto %}
-                                <img src="{{ u.perfil.foto.url }}" alt="{{ u.get_full_name|default:u.email }}" class="w-9 h-9 rounded-full object-cover border border-outline-variant/30">
+                                <img src="{{ u.perfil.foto.url }}" alt="{{ u.get_full_name|default:u.email }}" class="w-9 h-9 rounded-full object-cover object-top border border-outline-variant/30">
                                 {% else %}
                                 <div class="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-caption">
                                     {{ u.first_name.0|upper }}{% if u.last_name %}{{ u.last_name.0|upper }}{% endif %}

@@ -65,7 +65,7 @@
         </div>
         <div class="flex items-center gap-3 mt-1">
             {% if user.perfil.foto %}
-            <img src="{{ user.perfil.foto.url }}" alt="{{ user.get_full_name|default:user.email }}" class="w-10 h-10 rounded-full object-cover border border-outline-variant/30">
+            <img src="{{ user.perfil.foto.url }}" alt="{{ user.get_full_name|default:user.email }}" class="w-10 h-10 rounded-full object-cover object-top border border-outline-variant/30">
             {% else %}
             <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-label-md">
                 {{ user.first_name.0|upper }}{% if user.last_name %}{{ user.last_name.0|upper }}{% endif %}

@@ -47,7 +47,7 @@
     <div>
         <div class="bg-surface-container-lowest rounded-xl custom-shadow border border-outline-variant/10 p-6 text-center">
             {% if perfil.foto %}
-            <img src="{{ perfil.foto.url }}" alt="Foto de perfil" class="w-32 h-32 rounded-full object-cover border-4 border-primary-container mx-auto mb-4">
+            <img src="{{ perfil.foto.url }}" alt="Foto de perfil" class="w-32 h-32 rounded-full object-cover object-top border-4 border-primary-container mx-auto mb-4">
             {% else %}
             <div class="w-32 h-32 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-headline-lg text-headline-lg mx-auto mb-4">
                 {{ user.email|slice:":1"|upper }}
@@ -107,7 +107,7 @@
                         </div>
                     </div>
                     <div class="mt-4">
-                        <button type="submit" class="bg-primary text-on-primary font-label-md text-label-md rounded-lg px-lg py-sm hover:opacity-90 transition-opacity">Guardar Datos</button>
+                        <button type="submit" class="w-full sm:w-auto bg-primary text-on-primary font-label-md text-label-md rounded-lg px-6 py-2.5 hover:opacity-90 transition-opacity">Guardar Datos</button>
                     </div>
                 </form>
             </div>
