@@ -105,21 +105,20 @@
             <p class="font-caption text-caption text-on-surface-variant">Incidentes</p>
         </div>
         <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-4 flex items-center gap-3">
-            <div class="progress-ring-mini">
+            <div class="progress-ring-mini flex-shrink-0">
                 <svg viewBox="0 0 64 64">
                     <circle class="progress-ring__bg" cx="32" cy="32" r="26"/>
                     <circle class="progress-ring__fill" cx="32" cy="32" r="26" data-percent="{{ tasa_cumplimiento }}"
                             style="stroke: {% if tasa_cumplimiento >= 90 %}#37563b{% elif tasa_cumplimiento >= 70 %}#4f6f52{% else %}#625e56{% endif %};"/>
                 </svg>
                 <div class="mini-ring-center">
-                    <span class="font-label-md text-label-md font-bold {% if tasa_cumplimiento >= 70 %}text-primary{% else %}text-secondary{% endif %}">{{ tasa_cumplimiento }}%</span>
+                    <span class="text-xs font-bold {% if tasa_cumplimiento >= 70 %}text-primary{% else %}text-secondary{% endif %}">{{ tasa_cumplimiento }}%</span>
                 </div>
             </div>
             <div class="min-w-0">
-                <p class="font-label-md text-label-md text-on-surface truncate">{{ tasa_cumplimiento }}% Cumplimiento</p>
-                <p class="font-caption text-caption text-on-surface-variant">Tasa de entrega</p>
+                <p class="font-headline-lg text-headline-lg text-on-surface leading-tight">{{ tasa_cumplimiento }}%</p>
+                <p class="font-caption text-caption text-on-surface-variant">Cumplimiento</p>
             </div>
-        </div>
         </div>
     </div>
 
