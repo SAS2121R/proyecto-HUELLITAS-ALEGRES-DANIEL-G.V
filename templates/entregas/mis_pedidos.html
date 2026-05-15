@@ -14,20 +14,20 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {% for pedido in page_obj %}
         <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden
-            {% if pedido.estado == 'pendiente' %}border-l-4 border-l-secondary{% elif pedido.estado == 'en_camino' %}border-l-4 border-l-primary{% elif pedido.estado == 'entregado' %}border-l-4 border-l-tertiary{% else %}border-l-4 border-l-error{% endif %}">
+            {% if pedido.estado == 'pendiente' %}border-l-4 border-l-[#5e6d33]{% elif pedido.estado == 'en_camino' %}border-l-4 border-l-primary{% elif pedido.estado == 'entregado' %}border-l-4 border-l-primary{% else %}border-l-4 border-l-error{% endif %}">
             <div class="p-4">
                 <div class="flex justify-between items-center mb-3">
                     <h5 class="font-headline-md text-headline-md text-on-surface">Pedido #{{ pedido.pk }}</h5>
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-caption text-caption
-                        {% if pedido.estado == 'pendiente' %}bg-secondary-container/50 text-on-secondary-container
-                        {% elif pedido.estado == 'en_camino' %}bg-primary-container/30 text-primary
-                        {% elif pedido.estado == 'entregado' %}bg-tertiary-container/30 text-on-tertiary-container
-                        {% else %}bg-error-container/50 text-on-error-container{% endif %}">
+                        {% if pedido.estado == 'pendiente' %}bg-[#e8edd4] text-[#2b3a1a]
+                        {% elif pedido.estado == 'en_camino' %}bg-primary-container text-on-primary-container
+                        {% elif pedido.estado == 'entregado' %}bg-primary text-on-primary
+                        {% else %}bg-error text-on-error{% endif %}">
                         <span class="w-1.5 h-1.5 rounded-full
-                            {% if pedido.estado == 'pendiente' %}bg-secondary
+                            {% if pedido.estado == 'pendiente' %}bg-[#5e6d33]
                             {% elif pedido.estado == 'en_camino' %}bg-primary
-                            {% elif pedido.estado == 'entregado' %}bg-tertiary
-                            {% else %}bg-error{% endif %}"></span>
+                            {% elif pedido.estado == 'entregado' %}bg-on-primary/50
+                            {% else %}bg-on-error/50{% endif %}"></span>
                         {{ pedido.get_estado_display }}
                     </span>
                 </div>

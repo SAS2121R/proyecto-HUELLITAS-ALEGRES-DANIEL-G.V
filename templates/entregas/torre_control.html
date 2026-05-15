@@ -177,20 +177,20 @@
                         <td class="py-3 px-4">{{ pedido.direccion_entrega|truncatewords:4 }}</td>
                         <td class="py-3 px-4">
                             {% if pedido.estado == 'pendiente' %}
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-secondary-container/50 text-on-secondary-container font-caption text-caption">
-                                <span class="w-1.5 h-1.5 rounded-full bg-secondary mr-1.5"></span>{{ pedido.get_estado_display }}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-[#e8edd4] text-[#2b3a1a] font-caption text-caption">
+                                <span class="w-1.5 h-1.5 rounded-full bg-[#5e6d33] mr-1.5"></span>{{ pedido.get_estado_display }}
                             </span>
                             {% elif pedido.estado == 'en_camino' %}
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-primary-container/30 text-primary font-caption text-caption">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-primary-container text-on-primary-container font-caption text-caption">
                                 <span class="w-1.5 h-1.5 rounded-full bg-primary mr-1.5"></span>{{ pedido.get_estado_display }}
                             </span>
                             {% elif pedido.estado == 'entregado' %}
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-tertiary-container/30 text-on-tertiary-container font-caption text-caption">
-                                <span class="w-1.5 h-1.5 rounded-full bg-tertiary mr-1.5"></span>{{ pedido.get_estado_display }}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-primary text-on-primary font-caption text-caption">
+                                <span class="w-1.5 h-1.5 rounded-full bg-on-primary/50 mr-1.5"></span>{{ pedido.get_estado_display }}
                             </span>
                             {% elif pedido.estado == 'cancelado' %}
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-error-container/50 text-on-error-container font-caption text-caption">
-                                <span class="w-1.5 h-1.5 rounded-full bg-error mr-1.5"></span>{{ pedido.get_estado_display }}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-error text-on-error font-caption text-caption">
+                                <span class="w-1.5 h-1.5 rounded-full bg-on-error/50 mr-1.5"></span>{{ pedido.get_estado_display }}
                             </span>
                             {% else %}
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-caption text-caption">{{ pedido.get_estado_display }}</span>
