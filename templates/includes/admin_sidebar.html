@@ -44,7 +44,7 @@
         </a>
         <a href="{% url 'historial:lista' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
             {% if '/historial/' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
-            <span class="material-symbols-outlined text-[20px] {% if '/historial/' in request.path %}icon-fill{% endif %}">clipboard2_pulse</span>
+            <span class="material-symbols-outlined text-[20px] {% if '/historial/' in request.path %}icon-fill{% endif %}">history</span>
             Historial
         </a>
         <a href="{% url 'servicios:lista' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline

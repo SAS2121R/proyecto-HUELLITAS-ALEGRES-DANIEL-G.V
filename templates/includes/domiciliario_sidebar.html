@@ -19,7 +19,7 @@
         </a>
         <a href="{% url 'entregas:resumen' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-label-md text-label-md no-underline
             {% if '/resumen' in request.path %}bg-primary-container text-on-primary-container font-bold{% else %}text-secondary hover:bg-surface-container-high{% endif %}">
-            <span class="material-symbols-outlined text-[20px] {% if '/resumen' in request.path %}icon-fill{% endif %}">clipboard_check</span>
+            <span class="material-symbols-outlined text-[20px] {% if '/resumen' in request.path %}icon-fill{% endif %}">task_alt</span>
             Resumen
         </a>
     </nav>
