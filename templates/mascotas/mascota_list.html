@@ -87,7 +87,7 @@
         <tr class="border-b border-outline-variant/10 hover:bg-surface-container-low transition-colors">
           <td class="px-4 py-3">
             {% if m.foto %}
-            <img src="{{ m.foto.url }}" alt="{{ m.nombre }}" class="w-10 h-10 rounded-full object-cover">
+            <img src="{{ m.foto.url }}" alt="{{ m.nombre }}" class="w-10 h-10 rounded-full object-cover object-top">
             {% else %}
             <span class="material-symbols-outlined text-on-surface-variant text-[24px]">pets</span>
             {% endif %}

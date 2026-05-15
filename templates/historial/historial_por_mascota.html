@@ -19,7 +19,7 @@
     {# Pet info summary card #}
     <div class="bg-surface-container-low rounded-xl p-4 border border-outline-variant/20 mb-6 flex items-center gap-4">
         {% if mascota.foto %}
-        <img src="{{ mascota.foto.url }}" alt="{{ mascota.nombre }}" class="w-14 h-14 rounded-full object-cover border-2 border-primary-container">
+        <img src="{{ mascota.foto.url }}" alt="{{ mascota.nombre }}" class="w-14 h-14 rounded-full object-cover object-top border-2 border-primary-container">
         {% else %}
         <div class="w-14 h-14 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-headline-md text-headline-md">
             {{ mascota.nombre.0|upper }}

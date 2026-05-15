@@ -17,7 +17,7 @@
   <!-- Photo -->
   <div class="flex-shrink-0">
     {% if mascota.foto %}
-    <img src="{{ mascota.foto.url }}" alt="{{ mascota.nombre }}" class="w-48 h-48 md:w-56 md:h-56 rounded-xl object-cover border border-outline-variant/20 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+    <img src="{{ mascota.foto.url }}" alt="{{ mascota.nombre }}" class="w-48 h-48 md:w-56 md:h-56 rounded-xl object-cover object-top border border-outline-variant/20 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
     {% else %}
     <div class="w-48 h-48 md:w-56 md:h-56 rounded-xl bg-surface-container flex items-center justify-center border border-outline-variant/20">
       <span class="material-symbols-outlined text-on-surface-variant text-[64px]">pets</span>
