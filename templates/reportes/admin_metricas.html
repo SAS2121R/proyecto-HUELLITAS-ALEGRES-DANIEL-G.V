@@ -7,8 +7,8 @@
     /* ── Progress Ring (Donut) ── */
     .progress-ring-container {
         position: relative;
-        width: 180px;
-        height: 180px;
+        width: 160px;
+        height: 160px;
         margin: 0 auto;
     }
     .progress-ring {
@@ -30,27 +30,41 @@
     }
     .progress-ring-center {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         text-align: center;
+        pointer-events: none;
     }
     /* Mini ring for card */
     .progress-ring-mini {
-        width: 64px;
-        height: 64px;
+        position: relative;
+        width: 56px;
+        height: 56px;
+        flex-shrink: 0;
     }
     .progress-ring-mini svg {
-        width: 64px;
-        height: 64px;
+        width: 56px;
+        height: 56px;
+        display: block;
     }
     .progress-ring-mini .progress-ring__bg { stroke-width: 14; stroke: #c2c8bf; }
     .progress-ring-mini .progress-ring__fill { stroke-width: 14; stroke-dasharray: 163; stroke-dashoffset: 163; }
     .mini-ring-center {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%,-50%);
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
     }
 </style>
 {% endblock %}
@@ -76,7 +90,7 @@
     {# ── Summary Cards ── #}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-4 text-center">
-            <span class="material-symbols-outlined text-on-tertiary text-[28px]" style="font-variation-settings: 'FILL' 1;">local_shipping</span>
+            <span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1; color: #4f6f52;">local_shipping</span>
             <p class="font-headline-lg text-headline-lg text-on-surface mt-1">{{ total_entregados }}</p>
             <p class="font-caption text-caption text-on-surface-variant">Pedidos Entregados</p>
         </div>
@@ -90,19 +104,22 @@
             <p class="font-headline-lg text-headline-lg text-on-surface mt-1">{{ con_incidente }}</p>
             <p class="font-caption text-caption text-on-surface-variant">Incidentes</p>
         </div>
-        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-4 flex items-center justify-center gap-3">
-            <div class="progress-ring-mini relative">
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-4 flex items-center gap-3">
+            <div class="progress-ring-mini">
                 <svg viewBox="0 0 64 64">
                     <circle class="progress-ring__bg" cx="32" cy="32" r="26"/>
                     <circle class="progress-ring__fill" cx="32" cy="32" r="26" data-percent="{{ tasa_cumplimiento }}"
                             style="stroke: {% if tasa_cumplimiento >= 90 %}#37563b{% elif tasa_cumplimiento >= 70 %}#4f6f52{% else %}#625e56{% endif %};"/>
                 </svg>
-                <span class="mini-ring-center font-headline-md text-headline-md {% if tasa_cumplimiento >= 70 %}text-primary{% else %}text-secondary{% endif %}">{{ tasa_cumplimiento }}%</span>
+                <div class="mini-ring-center">
+                    <span class="font-label-md text-label-md font-bold {% if tasa_cumplimiento >= 70 %}text-primary{% else %}text-secondary{% endif %}">{{ tasa_cumplimiento }}%</span>
+                </div>
             </div>
-            <div class="text-left">
-                <p class="font-headline-md text-headline-md text-on-surface {% if tasa_cumplimiento >= 90 %}text-primary{% elif tasa_cumplimiento >= 70 %}text-primary{% else %}text-secondary{% endif %}">{{ tasa_cumplimiento }}%</p>
-                <p class="font-caption text-caption text-on-surface-variant">Cumplimiento</p>
+            <div class="min-w-0">
+                <p class="font-label-md text-label-md text-on-surface truncate">{{ tasa_cumplimiento }}% Cumplimiento</p>
+                <p class="font-caption text-caption text-on-surface-variant">Tasa de entrega</p>
             </div>
+        </div>
         </div>
     </div>
 
@@ -188,14 +205,14 @@
                 <div class="flex items-center gap-6">
                     {# Progress Ring #}
                     <div class="progress-ring-container flex-shrink-0">
-                        <svg class="progress-ring" viewBox="0 0 180 180" width="180" height="180">
+                        <svg class="progress-ring" viewBox="0 0 180 180" width="160" height="160">
                             <circle class="progress-ring__bg" cx="90" cy="90" r="72"/>
                             <circle class="progress-ring__fill" id="ring-fill" cx="90" cy="90" r="72" data-percent="{{ tasa_cumplimiento }}"
                                     style="stroke: {% if tasa_cumplimiento >= 90 %}#37563b{% elif tasa_cumplimiento >= 70 %}#4f6f52{% else %}#625e56{% endif %};"/>
                         </svg>
                         <div class="progress-ring-center">
-                            <div class="font-display-lg text-display-lg {% if tasa_cumplimiento >= 70 %}text-primary{% else %}text-secondary{% endif %}" id="ring-value" style="font-family: 'Plus Jakarta Sans', sans-serif;">{{ tasa_cumplimiento }}%</div>
-                            <div class="font-caption text-caption text-on-surface-variant" style="text-transform: uppercase; letter-spacing: 0.08rem; margin-top: 2px;">Cumplimiento</div>
+                            <div class="font-headline-lg text-headline-lg {% if tasa_cumplimiento >= 70 %}text-primary{% else %}text-secondary{% endif %}" id="ring-value" style="font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1;">{{ tasa_cumplimiento }}%</div>
+                            <div class="font-caption text-caption text-on-surface-variant" style="letter-spacing: 0.04em; margin-top: 2px;">Cumplimiento</div>
                         </div>
                     </div>
                     {# Stats ── #}
