@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Solicitar Cita — Huellitas Alegres{% endblock %}
+{% block title %}Reprogramar Cita — Huellitas Alegres{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -77,83 +77,43 @@
 
   {# Page heading #}
   <h1 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-2 mb-6">
-    <span class="material-symbols-outlined text-primary">calendar_add_on</span> Solicitar Cita
+    <span class="material-symbols-outlined text-primary">event_repeat</span> Reprogramar Cita
   </h1>
 
-  {% if sin_disponibilidad %}
-  {# Warning: no availability — show upcoming dates as alternatives (CU#4 4.2, HU#5) #}
-  <div class="flex items-start gap-3 p-4 bg-secondary-container/30 rounded-xl border border-secondary/20 font-body-md text-body-md text-on-surface mb-6">
-    <span class="material-symbols-outlined text-secondary flex-shrink-0 mt-0.5">warning</span>
-    <div>
-      <p><strong>No hay horarios libres en este momento.</strong></p>
-      <p class="mt-1 text-on-surface-variant">No se encontraron turnos disponibles. A continuación se muestran las próximas fechas donde los veterinarios tienen agenda.</p>
+  {# Current appointment info #}
+  <div class="bg-secondary-container/20 rounded-xl border border-secondary/30 p-4 mb-6">
+    <p class="font-label-md text-label-md text-on-surface mb-2">Cita actual:</p>
+    <div class="flex flex-col sm:flex-row gap-2 sm:gap-6 font-body-md text-body-md text-on-surface">
+      <span class="flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-secondary text-[18px]">pets</span>
+        {{ cita_actual.mascota.nombre }}
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-secondary text-[18px]">calendar_today</span>
+        {{ cita_actual.disponibilidad.fecha|date:"l, j N Y" }}
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-secondary text-[18px]">schedule</span>
+        {{ cita_actual.disponibilidad.hora_inicio|time:"H:i" }} — {{ cita_actual.disponibilidad.hora_fin|time:"H:i" }}
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-secondary text-[18px]">person</span>
+        {{ cita_actual.disponibilidad.veterinario.get_full_name }}
+      </span>
     </div>
+    {% if cita_actual.motivo %}
+    <p class="mt-2 font-caption text-caption text-on-surface-variant">Motivo: {{ cita_actual.motivo }}</p>
+    {% endif %}
   </div>
 
-  {% if proximas_disponibilidades %}
-  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
-    <div class="px-5 py-3 border-b border-outline-variant/30 bg-surface-container-low">
-      <h2 class="font-label-lg text-label-lg text-on-surface flex items-center gap-2">
-        <span class="material-symbols-outlined text-primary text-[20px]">event_upcoming</span>
-        Próximas fechas con agenda disponible
-      </h2>
-    </div>
-    <div class="divide-y divide-outline-variant/10">
-      {% for disp in proximas_disponibilidades %}
-      <div class="flex items-center justify-between px-5 py-3 hover:bg-surface-container-low transition-colors">
-        <div class="flex items-center gap-3">
-          <span class="material-symbols-outlined text-primary text-[20px]">schedule</span>
-          <div>
-            <p class="font-label-md text-label-md text-on-surface">{{ disp.fecha|date:"l, j N Y" }}</p>
-            <p class="font-caption text-caption text-on-surface-variant">{{ disp.hora_inicio|date:"H:i" }} — {{ disp.hora_fin|date:"H:i" }}</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full
-            {% if disp.esta_ocupada %}bg-error-container/50 text-error{% else %}bg-primary-container text-on-primary-container{% endif %}
-            font-caption text-caption">
-            <span class="material-symbols-outlined text-[14px]">{{ disp.esta_ocupada|yesno:"lock,check_circle" }}</span>
-            {% if disp.esta_ocupada %}Ocupado{% else %}Libre{% endif %}
-          </span>
-          <span class="font-caption text-caption text-on-surface-variant">{{ disp.veterinario.get_full_name }}</span>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-    <div class="px-5 py-3 border-t border-outline-variant/30 bg-surface-container-low">
-      <p class="font-caption text-caption text-on-surface-variant">Los turnos marcados como <strong>Ocupado</strong> ya tienen una cita asignada. Los turnos <strong>Libre</strong> pueden estar reservados recientemente — vuelva a cargar la página para actualizar.</p>
-    </div>
-  </div>
-  {% else %}
-  <div class="flex flex-col items-center justify-center gap-4 p-8 bg-surface-container rounded-xl border border-outline-variant/20">
-    <span class="material-symbols-outlined text-on-surface-variant text-[48px]">event_busy</span>
-    <div class="text-center">
-      <p class="font-body-md text-body-md text-on-surface-variant">No hay fechas programadas en el sistema.</p>
-      <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Comuníquese con la clínica para más información.</p>
-    </div>
-  </div>
-  {% endif %}
-  {% else %}
   {# Form card #}
   <div class="bg-surface-container-lowest rounded-xl p-6 custom-shadow border border-outline-variant/10">
+    <p class="font-body-md text-body-md text-on-surface-variant mb-4">Seleccione una nueva fecha y hora para su cita. La cita actual será cancelada automáticamente.</p>
     <div class="tw-form">
-      <form method="post" novalidate id="solicitar-cita-form">
+      <form method="post" novalidate id="reprogramar-cita-form">
         {% csrf_token %}
 
-        {# Mascota field #}
-        <div class="mb-4">
-          <label for="{{ form.mascota.id_for_label }}">{{ form.mascota.label }}</label>
-          {{ form.mascota }}
-          {% if form.mascota.errors %}
-          <div class="mt-1">
-            {% for error in form.mascota.errors %}
-            <p class="text-error font-caption text-caption">{{ error }}</p>
-            {% endfor %}
-          </div>
-          {% endif %}
-        </div>
-
-        {# Veterinario filter — HU#5: lista de profesionales disponibles #}
+        {# Veterinario filter #}
         <div class="mb-4">
           <label for="{{ form.veterinario.id_for_label }}">{{ form.veterinario.label }}</label>
           <select name="veterinario" id="{{ form.veterinario.id_for_label }}" class="form-control" onchange="filterByVet(this.value)">
@@ -200,23 +160,29 @@
           {% endif %}
         </div>
 
+        {# Non-field errors #}
+        {% if form.non_field_errors %}
+        <div class="mb-4 p-3 bg-error-container/30 rounded-lg border border-error/20">
+          {% for error in form.non_field_errors %}
+          <p class="text-error font-body-md text-body-md">{{ error }}</p>
+          {% endfor %}
+        </div>
+        {% endif %}
+
         {# Action buttons #}
         <div class="flex flex-col sm:flex-row gap-3 mt-6">
           <a href="{% url 'agenda:lista_citas' %}" class="flex-1 text-center bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-surface-container-highest transition-colors">Cancelar</a>
           <button type="submit" class="flex-1 bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2">
-            <span class="material-symbols-outlined text-[18px]">check_circle</span> Confirmar Cita
+            <span class="material-symbols-outlined text-[18px]">event_repeat</span> Reprogramar Cita
           </button>
         </div>
       </form>
     </div>
   </div>
-  {% endif %}
 </div>
 
 {% block extra_js %}
 <script>
-/* HU#5: Filtrar disponibilidades por veterinario seleccionado.
-   Recarga la página con query param ?vet=<id> para que el servidor filtre. */
 function filterByVet(vetId) {
     var url = new URL(window.location.href);
     if (vetId) {
@@ -227,7 +193,6 @@ function filterByVet(vetId) {
     window.location.href = url.toString();
 }
 
-/* Pre-select vet from URL param on page load */
 (function() {
     var params = new URLSearchParams(window.location.search);
     var vetId = params.get('vet');

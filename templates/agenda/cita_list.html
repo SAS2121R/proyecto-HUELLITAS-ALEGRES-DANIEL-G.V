@@ -76,6 +76,11 @@
                     <a href="{% url 'agenda:editar_cita' cita.pk %}" class="inline-flex items-center gap-1 bg-surface-container-high text-on-surface font-caption text-caption px-2.5 py-1 rounded-lg hover:bg-surface-container-highest transition-colors">Editar</a>
                     {% endif %}
                     {% if user.rol.nombre == 'Cliente' or user.rol.nombre == 'Veterinario' or user.rol.nombre == 'Administrador' %}
+                    {% if user.rol.nombre == 'Cliente' %}
+                    <a href="{% url 'agenda:reprogramar_cita' cita.pk %}" class="inline-flex items-center gap-1 bg-primary-container/30 text-primary font-caption text-caption px-2.5 py-1 rounded-lg hover:bg-primary-container transition-colors" title="Reprogramar cita">
+                      <span class="material-symbols-outlined text-[16px]">event_repeat</span> Reprogramar
+                    </a>
+                    {% endif %}
                     <a href="{% url 'agenda:cancelar_cita' cita.pk %}" class="inline-flex items-center gap-1 bg-error-container/50 text-error font-caption text-caption px-2.5 py-1 rounded-lg hover:bg-error-container transition-colors" onclick="return confirm('¿Estás seguro de cancelar esta cita?')">Cancelar</a>
                     {% endif %}
                   {% else %}

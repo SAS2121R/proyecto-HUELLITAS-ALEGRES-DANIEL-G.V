@@ -1,4 +1,7 @@
 {% extends 'base.html' %}
+
+{% block title %}Eliminar Disponibilidad — Huellitas Alegres{% endblock %}
+
 {% block content %}
 <div class="max-w-lg mx-auto">
   <div class="bg-surface-container-lowest rounded-xl border border-error/30 overflow-hidden custom-shadow">
@@ -15,7 +18,43 @@
         de <strong>{{ disponibilidad.hora_inicio|time:"H:i" }}</strong>
         a <strong>{{ disponibilidad.hora_fin|time:"H:i" }}</strong>?
       </p>
-      <p class="text-on-surface-variant font-body-md text-body-md mb-6">Esta acción no se puede deshacer.</p>
+      <p class="text-on-surface-variant font-body-md text-body-md mb-4">Esta acción no se puede deshacer.</p>
+
+      {% if citas_vinculadas %}
+      {# CU#3 4.1: Show affected appointments and offer to cancel them #}
+      <div class="bg-error-container/30 rounded-lg border border-error/20 p-4 mb-6">
+        <div class="flex items-start gap-2 mb-3">
+          <span class="material-symbols-outlined text-error text-[20px] mt-0.5">error</span>
+          <div>
+            <p class="font-label-md text-label-md text-error">Esta disponibilidad tiene {{ citas_vinculadas|length }} cita{{ citas_vinculadas|length|pluralize:"s" }} vinculada{{ citas_vinculadas|length|pluralize:"s" }}</p>
+            <p class="font-caption text-caption text-on-surface-variant mt-1">Eliminando la disponibilidad, las citas serán canceladas automáticamente.</p>
+          </div>
+        </div>
+        <div class="divide-y divide-error/10">
+          {% for cita in citas_vinculadas %}
+          <div class="py-2 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-on-surface-variant text-[18px]">pets</span>
+              <span class="font-body-md text-body-md text-on-surface">{{ cita.mascota.nombre }}</span>
+              <span class="font-caption text-caption text-on-surface-variant">({{ cita.get_estado_display }})</span>
+            </div>
+            <span class="font-caption text-caption text-on-surface-variant">{{ cita.mascota.propietario.get_full_name }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="cancel_citas_and_delete">
+        <button type="submit" class="w-full bg-error text-on-error font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity mb-3 inline-flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">delete_forever</span> Cancelar citas y eliminar disponibilidad
+        </button>
+      </form>
+      <a href="{% url 'agenda:lista_disponibilidad' %}" class="block w-full text-center bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-surface-container-highest transition-colors">Cancelar y volver</a>
+
+      {% else %}
+      {# No linked appointments — simple delete confirmation #}
       <form method="post">
         {% csrf_token %}
         <div class="flex flex-col gap-3">
@@ -23,6 +62,7 @@
           <a href="{% url 'agenda:lista_disponibilidad' %}" class="w-full text-center bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-surface-container-highest transition-colors">Cancelar</a>
         </div>
       </form>
+      {% endif %}
     </div>
   </div>
 </div>

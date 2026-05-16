@@ -58,7 +58,7 @@
     {# Product card grid #}
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {% for producto in page_obj %}
-        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-md transition-all duration-300 ease-in-out overflow-hidden flex flex-col hover:scale-105 hover:shadow-xl hover:-translate-y-1 hover:border-[#37563b]/40">
+        <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-md transition-all duration-300 ease-in-out overflow-hidden flex flex-col hover:scale-105 hover:shadow-xl hover:-translate-y-1 hover:border-[#37563b]/40 cursor-pointer" onclick="window.location='{% url 'tienda:detalle_producto' producto.pk %}'" role="link" tabindex="0" aria-label="Ver detalles de {{ producto.nombre }}">
             {% if producto.imagen %}
             <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="w-full h-44 object-cover">
             {% else %}
@@ -88,11 +88,11 @@
                         {% endif %}
                     </div>
                     {% if producto.cantidad_stock == 0 %}
-                    <button type="button" disabled class="w-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md rounded-lg px-4 py-2 cursor-not-allowed opacity-60">
+                    <button type="button" disabled class="w-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md rounded-lg px-4 py-2 cursor-not-allowed opacity-60" onclick="event.stopPropagation()">
                         <span class="material-symbols-outlined text-[16px] align-middle">block</span> Agotado
                     </button>
                     {% else %}
-                    <form method="post" action="{% url 'tienda:agregar_carrito' producto.pk %}">
+                    <form method="post" action="{% url 'tienda:agregar_carrito' producto.pk %}" onclick="event.stopPropagation()">
                         {% csrf_token %}
                         <button type="submit" class="w-full bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2 hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-1.5">
                             <span class="material-symbols-outlined text-[16px]">add_shopping_cart</span> Agregar

@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load formato %}
+
+{% block title %}{{ producto.nombre }} — Huellitas Alegres{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+  {# Breadcrumb #}
+  <nav class="flex items-center gap-2 mb-4 font-body-md text-body-md">
+    <a href="{% url 'tienda:catalogo' %}" class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
+      <span class="material-symbols-outlined text-[18px]">store</span> Tienda
+    </a>
+    <span class="material-symbols-outlined text-on-surface-variant text-[18px]">chevron_right</span>
+    <span class="text-on-surface-variant">{{ producto.get_categoria_display }}</span>
+    <span class="material-symbols-outlined text-on-surface-variant text-[18px]">chevron_right</span>
+    <span class="text-on-surface font-label-md">{{ producto.nombre }}</span>
+  </nav>
+
+  {# Product detail card #}
+  <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
+    <div class="flex flex-col md:flex-row">
+      {# Image #}
+      <div class="md:w-1/2 bg-surface-container flex items-center justify-center">
+        {% if producto.imagen %}
+        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="w-full h-full min-h-[300px] object-cover">
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-16 px-8">
+          <span class="material-symbols-outlined text-on-surface-variant text-[96px]">image</span>
+          <p class="font-body-sm text-body-sm text-on-surface-variant mt-2">Sin imagen</p>
+        </div>
+        {% endif %}
+      </div>
+
+      {# Info #}
+      <div class="md:w-1/2 p-6 flex flex-col gap-4">
+        <div>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary-container/50 text-on-secondary-container font-caption text-caption mb-2">
+            {{ producto.get_categoria_display }}
+          </span>
+          <h1 class="font-headline-lg text-headline-lg text-on-surface">{{ producto.nombre }}</h1>
+        </div>
+
+        {% if producto.descripcion %}
+        <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">{{ producto.descripcion }}</p>
+        {% else %}
+        <p class="font-body-md text-body-md text-on-surface-variant italic">Sin descripción disponible.</p>
+        {% endif %}
+
+        {# Price and stock #}
+        <div class="flex items-end justify-between mt-2">
+          <span class="font-display-lg text-display-lg text-primary">{{ producto.precio|pesos }}</span>
+          {% if producto.cantidad_stock == 0 %}
+          <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-error-container/50 text-error font-label-md text-label-md">
+            <span class="material-symbols-outlined text-[18px]">block</span> Agotado
+          </span>
+          {% elif producto.cantidad_stock <= 10 %}
+          <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-secondary-container/50 text-on-secondary-container font-label-md text-label-md">
+            <span class="material-symbols-outlined text-[18px]">warning</span> ¡Últimas unidades!
+          </span>
+          {% else %}
+          <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary-container/30 text-primary font-label-md text-label-md">
+            <span class="material-symbols-outlined text-[18px]">check_circle</span> Disponible
+          </span>
+          {% endif %}
+        </div>
+
+        {# Cart action #}
+        <div class="mt-auto pt-4 border-t border-outline-variant/20">
+          {% if producto.cantidad_stock == 0 %}
+          <button type="button" disabled class="w-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md rounded-lg px-6 py-2.5 cursor-not-allowed opacity-60 inline-flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">block</span> Producto agotado
+          </button>
+          {% elif in_cart %}
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center gap-2 p-3 bg-primary-container/30 rounded-lg">
+              <span class="material-symbols-outlined text-primary text-[20px]">shopping_cart</span>
+              <span class="font-label-md text-label-md text-primary">Ya tienes {{ cart_quantity }} en el carrito</span>
+            </div>
+            <div class="flex gap-2">
+              <a href="{% url 'tienda:carrito' %}" class="flex-1 text-center bg-surface-container-high text-on-surface font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-surface-container-highest transition-colors inline-flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">shopping_cart</span> Ver Carrito
+              </a>
+              <form method="post" action="{% url 'tienda:agregar_carrito' producto.pk %}" class="flex-1">
+                {% csrf_token %}
+                <button type="submit" class="w-full bg-primary text-on-primary font-label-md text-label-md rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2">
+                  <span class="material-symbols-outlined text-[18px]">add</span> Agregar otro
+                </button>
+              </form>
+            </div>
+          </div>
+          {% else %}
+          <form method="post" action="{% url 'tienda:agregar_carrito' producto.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="w-full bg-primary text-on-primary font-label-md text-label-md rounded-lg px-6 py-2.5 hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined text-[18px]">add_shopping_cart</span> Agregar al Carrito
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Back button #}
+  <div class="mt-6">
+    <a href="{% url 'tienda:catalogo' %}" class="inline-flex items-center gap-2 bg-surface-container-lowest border border-outline-variant/30 text-on-surface font-label-md text-label-md rounded-lg px-4 py-2.5 hover:bg-surface-container-high transition-colors">
+      <span class="material-symbols-outlined text-[18px]">arrow_back</span> Volver a la Tienda
+    </a>
+  </div>
+</div>
+{% endblock %}

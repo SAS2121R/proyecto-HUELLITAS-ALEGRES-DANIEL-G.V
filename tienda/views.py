@@ -5,11 +5,105 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
+from django.db import transaction
 
 from productos.models import Producto, CATEGORIAS
 from entregas.models import Pedido, PedidoItem
 from usuarios.decorators import role_required
+from .models import Carrito, CarritoItem
 
+
+# ============================================================
+# Cart persistence helpers: session ↔ DB synchronization
+# HU#3: «El carrito debe mantener su contenido incluso si el
+# cliente cierra la sesión y vuelve a ingresar al sistema.»
+# ============================================================
+
+def _get_cart_count(request):
+    """Return total items in cart (session + persistent)."""
+    cart = request.session.get('cart', {})
+    return sum(item.get('quantity', 0) for item in cart.values())
+
+
+def _sync_session_to_db(request):
+    """Sync session cart data into the DB-backed Carrito.
+
+    Called when user adds/updates/removes items AND after login.
+    Merges quantities: if a product exists in both session and DB,
+    the session quantity wins (most recent action).
+    """
+    if not request.user.is_authenticated:
+        return
+
+    cart_data = request.session.get('cart', {})
+    if not cart_data:
+        # If session cart is empty, don't touch DB (user may have cleared session only)
+        return
+
+    carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
+
+    for pk_str, item_data in cart_data.items():
+        producto = Producto.objects.filter(pk=int(pk_str)).first()
+        if not producto:
+            continue
+        db_item, created = CarritoItem.objects.get_or_create(
+            carrito=carrito,
+            producto=producto,
+            defaults={'cantidad': item_data['quantity']},
+        )
+        if not created:
+            # Update quantity from session
+            db_item.cantidad = item_data['quantity']
+            db_item.save(update_fields=['cantidad'])
+
+    # Remove DB items NOT in session (user removed them)
+    product_ids_in_session = [int(pk) for pk in cart_data.keys()]
+    CarritoItem.objects.filter(carrito=carrito).exclude(
+        producto_id__in=product_ids_in_session
+    ).delete()
+
+
+def _sync_db_to_session(request):
+    """Load DB cart into session (called after login).
+
+    If session has items too, merges (DB + session, session wins on conflict).
+    """
+    if not request.user.is_authenticated:
+        return
+
+    try:
+        carrito = Carrito.objects.select_related('usuario').get(usuario=request.user)
+    except Carrito.DoesNotExist:
+        return
+
+    session_cart = request.session.get('cart', {})
+
+    for item in carrito.items.select_related('producto'):
+        pk_str = str(item.producto_id)
+        if pk_str in session_cart:
+            # Session wins — keep session data
+            continue
+        # Add from DB
+        session_cart[pk_str] = {
+            'name': item.producto.nombre,
+            'price': str(item.producto.precio),
+            'quantity': item.cantidad,
+        }
+
+    request.session['cart'] = session_cart
+    request.session.modified = True
+
+
+def _clear_db_cart(request):
+    """Remove all DB cart items (called on vaciar_carrito and checkout)."""
+    if not request.user.is_authenticated:
+        return
+    CarritoItem.objects.filter(carrito__usuario=request.user).delete()
+
+
+# ============================================================
+# Views
+# ============================================================
 
 @login_required(login_url='/usuarios/login/')
 def catalogo(request):
@@ -43,16 +137,33 @@ def catalogo(request):
     except (PageNotAnInteger, EmptyPage):
         page_obj = paginator.page(1)
 
-    # Get cart item count for badge
-    cart = request.session.get('cart', {})
-    cart_count = sum(item.get('quantity', 0) for item in cart.values())
-
     return render(request, 'tienda/catalogo.html', {
         'page_obj': page_obj,
         'search': search,
         'categoria': categoria,
         'categorias': CATEGORIAS,
-        'cart_count': cart_count,
+        'cart_count': _get_cart_count(request),
+    })
+
+
+@login_required(login_url='/usuarios/login/')
+def detalle_producto(request, pk):
+    """Tienda — product detail page for a single product.
+
+    HU#3 / CU#8: «El sistema muestra información detallada del producto,
+    incluyendo descripción, precio, disponibilidad y opciones de compra.»
+    """
+    producto = get_object_or_404(Producto, pk=pk, esta_activo=True)
+
+    cart = request.session.get('cart', {})
+    in_cart = str(pk) in cart
+    cart_quantity = cart.get(str(pk), {}).get('quantity', 0) if in_cart else 0
+
+    return render(request, 'tienda/detalle_producto.html', {
+        'producto': producto,
+        'cart_count': _get_cart_count(request),
+        'in_cart': in_cart,
+        'cart_quantity': cart_quantity,
     })
 
 
@@ -60,6 +171,7 @@ def catalogo(request):
 def agregar_carrito(request, pk):
     """Add a product to the session cart. POST only.
 
+    HU#3: Syncs to DB cart for cross-session persistence.
     Cart structure in session:
         {'<product_id>': {'name': str, 'price': str, 'quantity': int}}
     """
@@ -92,6 +204,10 @@ def agregar_carrito(request, pk):
 
     request.session['cart'] = cart
     request.session.modified = True
+
+    # HU#3: Sync to DB cart for persistence
+    _sync_session_to_db(request)
+
     messages.success(request, f'"{producto.nombre}" agregado al carrito.')
     return redirect('tienda:catalogo')
 
@@ -103,8 +219,8 @@ def carrito(request):
     items = []
     total = Decimal('0.00')
 
-    for pk, item_data in cart.items():
-        producto = Producto.objects.filter(pk=int(pk)).first()
+    for pk_val, item_data in cart.items():
+        producto = Producto.objects.filter(pk=int(pk_val)).first()
         if producto:
             subtotal = Decimal(item_data['price']) * item_data['quantity']
             items.append({
@@ -118,7 +234,7 @@ def carrito(request):
     return render(request, 'tienda/carrito.html', {
         'items': items,
         'total': total,
-        'cart_count': sum(item_data.get('quantity', 0) for item_data in cart.values()),
+        'cart_count': _get_cart_count(request),
     })
 
 
@@ -143,6 +259,7 @@ def actualizar_cantidad(request, pk):
         del cart[product_key]
         request.session['cart'] = cart
         request.session.modified = True
+        _sync_session_to_db(request)
         messages.info(request, f'"{producto.nombre}" eliminado del carrito.')
     elif new_qty > producto.cantidad_stock:
         messages.error(request, f'Solo hay {producto.cantidad_stock} unidades de "{producto.nombre}".')
@@ -150,6 +267,7 @@ def actualizar_cantidad(request, pk):
         cart[product_key]['quantity'] = new_qty
         request.session['cart'] = cart
         request.session.modified = True
+        _sync_session_to_db(request)
         messages.success(request, f'Cantidad de "{producto.nombre}" actualizada.')
 
     return redirect('tienda:carrito')
@@ -170,6 +288,7 @@ def eliminar_carrito(request, pk):
         del cart[product_key]
         request.session['cart'] = cart
         request.session.modified = True
+        _sync_session_to_db(request)
         messages.info(request, f'"{name}" eliminado del carrito.')
 
     return redirect('tienda:carrito')
@@ -183,6 +302,7 @@ def vaciar_carrito(request):
 
     request.session['cart'] = {}
     request.session.modified = True
+    _clear_db_cart(request)
     messages.info(request, 'Carrito vaciado.')
     return redirect('tienda:carrito')
 
@@ -207,8 +327,8 @@ def checkout(request):
     # Build cart items for display
     items = []
     total = Decimal('0.00')
-    for pk, item_data in cart.items():
-        producto = Producto.objects.filter(pk=int(pk)).first()
+    for pk_val, item_data in cart.items():
+        producto = Producto.objects.filter(pk=int(pk_val)).first()
         if producto:
             subtotal = Decimal(item_data['price']) * item_data['quantity']
             items.append({
@@ -229,7 +349,7 @@ def checkout(request):
             return render(request, 'tienda/checkout.html', {
                 'items': items,
                 'total': total,
-                'cart_count': sum(i.get('quantity', 0) for i in cart.values()),
+                'cart_count': _get_cart_count(request),
                 'direccion': direccion,
                 'telefono': telefono,
             })
@@ -239,7 +359,7 @@ def checkout(request):
             return render(request, 'tienda/checkout.html', {
                 'items': items,
                 'total': total,
-                'cart_count': sum(i.get('quantity', 0) for i in cart.values()),
+                'cart_count': _get_cart_count(request),
                 'direccion': direccion,
                 'telefono': telefono,
             })
@@ -261,8 +381,8 @@ def checkout(request):
         )
 
         # Create PedidoItems from cart
-        for pk, item_data in cart.items():
-            producto = Producto.objects.filter(pk=int(pk)).first()
+        for pk_val, item_data in cart.items():
+            producto = Producto.objects.filter(pk=int(pk_val)).first()
             if producto:
                 PedidoItem.objects.create(
                     pedido=pedido,
@@ -270,9 +390,10 @@ def checkout(request):
                     cantidad=item_data['quantity'],
                 )
 
-        # Clear the cart
+        # Clear both session and DB cart
         request.session['cart'] = {}
         request.session.modified = True
+        _clear_db_cart(request)
 
         messages.success(request, f'¡Pedido #{pedido.pk} creado exitosamente! Tu domiciliario asignado es {domiciliario.get_full_name() if domiciliario else "pendiente de asignación"}.')
         if not domiciliario:
@@ -282,5 +403,5 @@ def checkout(request):
     return render(request, 'tienda/checkout.html', {
         'items': items,
         'total': total,
-        'cart_count': sum(i.get('quantity', 0) for i in cart.values()),
+        'cart_count': _get_cart_count(request),
     })

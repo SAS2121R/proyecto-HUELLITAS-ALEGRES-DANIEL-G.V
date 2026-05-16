@@ -7,7 +7,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import ProtectedError
 from usuarios.decorators import role_required
 from .models import Disponibilidad, Cita
-from .forms import DisponibilidadForm, CitaForm, SolicitarCitaForm
+from .forms import DisponibilidadForm, CitaForm, SolicitarCitaForm, ReprogramarCitaForm
 
 
 @login_required(login_url='/usuarios/login/')
@@ -95,21 +95,51 @@ def editar_disponibilidad(request, pk):
 
 @login_required(login_url='/usuarios/login/')
 def eliminar_disponibilidad(request, pk):
-    """Eliminar disponibilidad con confirmación — Vet solo propia, Admin cualquiera."""
+    """Eliminar disponibilidad con confirmación — Vet solo propia, Admin cualquiera.
+
+    CU#3 Flujo alternativo 4.1: Si the veterinarian tries to delete a schedule
+    with scheduled appointments, show affected appointments and offer options.
+    Opción B: Mantener protección, mostrar citas afectadas.
+    """
     if request.user.rol.nombre not in ('Veterinario', 'Administrador'):
         raise PermissionDenied
     disponibilidad = get_object_or_404(Disponibilidad, pk=pk)
     if request.user.rol.nombre == 'Veterinario' and disponibilidad.veterinario != request.user:
         raise PermissionDenied
+
+    # Fetch linked citas for the confirmation template (Opción B)
+    citas_vinculadas = Cita.objects.filter(
+        disponibilidad=disponibilidad
+    ).exclude(estado='Cancelada').select_related('mascota', 'mascota__propietario')
+
     if request.method == 'POST':
-        try:
+        # Determine action: delete or cancel_citas_and_delete
+        action = request.POST.get('action', 'delete')
+        if action == 'cancel_citas_and_delete':
+            # Cancel all linked appointments first, then delete
+            for cita in citas_vinculadas:
+                cita.estado = 'Cancelada'
+                cita.motivo_cancelacion = 'Disponibilidad eliminada por el veterinario'
+                cita.save()
             disponibilidad.delete()
-            messages.success(request, 'Disponibilidad eliminada exitosamente.')
+            messages.success(request, 'Disponibilidad eliminada y citas canceladas exitosamente.')
             return redirect('agenda:lista_disponibilidad')
-        except ProtectedError:
-            messages.error(request, 'No se puede eliminar esta disponibilidad porque tiene citas vinculadas. Cancele o reasigne las citas primero.')
-            return render(request, 'agenda/disponibilidad_confirm_delete.html', {'disponibilidad': disponibilidad})
-    return render(request, 'agenda/disponibilidad_confirm_delete.html', {'disponibilidad': disponibilidad})
+        else:
+            try:
+                disponibilidad.delete()
+                messages.success(request, 'Disponibilidad eliminada exitosamente.')
+                return redirect('agenda:lista_disponibilidad')
+            except ProtectedError:
+                messages.error(request, 'No se puede eliminar esta disponibilidad porque tiene citas vinculadas. Cancele o reasigne las citas primero.')
+                return render(request, 'agenda/disponibilidad_confirm_delete.html', {
+                    'disponibilidad': disponibilidad,
+                    'citas_vinculadas': citas_vinculadas,
+                })
+
+    return render(request, 'agenda/disponibilidad_confirm_delete.html', {
+        'disponibilidad': disponibilidad,
+        'citas_vinculadas': citas_vinculadas,
+    })
 
 
 # ========================================
@@ -157,6 +187,8 @@ def solicitar_cita(request):
 
     Si no hay disponibilidades futuras, muestra un mensaje informativo en lugar
     del formulario vacío para evitar la frustración del campo obligatorio sin opciones.
+    
+    HU#5: Permite filtrar por veterinario (query param ?vet=<id>).
     """
     if request.user.rol.nombre != 'Cliente':
         raise PermissionDenied
@@ -174,15 +206,33 @@ def solicitar_cita(request):
     ).exists()
 
     if not disponibles:
+        # CU#4 Flujo alternativo 4.2: si la fecha/hora no está disponible,
+        # mostrar las opciones disponibles más cercanas.
+        proximas_disponibilidades = Disponibilidad.objects.filter(
+            activa=True,
+            fecha__gte=dj_tz.localdate(),
+        ).order_by('fecha', 'hora_inicio')[:10]
+
+        from django.contrib.auth import get_user_model
+        Usuario = get_user_model()
+        vets = Usuario.objects.filter(
+            pk__in=proximas_disponibilidades.values_list('veterinario_id', flat=True).distinct()
+        )
+
         messages.warning(
             request,
             'No hay horarios disponibles en este momento. '
-            'Por favor, consulte más tarde o comuníquese con la clínica.'
+            'A continuación se muestran las próximas fechas con disponibilidad.'
         )
         return render(request, 'agenda/solicitar_cita.html', {
             'form': None,
             'sin_disponibilidad': True,
+            'proximas_disponibilidades': proximas_disponibilidades,
+            'veterinarios': vets,
         })
+
+    # HU#5: Optional vet filter from query param
+    vet_filter = request.GET.get('vet') or (request.POST.get('veterinario') if request.method == 'POST' else None)
 
     if request.method == 'POST':
         form = SolicitarCitaForm(request.POST, user=request.user)
@@ -193,7 +243,18 @@ def solicitar_cita(request):
             messages.success(request, f'¡Cita solicitada exitosamente para {cita.mascota.nombre}!')
             return redirect('agenda:lista_citas')
     else:
-        form = SolicitarCitaForm(user=request.user)
+        # Pre-populate vet filter if present in query string
+        initial = {}
+        if vet_filter:
+            try:
+                from django.contrib.auth import get_user_model
+                Usuario = get_user_model()
+                vet_obj = Usuario.objects.filter(pk=int(vet_filter), rol__nombre='Veterinario').first()
+                if vet_obj:
+                    initial['veterinario'] = vet_obj
+            except (ValueError, TypeError):
+                pass
+        form = SolicitarCitaForm(user=request.user, initial=initial)
 
     return render(request, 'agenda/solicitar_cita.html', {'form': form})
 
@@ -253,3 +314,60 @@ def eliminar_cita(request, pk):
         messages.success(request, 'Cita cancelada exitosamente.')
         return redirect('agenda:lista_citas')
     return render(request, 'agenda/cita_cancel.html', {'cita': cita})
+
+
+@login_required(login_url='/usuarios/login/')
+def reprogramar_cita(request, pk):
+    """Cliente reprogresa su propia cita — HU#5 criterion:
+    «En caso de que el cliente necesite cambiar o cancelar una cita,
+    el sistema debe ofrecer opciones claras para llevar a cabo estas acciones.»
+
+    Only for Programada citas, only for the Cliente's own pets.
+    Cancels the old cita and creates a new one with the new disponibilidad.
+    """
+    cita = get_object_or_404(Cita, pk=pk)
+
+    # Permission: only Cliente can reprogram their own pet's citas
+    if request.user.rol.nombre != 'Cliente':
+        raise PermissionDenied
+    if cita.mascota.propietario != request.user:
+        raise Http404('Cita no encontrada.')
+
+    # Only Programada citas can be rescheduled
+    if cita.estado != 'Programada':
+        messages.error(request, f'No se puede reprogramar una cita en estado {cita.get_estado_display()}.')
+        return redirect('agenda:lista_citas')
+
+    if request.method == 'POST':
+        form = ReprogramarCitaForm(request.POST, cita_actual=cita, user=request.user)
+        if form.is_valid():
+            nueva_disponibilidad = form.cleaned_data['disponibilidad']
+            nuevo_motivo = form.cleaned_data.get('motivo', '') or cita.motivo
+
+            # Cancel the old cita
+            cita.estado = 'Cancelada'
+            cita.motivo_cancelacion = 'Reprogramada — nueva cita creada'
+            cita.save()
+
+            # Create new cita
+            nueva_cita = Cita.objects.create(
+                mascota=cita.mascota,
+                disponibilidad=nueva_disponibilidad,
+                estado='Programada',
+                motivo=nuevo_motivo,
+            )
+
+            messages.success(
+                request,
+                f'¡Cita reprogramada exitosamente para {cita.mascota.nombre}! '
+                f'Nueva fecha: {nueva_disponibilidad.fecha} '
+                f'a las {nueva_disponibilidad.hora_inicio.strftime("%H:%M")}.'
+            )
+            return redirect('agenda:lista_citas')
+    else:
+        form = ReprogramarCitaForm(cita_actual=cita, user=request.user)
+
+    return render(request, 'agenda/reprogramar_cita.html', {
+        'form': form,
+        'cita_actual': cita,
+    })

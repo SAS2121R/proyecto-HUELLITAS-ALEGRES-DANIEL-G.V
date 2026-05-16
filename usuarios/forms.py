@@ -2,8 +2,11 @@ import re
 from django import forms
 from django.contrib.auth import get_user_model
 from .models import Rol, Perfil
+from .validators import ComplexityPasswordValidator
 
 Usuario = get_user_model()
+
+_complexity_validator = ComplexityPasswordValidator()
 
 
 class RegistroForm(forms.ModelForm):
@@ -15,11 +18,13 @@ class RegistroForm(forms.ModelForm):
     R10: first_name obligatorio (no vacío, no solo espacios)
     R11: Validación formato telefono (regex)
     R5: Asigna rol Cliente por defecto
+    HU#1: Contraseña ≥8 caracteres con letras, números y especiales
     """
     password1 = forms.CharField(
         label='Contraseña',
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        min_length=6,
+        min_length=8,
+        help_text='Mínimo 8 caracteres. Debe incluir letras, números y al menos un carácter especial.',
     )
     password2 = forms.CharField(
         label='Confirmar contraseña',
@@ -50,6 +55,13 @@ class RegistroForm(forms.ModelForm):
                 'El teléfono solo puede contener números, espacios, +, -, ( y ).'
             )
         return telefono
+
+    def clean_password1(self):
+        """HU#1: Validar complejidad de contraseña (letras + números + especiales)."""
+        password1 = self.cleaned_data.get('password1')
+        if password1:
+            _complexity_validator.validate(password1)
+        return password1
 
     def clean_password2(self):
         """R9 scenario 3: Validar que las contraseñas coincidan"""
@@ -125,12 +137,16 @@ class PerfilEditForm(forms.ModelForm):
 
 
 class CrearUsuarioForm(forms.ModelForm):
-    """Formulario para que el Admin cree usuarios de personal (Veterinario, Domiciliario, Admin)."""
+    """Formulario para que el Admin cree usuarios de personal (Veterinario, Domiciliario, Admin).
+
+    HU#1: Contraseña ≥8 caracteres con letras, números y especiales.
+    """
 
     password1 = forms.CharField(
         label='Contraseña',
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        min_length=6,
+        min_length=8,
+        help_text='Mínimo 8 caracteres. Debe incluir letras, números y al menos un carácter especial.',
     )
     password2 = forms.CharField(
         label='Confirmar contraseña',
@@ -163,6 +179,13 @@ class CrearUsuarioForm(forms.ModelForm):
         if not first_name or not first_name.strip():
             raise forms.ValidationError('El nombre es obligatorio.')
         return first_name.strip()
+
+    def clean_password1(self):
+        """HU#1: Validar complejidad de contraseña."""
+        password1 = self.cleaned_data.get('password1')
+        if password1:
+            _complexity_validator.validate(password1)
+        return password1
 
     def clean_password2(self):
         password1 = self.cleaned_data.get('password1')
@@ -209,17 +232,28 @@ class EditarUsuarioForm(forms.ModelForm):
 
 
 class SetPasswordForm(forms.Form):
-    """Formulario para que el Admin establezca una contraseña temporal para un usuario."""
+    """Formulario para que el Admin establezca una contraseña temporal para un usuario.
+
+    HU#1: Contraseña ≥8 caracteres con letras, números y especiales.
+    """
 
     new_password1 = forms.CharField(
         label='Nueva contraseña',
         widget=forms.PasswordInput(attrs={'class': 'form-control form-control-lg'}),
-        min_length=6,
+        min_length=8,
+        help_text='Mínimo 8 caracteres. Debe incluir letras, números y al menos un carácter especial.',
     )
     new_password2 = forms.CharField(
         label='Confirmar contraseña',
         widget=forms.PasswordInput(attrs={'class': 'form-control form-control-lg'}),
     )
+
+    def clean_new_password1(self):
+        """HU#1: Validar complejidad de contraseña."""
+        password1 = self.cleaned_data.get('new_password1')
+        if password1:
+            _complexity_validator.validate(password1)
+        return password1
 
     def clean_new_password2(self):
         password1 = self.cleaned_data.get('new_password1')
